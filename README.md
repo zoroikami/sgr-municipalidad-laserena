@@ -121,32 +121,6 @@ PROYECTO INTEGRADO/
 
 ---
 
-## 5. Instrucciones de Instalación y Ejecución Local
-
-### Requisitos Previos:
-- Navegador web moderno (Google Chrome, Microsoft Edge, Mozilla Firefox o Safari).
-- Python 3.10+ (opcional, para levantar servidor web local y compilar informes).
-- MySQL Server 8.0 o MariaDB 10.5+ (opcional, para ejecutar `database_sgr.sql`).
-
-### Ejecución Inmediata del Mockup:
-1. **Opción A (Servidor Local Python):**
-   ```bash
-   # Navegar a la carpeta del mockup
-   cd "mockup"
-
-   # Iniciar servidor temporal en el puerto 8000
-   python -m http.server 8000
-   ```
-   Abrir en el navegador: `http://localhost:8000`
-
-2. **Opción B (Directo en Navegador):**
-   - Abrir directamente el archivo `mockup/index.html` con doble clic o arrastrándolo a la ventana del navegador.
-
-### Ejecución del Script de Base de Datos MySQL:
-```bash
-# Conectarse a MySQL e importar el script oficial
-mysql -u root -p < "base_datos/database_sgr.sql"
-```
 
 ---
 
@@ -170,25 +144,16 @@ Cada commit se encabeza con el identificador de la tarea de Planner, seguido de 
 - `SGR-12: Implementación de visor de evidencias con zoom y dictamen de aprobación`
 - `SGR-19: Algoritmo dinámico de cálculo de semáforo proporcional diario`
 
-### Repositorio Oficial en GitHub:
-- **URL Pública:** [https://github.com/zoroikami/sgr-municipalidad-laserena](https://github.com/zoroikami/sgr-municipalidad-laserena)
-- **Clonación:** `git clone https://github.com/zoroikami/sgr-municipalidad-laserena.git`
 
-```bash
-# Comandos para sincronizar cambios
-git remote add origin https://github.com/zoroikami/sgr-municipalidad-laserena.git
-git push -u origin main
-```
+
 
 ---
 
 ## 7. Equipo de Desarrollo y Asignación de Roles
 
-| Integrante / Rol | Rol en Proyecto | Especialidad Técnica | Responsabilidad Principal |
-| :--- | :--- | :--- | :--- |
-| **Desarrollador 1 (Dev 1)** | Líder Técnico / Frontend | Analista / Ing. en Informática | Arquitectura web, mockup interactivo, estilos institucionales y gestión del repositorio Git. |
-| **Desarrollador 2 (Dev 2)** | Ingeniero de Backend y Datos | Ing. en Informática | Lógica de cálculo, modelado UML (Clases y DER), script MySQL 8.0 e integridad referencial. |
-| **Desarrollador 3 (Dev 3)** | Analista de Requerimientos y QA | Ing. en Ciberseguridad | Planificación en Planner, diagramas SysML, matriz de trazabilidad, bitácora de auditoría y pruebas. |
+| **Desarrollador 1 (Dev 1)** | Harold Concha
+| **Desarrollador 2 (Dev 2)** | Keoni Vergara
+| **Desarrollador 3 (Dev 3)** | Claudio Romo
 
 ---
 
