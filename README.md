@@ -170,16 +170,13 @@ Cada commit se encabeza con el identificador de la tarea de Planner, seguido de 
 - `SGR-12: Implementación de visor de evidencias con zoom y dictamen de aprobación`
 - `SGR-19: Algoritmo dinámico de cálculo de semáforo proporcional diario`
 
-### Vinculación con Repositorio Remoto de GitHub:
-Para vincular este repositorio local con su cuenta institucional de GitHub:
+### Repositorio Oficial en GitHub:
+- **URL Pública:** [https://github.com/zoroikami/sgr-municipalidad-laserena](https://github.com/zoroikami/sgr-municipalidad-laserena)
+- **Clonación:** `git clone https://github.com/zoroikami/sgr-municipalidad-laserena.git`
+
 ```bash
-# 1. Renombrar la rama principal a main
-git branch -M main
-
-# 2. Agregar el repositorio remoto de GitHub del equipo
-git remote add origin https://github.com/tu-usuario/sgr-la-serena-2026.git
-
-# 3. Subir el proyecto completo a GitHub
+# Comandos para sincronizar cambios
+git remote add origin https://github.com/zoroikami/sgr-municipalidad-laserena.git
 git push -u origin main
 ```
 
