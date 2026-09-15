@@ -1,0 +1,33 @@
+@startuml CU-06_crear_compromiso_agenda_colectiva
+!theme plain
+skinparam backgroundColor #FFFFFF
+skinparam roundcorner 8
+skinparam defaultFontName Arial
+skinparam defaultFontSize 11
+skinparam packageBackgroundColor #F8FAFC
+skinparam packageBorderColor #64748B
+left to right direction
+
+title Caso de Uso Específico: CU-06: Crear Compromiso en Agenda Colectiva Territorial\nSistema SGR - Municipalidad de La Serena
+
+actor "Delegado Municipal" as ACT_PRIMARY #e0f2fe
+actor "Tubo de Trabajo Kanban" as ACT_SYS #f1f5f9
+
+rectangle "Sistema de Gestión de Resultados (SGR)" {
+    usecase "Crear Compromiso Comunitario" as UC_BASE #dbeafe
+    usecase "Validar Plazo y Territorio" as INC_1 #f8fafc
+    usecase "Asignar Funcionario Responsable" as INC_2 #f8fafc
+    usecase "Notificar Datos Incompletos en Compromiso" as EXT_1 #fff1f2
+
+    ' Relaciones de Inclusión
+    UC_BASE ..> INC_1 : <<include>>
+    UC_BASE ..> INC_2 : <<include>>
+
+    ' Relaciones de Extensión
+    EXT_1 ..> UC_BASE : <<extend>>\n(Condición: Falta dirigente o fecha límite)
+}
+
+ACT_PRIMARY --> UC_BASE
+UC_BASE --> ACT_SYS
+
+@enduml

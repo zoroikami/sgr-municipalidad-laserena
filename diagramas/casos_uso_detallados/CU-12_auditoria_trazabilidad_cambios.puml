@@ -1,0 +1,33 @@
+@startuml CU-12_auditoria_trazabilidad_cambios
+!theme plain
+skinparam backgroundColor #FFFFFF
+skinparam roundcorner 8
+skinparam defaultFontName Arial
+skinparam defaultFontSize 11
+skinparam packageBackgroundColor #F8FAFC
+skinparam packageBorderColor #64748B
+left to right direction
+
+title Caso de Uso Específico: CU-12: Auditar Bitácora Inmutable y Trazabilidad Transversal\nSistema SGR - Municipalidad de La Serena
+
+actor "Oficial de Seguridad / Auditor" as ACT_PRIMARY #e0f2fe
+actor "Bitácora Inmutable MySQL" as ACT_SYS #f1f5f9
+
+rectangle "Sistema de Gestión de Resultados (SGR)" {
+    usecase "Auditar Bitácora de Eventos" as UC_BASE #dbeafe
+    usecase "Consultar Log Inalterable" as INC_1 #f8fafc
+    usecase "Verificar Integridad de Hash y Timestamp" as INC_2 #f8fafc
+    usecase "Filtrar por Evento Crítico de Seguridad" as EXT_1 #fff1f2
+
+    ' Relaciones de Inclusión
+    UC_BASE ..> INC_1 : <<include>>
+    UC_BASE ..> INC_2 : <<include>>
+
+    ' Relaciones de Extensión
+    EXT_1 ..> UC_BASE : <<extend>>\n(Condición: Auditor selecciona alertas de acceso)
+}
+
+ACT_PRIMARY --> UC_BASE
+UC_BASE --> ACT_SYS
+
+@enduml

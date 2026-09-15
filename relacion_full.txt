@@ -1,0 +1,280 @@
+=== Page 1 ===
+Diagrama de Requerimientos: 
+Descripción 
+Es una representación gráfica de los requerimientos funcionales y no funcionales de un sistema, 
+mostrando su organización, jerarquía y relaciones. Permite visualizar de manera estructurada qué 
+necesidades debe satisfacer la solución. 
+Propósito 
+• Identificar y organizar los requerimientos del proyecto. 
+• Mostrar la descomposición de requerimientos generales en requerimientos más 
+específicos. 
+• Facilitar la comunicación entre clientes, usuarios y equipo de desarrollo. 
+• Servir como base para la definición de casos de uso, diseño y pruebas. 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+Imagen 1: Vista general del diagrama de requerimientos, donde se destaca lo que podríamos 
+identificar como una Épica. 
+ 
+Requerimiento a documentar: 
+ 
+Imagen 2: Vista específica del requerimiento identificado como la épica Gestionar Empleados. 
+
+=== Page 2 ===
+Caso de Uso de Alto o Nivel o General: 
+Descripción 
+Es una representación simplificada de las funcionalidades principales del sistema y de los 
+actores que interactúan con él. Se enfoca en mostrar qué hace el sistema, sin detallar el proceso 
+interno de cada funcionalidad. 
+Propósito 
+• Proporcionar una visión global del sistema. 
+• Identificar actores y funcionalidades principales. 
+• Delimitar el alcance del proyecto. 
+• Facilitar la comprensión inicial de los requerimientos por parte de los interesados. 
+Componentes principales 
+• Sistema. 
+• Actores. 
+• Casos de uso principales. 
+• Relaciones entre actores y casos 
+de uso. 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+Imagen 3: Caso de uso General o de Alto Nivel. 
+ 
+ 
+ 
+
+=== Page 3 ===
+Caso de Uso Detallado 
+Descripción 
+Es la especificación completa de un caso de uso particular, describiendo paso a paso cómo 
+interactúan el actor y el sistema para lograr un objetivo determinado. 
+Propósito 
+• Documentar el comportamiento esperado del sistema. 
+• Reducir ambigüedades en los requerimientos. 
+• Servir de base para el diseño, la programación y las pruebas. 
+• Definir escenarios normales y alternativos. 
+Información que suele contener 
+• Nombre del caso de uso. 
+• Objetivo. 
+• Actor(es). 
+• Precondiciones. 
+• Flujo principal. 
+• Flujos alternativos. 
+• Postcondiciones. 
+• Reglas de negocio. 
+ 
+=== Page 4 ===
+ 
+Imagen 4: Caso de uso Detallado del caso de uso Gestionar Empleados. 
+ 
+Cuadros de Descripción de Casos de Uso 
+Descripción 
+Es una plantilla tabular utilizada para documentar de manera estructurada la información de un 
+caso de uso detallado. Resume todos los elementos relevantes en un formato estandarizado. 
+Propósito 
+• Estandarizar la documentación de casos de uso. 
+• Facilitar la revisión y validación de requerimientos. 
+• Mantener la trazabilidad entre requerimientos y funcionalidades. 
+• Servir como referencia para desarrolladores y evaluadores. 
+ 
+
+=== Page 5 ===
+CU-01 Registrar Empleado 
+Campo Descripción 
+Identificador CU-01 
+Nombre Registrar Empleado 
+Actor Principal Analista_RRHH 
+Propósito Incorporar un nuevo empleado al sistema 
+Precondiciones Usuario autenticado con permisos de gestión 
+Postcondiciones Empleado registrado correctamente 
+Flujo Principal Ingresar antecedentes del empleado, validar información y 
+almacenar registro 
+Casos Incluidos Validar Datos de Empleado 
+Casos Extendidos Notificar Empleado Duplicado 
+ 
+CU-02 Editar Empleado 
+Campo Descripción 
+Identificador CU-02 
+Nombre Editar Empleado 
+Actor Principal Analista_RRHH 
+Propósito Modificar antecedentes de un empleado existente 
+Precondiciones El empleado debe existir en el sistema 
+Postcondiciones Información actualizada 
+Flujo Principal Buscar empleado, modificar datos y guardar cambios 
+Casos Incluidos Buscar Empleado, Validar Datos de Empleado 
+Casos Extendidos Ninguno 
+ 
+ 
+=== Page 6 ===
+CU-03 Eliminar Empleado 
+Campo Descripción 
+Identificador CU-03 
+Nombre Eliminar Empleado 
+Actor Principal Analista_RRHH 
+Propósito Eliminar un registro de empleado 
+Precondiciones El empleado existe en el sistema 
+Postcondiciones Registro eliminado 
+Flujo Principal Buscar empleado, confirmar eliminación y eliminar registro 
+Casos Incluidos Buscar Empleado 
+Casos Extendidos Notificar Empleado con Procesos Activos 
+ 
+CU-04 Consultar Empleado 
+Campo Descripción 
+Identificador CU-04 
+Nombre Consultar Empleado 
+Actor Principal Analista_RRHH 
+Propósito Obtener información de empleados registrados 
+Precondiciones Existencia de registros en el sistema 
+Postcondiciones Información presentada al usuario 
+Flujo Principal Buscar empleado y visualizar la información encontrada 
+Casos Incluidos Buscar Empleado 
+Casos Extendidos Consulta Sin Coincidencias 
+ 
+ 
+=== Page 7 ===
+CU-05 Buscar Empleado 
+Campo Descripción 
+Identificador CU-05 
+Nombre Buscar Empleado 
+Actor Principal Sistema 
+Propósito Localizar empleados a partir de criterios de búsqueda 
+Precondiciones Existencia de criterios de búsqueda 
+Postcondiciones Empleado localizado o sin resultados 
+Flujo Principal Procesar criterios y recuperar información 
+Casos Incluidos Ninguno 
+Casos Extendidos Ninguno 
+ 
+CU-06 Validar Datos de Empleado 
+Campo Descripción 
+Identificador CU-06 
+Nombre Validar Datos de Empleado 
+Actor Principal Sistema 
+Propósito Verificar integridad, consistencia y obligatoriedad de los datos 
+Precondiciones Existen datos ingresados 
+Postcondiciones Datos validados o rechazados 
+Flujo Principal Comprobar formato, obligatoriedad y reglas de negocio 
+Casos Incluidos Ninguno 
+Casos Extendidos Gestionar Error de Validación, Detectar Datos Incompletos 
+ 
+ 
+ 
+=== Page 8 ===
+CU-07 Notificar Empleado Duplicado 
+Campo Descripción 
+Identificador CU-07 
+Nombre Notificar Empleado Duplicado 
+Tipo Caso de uso de extensión 
+Caso Base Registrar Empleado 
+Condición Ya existe un empleado con el identificador ingresado 
+Resultado Se informa al usuario y se cancela el registro 
+ 
+CU-08 Gestionar Error de Validación 
+Campo Descripción 
+Identificador CU-08 
+Nombre Gestionar Error de Validación 
+Tipo Caso de uso de extensión 
+Caso Base Validar Datos de Empleado 
+Condición Existen datos que incumplen reglas de formato o negocio 
+Resultado El sistema informa los errores detectados 
+ 
+CU-09 Detectar Datos Incompletos 
+Campo Descripción 
+Identificador CU-09 
+Nombre Detectar Datos Incompletos 
+Tipo Caso de uso de extensión 
+Caso Base Validar Datos de Empleado 
+Condición Existen campos obligatorios sin completar 
+Resultado Se solicita completar la información faltante 
+=== Page 9 ===
+CU-10 Notificar Empleado con Procesos Activos 
+Campo Descripción 
+Identificador CU-10 
+Nombre Notificar Empleado con Procesos Activos 
+Tipo Caso de uso de extensión 
+Caso Base Eliminar Empleado 
+Condición El empleado posee registros relacionados que impiden su eliminación 
+Resultado La eliminación es rechazada 
+ 
+CU-11 Consulta Sin Coincidencias 
+Campo Descripción 
+Identificador CU-11 
+Nombre Consulta Sin Coincidencias 
+Tipo Caso de uso de extensión 
+Caso Base Consultar Empleado 
+Condición No se encuentran registros que satisfagan los criterios de búsqueda 
+Resultado El sistema informa que no existen coincidencias para la consulta 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+=== Page 10 ===
+Relación entre los artefactos 
+En otras palabras, el diagrama de requerimientos identifica qué necesita el sistema; el caso de 
+uso general muestra las funcionalidades principales; el caso de uso detallado  describe cada 
+funcionalidad paso a paso; y el cuadro de descripción de caso de uso  documenta formalmente 
+esos detalles en una plantilla estructurada. 
+En conjunto, estos artefactos proporcionan la trazabilidad necesaria entre los requerimientos y el 
+diseño del sistema. Su análisis permite determinar las funcionalidades que deberán 
+implementarse, las interacciones entre usuarios y sistema, los datos a cap turar y visualizar, así 
+como las reglas de negocio involucradas. Como resultado, constituyen la base para la elaboración 
+de prototipos de interfaces de usuario (UI), wireframes, mockups y diseños de experiencia de 
+usuario (UX)  que representen de forma coherente las necesidades identificadas durante el 
+levantamiento y especificación de requerimientos. 
+ 
+Propuesta de trazabilidad: 
+ 
+Entonces los mockups deben representar las pantallas necesarias para ejecutar los casos de uso 
+del diagrama y también contemplar los escenarios alternativos modelados. 
+ 
+Mapa de Trazabilidad 
+Caso de Uso Mockup 
+Registrar Empleado Pantalla Registro de Empleado 
+Editar Empleado Pantalla Modificar Empleado 
+Eliminar Empleado Pantalla Eliminar Empleado 
+Consultar Empleado Pantalla Consulta de Empleados 
+Buscar Empleado Componente reutilizable de búsqueda 
+Validar Datos de Empleado Mensajes de validación 
+Gestionar Error de Validación Modal de error 
+Detectar Datos Incompletos Mensajes de campos obligatorios 
+Notificar Empleado Duplicado Modal de advertencia 
+Notificar Empleado con Procesos Activos Modal de restricción 
+Consulta Sin Coincidencias Mensaje de búsqueda sin resultados 
+Requerimientos Casos de Uso Casos de Uso 
+Detallados
+Cuadros de 
+Descripción
+Mockups / 
+Prototipos
+=== Page 11 ===
+Mockups / Prototipos: 
+ 
+ 
+ 
+ 
+
+=== Page 12 ===
+ 
+ 
+ 
+ 
+ 
+
+=== Page 13 ===
+ 
+ 
+ 

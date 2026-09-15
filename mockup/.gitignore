@@ -1,0 +1,6 @@
+# Sistema de Gestión de Resultados (SGR) - Gitignore
+.DS_Store
+Thumbs.db
+*.log
+.vscode/
+.idea/

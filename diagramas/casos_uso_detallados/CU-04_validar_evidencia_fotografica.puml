@@ -1,0 +1,35 @@
+@startuml CU-04_validar_evidencia_fotografica
+!theme plain
+skinparam backgroundColor #FFFFFF
+skinparam roundcorner 8
+skinparam defaultFontName Arial
+skinparam defaultFontSize 11
+skinparam packageBackgroundColor #F8FAFC
+skinparam packageBorderColor #64748B
+left to right direction
+
+title Caso de Uso Específico: CU-04: Validar Evidencia Fotográfica en Bandeja Técnica\nSistema SGR - Municipalidad de La Serena
+
+actor "Verificador Técnico" as ACT_PRIMARY #e0f2fe
+actor "Motor de Semáforo SGR" as ACT_SYS #f1f5f9
+
+rectangle "Sistema de Gestión de Resultados (SGR)" {
+    usecase "Validar Evidencia Fotográfica" as UC_BASE #dbeafe
+    usecase "Visualizar Evidencia con Zoom" as INC_1 #f8fafc
+    usecase "Registrar Dictamen Técnico" as INC_2 #f8fafc
+    usecase "Exigir Dictamen por Rechazo" as EXT_1 #fff1f2
+    usecase "Actualizar Semáforo de Funcionario" as EXT_2 #fff1f2
+
+    ' Relaciones de Inclusión
+    UC_BASE ..> INC_1 : <<include>>
+    UC_BASE ..> INC_2 : <<include>>
+
+    ' Relaciones de Extensión
+    EXT_1 ..> UC_BASE : <<extend>>\n(Condición: Verificador selecciona rechazar)
+    EXT_2 ..> UC_BASE : <<extend>>\n(Condición: Evidencia aprobada exitosamente)
+}
+
+ACT_PRIMARY --> UC_BASE
+UC_BASE --> ACT_SYS
+
+@enduml

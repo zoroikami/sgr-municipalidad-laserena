@@ -1,0 +1,182 @@
+@startuml Diagrama_Clases_SGR
+!theme plain
+skinparam backgroundColor #FFFFFF
+skinparam roundcorner 6
+skinparam defaultFontName Arial
+skinparam defaultFontSize 10
+skinparam classFontSize 11
+skinparam classFontStyle bold
+skinparam classAttributeIconSize 0
+
+title Diagrama de Clases del Dominio (UML 2.5)\nSistema de Gestión de Resultados (SGR) - Ilustre Municipalidad de La Serena
+
+class Delegacion {
+    - id: Integer
+    - codigo: String
+    - nombre: String
+    - direccion: String
+    - telefono: String
+    - activa: Boolean
+    + obtenerFuncionarios(): List<Usuario>
+    + calcularPromedioDelegacion(): Decimal
+}
+
+class Usuario {
+    - id: Integer
+    - rut: String
+    - nombres: String
+    - apellidos: String
+    - email: String
+    - passwordHash: String
+    - estado: EstadoUsuarioEnum
+    + autenticar(password): Boolean
+    + asignarRol(rol): Void
+    + obtenerSemaforo(): SemaforoEnum
+}
+
+class Rol {
+    - id: Integer
+    - codigo: String
+    - nombre: String
+    + tienePermiso(permiso): Boolean
+}
+
+class Cargo {
+    - id: Integer
+    - nombreCargo: String
+    - departamento: String
+    + validarPonderaciones(): Boolean
+}
+
+class PeriodoMedicion {
+    - id: Integer
+    - codigo: String
+    - nombre: String
+    - fechaInicio: Date
+    - fechaTermino: Date
+    - diasTotales: Integer
+    + getDiasTranscurridos(hoy): Integer
+    + getMetaIdealAlDia(hoy): Decimal
+}
+
+class ItemMedicion {
+    - id: Integer
+    - codigo: String
+    - nombreItem: String
+    - unidadMedida: String
+}
+
+class MetaItem {
+    - id: Integer
+    - metaCantidad: Integer
+    - ponderacionPorcentaje: Decimal
+    + calcularAporte(ejecutado): Decimal
+}
+
+class Actividad {
+    - id: Integer
+    - codigoActividad: String
+    - fechaRealizacion: Date
+    - sectorTerritorio: String
+    - solicitante: String
+    - descripcion: String
+    + registrar(): Boolean
+    + tieneEvidenciaValida(): Boolean
+}
+
+class Evidencia {
+    - id: Integer
+    - codigoEvidencia: String
+    - rutaFotografia: String
+    - georreferencia: String
+    - estadoValidacion: EstadoEvidenciaEnum
+    + generarCodigoUnico(): String
+}
+
+class ValidacionEvidencia {
+    - id: Integer
+    - fechaValidacion: DateTime
+    - dictamen: DictamenEnum
+    - observacionTecnica: String
+    + aprobar(verificador, obs): Void
+    + rechazar(verificador, obs): Void
+}
+
+class PersonaUsuaria {
+    - id: Integer
+    - rut: String
+    - nombreCompleto: String
+    - totalGestiones: Integer
+    + puedeRecibirGestion(): Boolean
+}
+
+class AtencionSocial {
+    - id: Integer
+    - numeroGestion: Integer
+    - fechaAtencion: Date
+    - tipoBeneficio: String
+    + registrarEtapa(detalle): Boolean
+}
+
+class CompromisoAgenda {
+    - id: Integer
+    - codigoCompromiso: String
+    - solicitante: String
+    - fechaLimite: Date
+    - estado: EstadoCompromisoEnum
+    + transicionar(nuevoEstado): Void
+    + reasignar(responsable): Void
+    + estaVencido(hoy): Boolean
+}
+
+class HistorialCompromiso {
+    - id: Integer
+    - estadoAnterior: EstadoCompromisoEnum
+    - estadoNuevo: EstadoCompromisoEnum
+    - fechaCambio: DateTime
+}
+
+class IndicadorDesempeno {
+    - id: Integer
+    - fechaCalculo: Date
+    - porcentajePonderado: Decimal
+    - semaforo: SemaforoEnum
+    + calcularAvanceGlobal(): Decimal
+}
+
+class RegistroAuditoria {
+    - id: BigInteger
+    - fechaHora: DateTime
+    - accion: String
+    - tablaAfectada: String
+    - ipOrigen: String
+    + registrarEvento(): Void
+}
+
+Delegacion "1" <-- "0..*" Usuario : pertenece a
+Cargo "1" <-- "0..*" Usuario : desempeña
+Usuario "0..*" <--> "1..*" Rol : asignado
+
+Usuario "1" --> "0..*" Actividad : reporta
+Delegacion "1" --> "0..*" Actividad : jurisdicción de
+ItemMedicion "1" <-- "0..*" Actividad : ítem de
+
+Actividad "1" *-- "1" Evidencia : sustentada por
+Evidencia "1" <-- "0..1" ValidacionEvidencia : evaluada en
+Usuario "1" <-- "0..*" ValidacionEvidencia : dictaminada por
+
+Cargo "1" --> "1..*" MetaItem : define metas
+ItemMedicion "1" <-- "1..*" MetaItem : meta de
+PeriodoMedicion "1" --> "1..*" MetaItem : ciclo de
+
+PersonaUsuaria "1" *-- "1..3" AtencionSocial : historial concatenado
+Usuario "1" --> "0..*" AtencionSocial : gestionada por
+
+Delegacion "1" --> "0..*" CompromisoAgenda : radica en
+Usuario "1" <-- "0..*" CompromisoAgenda : responsable
+CompromisoAgenda "1" *-- "1..*" HistorialCompromiso : bitácora
+
+Usuario "1" --> "0..*" IndicadorDesempeno : monitoreado en
+Usuario "0..1" <-- "0..*" RegistroAuditoria : ejecutado por
+
+@enduml

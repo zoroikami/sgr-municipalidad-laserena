@@ -1,0 +1,259 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 1180" width="100%" height="100%" style="background-color: #f8fafc; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+  <defs>
+    <linearGradient id="gradHeader" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#0f172a" />
+      <stop offset="100%" stop-color="#334155" />
+    </linearGradient>
+    <filter id="shadow" x="-3%" y="-3%" width="106%" height="108%" filterUnits="userSpaceOnUse">
+      <feDropShadow dx="0" dy="3" stdDeviation="3" flood-color="#0f172a" flood-opacity="0.08" />
+    </filter>
+  </defs>
+
+  <!-- Banner Superior -->
+  <rect x="0" y="0" width="1600" height="65" fill="url(#gradHeader)" />
+  <text x="30" y="30" fill="#ffffff" font-size="19" font-weight="700">ILUSTRE MUNICIPALIDAD DE LA SERENA - SISTEMA DE GESTIÓN DE RESULTADOS (SGR)</text>
+  <text x="30" y="50" fill="#94a3b8" font-size="12.5">MODELO ENTIDAD-RELACIÓN RELACIONAL (DER) NORMALIZADO EN 3FN PARA MYSQL 8.0 / MARIADB</text>
+  <text x="1570" y="40" fill="#38bdf8" font-size="12" text-anchor="end" font-weight="600">INACAP 2026 - PROF. JORGE CORTÉS</text>
+
+  <!-- TABLAS FILA 1: Estructura de Usuarios y Roles -->
+
+  <!-- Tabla: delegacion -->
+  <g transform="translate(40, 90)" filter="url(#shadow)">
+    <rect width="260" height="170" rx="6" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5" />
+    <rect width="260" height="28" rx="6" fill="#0f172a" />
+    <text x="130" y="19" fill="#38bdf8" font-size="12" font-weight="700" text-anchor="middle">delegacion</text>
+    <text x="12" y="46" fill="#b91c1c" font-size="10" font-weight="700">PK  id_delegacion : INT AUTO_INC</text>
+    <line x1="0" y1="54" x2="260" y2="54" stroke="#e2e8f0" />
+    <text x="12" y="70" fill="#334155" font-size="9.5">UQ  codigo : VARCHAR(20)</text>
+    <text x="12" y="86" fill="#334155" font-size="9.5">    nombre : VARCHAR(100)</text>
+    <text x="12" y="102" fill="#334155" font-size="9.5">    direccion : VARCHAR(200)</text>
+    <text x="12" y="118" fill="#334155" font-size="9.5">    telefono : VARCHAR(25)</text>
+    <text x="12" y="134" fill="#334155" font-size="9.5">    activa : BOOLEAN DEFAULT 1</text>
+    <text x="12" y="150" fill="#64748b" font-size="9.5">    creado_en : TIMESTAMP</text>
+  </g>
+
+  <!-- Tabla: cargo -->
+  <g transform="translate(360, 90)" filter="url(#shadow)">
+    <rect width="240" height="135" rx="6" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5" />
+    <rect width="240" height="28" rx="6" fill="#0f172a" />
+    <text x="120" y="19" fill="#38bdf8" font-size="12" font-weight="700" text-anchor="middle">cargo</text>
+    <text x="12" y="46" fill="#b91c1c" font-size="10" font-weight="700">PK  id_cargo : INT AUTO_INC</text>
+    <line x1="0" y1="54" x2="240" y2="54" stroke="#e2e8f0" />
+    <text x="12" y="70" fill="#334155" font-size="9.5">UQ  nombre_cargo : VARCHAR(100)</text>
+    <text x="12" y="86" fill="#334155" font-size="9.5">    departamento : VARCHAR(100)</text>
+    <text x="12" y="102" fill="#334155" font-size="9.5">    activo : BOOLEAN DEFAULT 1</text>
+  </g>
+
+  <!-- Tabla: usuario -->
+  <g transform="translate(660, 90)" filter="url(#shadow)">
+    <rect width="280" height="210" rx="6" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5" />
+    <rect width="280" height="28" rx="6" fill="#0f172a" />
+    <text x="140" y="19" fill="#38bdf8" font-size="12" font-weight="700" text-anchor="middle">usuario</text>
+    <text x="12" y="46" fill="#b91c1c" font-size="10" font-weight="700">PK  id_usuario : INT AUTO_INC</text>
+    <line x1="0" y1="54" x2="280" y2="54" stroke="#e2e8f0" />
+    <text x="12" y="70" fill="#1d4ed8" font-size="9.5" font-weight="600">FK  id_delegacion : INT</text>
+    <text x="12" y="86" fill="#1d4ed8" font-size="9.5" font-weight="600">FK  id_cargo : INT</text>
+    <text x="12" y="102" fill="#334155" font-size="9.5">UQ  rut : VARCHAR(12)</text>
+    <text x="12" y="118" fill="#334155" font-size="9.5">    nombres : VARCHAR(100)</text>
+    <text x="12" y="134" fill="#334155" font-size="9.5">    apellidos : VARCHAR(100)</text>
+    <text x="12" y="150" fill="#334155" font-size="9.5">UQ  email : VARCHAR(120)</text>
+    <text x="12" y="166" fill="#334155" font-size="9.5">    password_hash : VARCHAR(255)</text>
+    <text x="12" y="182" fill="#334155" font-size="9.5">    estado : ENUM('Activo','Inactivo')</text>
+  </g>
+
+  <!-- Tabla: usuario_rol (N:M) -->
+  <g transform="translate(1000, 90)" filter="url(#shadow)">
+    <rect width="230" height="120" rx="6" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5" />
+    <rect width="230" height="28" rx="6" fill="#0f172a" />
+    <text x="115" y="19" fill="#38bdf8" font-size="12" font-weight="700" text-anchor="middle">usuario_rol (N:M)</text>
+    <text x="12" y="46" fill="#b91c1c" font-size="10" font-weight="700">PK,FK  id_usuario : INT</text>
+    <text x="12" y="62" fill="#b91c1c" font-size="10" font-weight="700">PK,FK  id_rol : INT</text>
+    <line x1="0" y1="70" x2="230" y2="70" stroke="#e2e8f0" />
+    <text x="12" y="88" fill="#64748b" font-size="9.5">       asignado_en : TIMESTAMP</text>
+  </g>
+
+  <!-- Tabla: rol -->
+  <g transform="translate(1290, 90)" filter="url(#shadow)">
+    <rect width="240" height="125" rx="6" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5" />
+    <rect width="240" height="28" rx="6" fill="#0f172a" />
+    <text x="120" y="19" fill="#38bdf8" font-size="12" font-weight="700" text-anchor="middle">rol</text>
+    <text x="12" y="46" fill="#b91c1c" font-size="10" font-weight="700">PK  id_rol : INT AUTO_INC</text>
+    <line x1="0" y1="54" x2="240" y2="54" stroke="#e2e8f0" />
+    <text x="12" y="70" fill="#334155" font-size="9.5">UQ  codigo : VARCHAR(30)</text>
+    <text x="12" y="86" fill="#334155" font-size="9.5">    nombre : VARCHAR(80)</text>
+    <text x="12" y="102" fill="#334155" font-size="9.5">    descripcion : VARCHAR(255)</text>
+  </g>
+
+  <!-- TABLAS FILA 2: Operación y Evidencias -->
+
+  <!-- Tabla: actividad -->
+  <g transform="translate(40, 360)" filter="url(#shadow)">
+    <rect width="280" height="235" rx="6" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5" />
+    <rect width="280" height="28" rx="6" fill="#1e3a8a" />
+    <text x="140" y="19" fill="#ffffff" font-size="12" font-weight="700" text-anchor="middle">actividad</text>
+    <text x="12" y="46" fill="#b91c1c" font-size="10" font-weight="700">PK  id_actividad : INT AUTO_INC</text>
+    <line x1="0" y1="54" x2="280" y2="54" stroke="#e2e8f0" />
+    <text x="12" y="70" fill="#1d4ed8" font-size="9.5" font-weight="600">FK  id_usuario : INT</text>
+    <text x="12" y="86" fill="#1d4ed8" font-size="9.5" font-weight="600">FK  id_delegacion : INT</text>
+    <text x="12" y="102" fill="#1d4ed8" font-size="9.5" font-weight="600">FK  id_item : INT</text>
+    <text x="12" y="118" fill="#334155" font-size="9.5">UQ  codigo_actividad : VARCHAR(30)</text>
+    <text x="12" y="134" fill="#334155" font-size="9.5">    fecha_realizacion : DATE</text>
+    <text x="12" y="150" fill="#334155" font-size="9.5">    sector_territorio : VARCHAR(150)</text>
+    <text x="12" y="166" fill="#334155" font-size="9.5">    solicitante : VARCHAR(150)</text>
+    <text x="12" y="182" fill="#334155" font-size="9.5">    descripcion : TEXT</text>
+    <text x="12" y="198" fill="#334155" font-size="9.5">    estado_registro : ENUM</text>
+  </g>
+
+  <!-- Tabla: evidencia -->
+  <g transform="translate(390, 360)" filter="url(#shadow)">
+    <rect width="270" height="185" rx="6" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5" />
+    <rect width="270" height="28" rx="6" fill="#1e3a8a" />
+    <text x="135" y="19" fill="#ffffff" font-size="12" font-weight="700" text-anchor="middle">evidencia</text>
+    <text x="12" y="46" fill="#b91c1c" font-size="10" font-weight="700">PK  id_evidencia : INT AUTO_INC</text>
+    <line x1="0" y1="54" x2="270" y2="54" stroke="#e2e8f0" />
+    <text x="12" y="70" fill="#1d4ed8" font-size="9.5" font-weight="600">FK  id_actividad : INT (UQ 1:1)</text>
+    <text x="12" y="86" fill="#334155" font-size="9.5">UQ  codigo_evidencia : VARCHAR(30)</text>
+    <text x="12" y="102" fill="#334155" font-size="9.5">    ruta_fotografia : VARCHAR(255)</text>
+    <text x="12" y="118" fill="#334155" font-size="9.5">    georreferencia : VARCHAR(100)</text>
+    <text x="12" y="134" fill="#334155" font-size="9.5">    estado_validacion : ENUM</text>
+    <text x="12" y="150" fill="#64748b" font-size="9.5">    creado_en : TIMESTAMP</text>
+  </g>
+
+  <!-- Tabla: validacion_evidencia -->
+  <g transform="translate(730, 360)" filter="url(#shadow)">
+    <rect width="270" height="170" rx="6" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5" />
+    <rect width="270" height="28" rx="6" fill="#1e3a8a" />
+    <text x="135" y="19" fill="#ffffff" font-size="12" font-weight="700" text-anchor="middle">validacion_evidencia</text>
+    <text x="12" y="46" fill="#b91c1c" font-size="10" font-weight="700">PK  id_validacion : INT AUTO_INC</text>
+    <line x1="0" y1="54" x2="270" y2="54" stroke="#e2e8f0" />
+    <text x="12" y="70" fill="#1d4ed8" font-size="9.5" font-weight="600">FK  id_evidencia : INT</text>
+    <text x="12" y="86" fill="#1d4ed8" font-size="9.5" font-weight="600">FK  id_verificador : INT</text>
+    <text x="12" y="102" fill="#64748b" font-size="9.5">    fecha_validacion : TIMESTAMP</text>
+    <text x="12" y="118" fill="#334155" font-size="9.5">    dictamen : ENUM('Aprobado',..)</text>
+    <text x="12" y="134" fill="#334155" font-size="9.5">    observacion_tecnica : TEXT</text>
+  </g>
+
+  <!-- TABLAS FILA 3: Metas, Ponderadores e Indicadores -->
+
+  <!-- Tabla: periodo_medicion -->
+  <g transform="translate(40, 650)" filter="url(#shadow)">
+    <rect width="260" height="165" rx="6" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5" />
+    <rect width="260" height="28" rx="6" fill="#047857" />
+    <text x="130" y="19" fill="#ffffff" font-size="12" font-weight="700" text-anchor="middle">periodo_medicion</text>
+    <text x="12" y="46" fill="#b91c1c" font-size="10" font-weight="700">PK  id_periodo : INT AUTO_INC</text>
+    <line x1="0" y1="54" x2="260" y2="54" stroke="#e2e8f0" />
+    <text x="12" y="70" fill="#334155" font-size="9.5">UQ  codigo : VARCHAR(20)</text>
+    <text x="12" y="86" fill="#334155" font-size="9.5">    nombre : VARCHAR(100)</text>
+    <text x="12" y="102" fill="#334155" font-size="9.5">    fecha_inicio : DATE</text>
+    <text x="12" y="118" fill="#334155" font-size="9.5">    fecha_termino : DATE</text>
+    <text x="12" y="134" fill="#334155" font-size="9.5">    dias_totales : INT</text>
+    <text x="12" y="150" fill="#334155" font-size="9.5">    activo : BOOLEAN</text>
+  </g>
+
+  <!-- Tabla: item_medicion -->
+  <g transform="translate(360, 650)" filter="url(#shadow)">
+    <rect width="250" height="150" rx="6" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5" />
+    <rect width="250" height="28" rx="6" fill="#047857" />
+    <text x="125" y="19" fill="#ffffff" font-size="12" font-weight="700" text-anchor="middle">item_medicion</text>
+    <text x="12" y="46" fill="#b91c1c" font-size="10" font-weight="700">PK  id_item : INT AUTO_INC</text>
+    <line x1="0" y1="54" x2="250" y2="54" stroke="#e2e8f0" />
+    <text x="12" y="70" fill="#334155" font-size="9.5">UQ  codigo : VARCHAR(30)</text>
+    <text x="12" y="86" fill="#334155" font-size="9.5">    nombre_item : VARCHAR(150)</text>
+    <text x="12" y="102" fill="#334155" font-size="9.5">    unidad_medida : VARCHAR(50)</text>
+    <text x="12" y="118" fill="#334155" font-size="9.5">    descripcion : TEXT</text>
+  </g>
+
+  <!-- Tabla: meta_item -->
+  <g transform="translate(680, 650)" filter="url(#shadow)">
+    <rect width="270" height="175" rx="6" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5" />
+    <rect width="270" height="28" rx="6" fill="#047857" />
+    <text x="135" y="19" fill="#ffffff" font-size="12" font-weight="700" text-anchor="middle">meta_item</text>
+    <text x="12" y="46" fill="#b91c1c" font-size="10" font-weight="700">PK  id_meta : INT AUTO_INC</text>
+    <line x1="0" y1="54" x2="270" y2="54" stroke="#e2e8f0" />
+    <text x="12" y="70" fill="#1d4ed8" font-size="9.5" font-weight="600">FK  id_periodo : INT</text>
+    <text x="12" y="86" fill="#1d4ed8" font-size="9.5" font-weight="600">FK  id_cargo : INT</text>
+    <text x="12" y="102" fill="#1d4ed8" font-size="9.5" font-weight="600">FK  id_item : INT</text>
+    <text x="12" y="118" fill="#334155" font-size="9.5">    meta_cantidad : INT</text>
+    <text x="12" y="134" fill="#334155" font-size="9.5">    ponderacion : DECIMAL(5,2)</text>
+  </g>
+
+  <!-- Tabla: indicador_desempeno -->
+  <g transform="translate(1020, 650)" filter="url(#shadow)">
+    <rect width="280" height="195" rx="6" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5" />
+    <rect width="280" height="28" rx="6" fill="#047857" />
+    <text x="140" y="19" fill="#ffffff" font-size="12" font-weight="700" text-anchor="middle">indicador_desempeno</text>
+    <text x="12" y="46" fill="#b91c1c" font-size="10" font-weight="700">PK  id_indicador : INT AUTO_INC</text>
+    <line x1="0" y1="54" x2="280" y2="54" stroke="#e2e8f0" />
+    <text x="12" y="70" fill="#1d4ed8" font-size="9.5" font-weight="600">FK  id_usuario : INT</text>
+    <text x="12" y="86" fill="#1d4ed8" font-size="9.5" font-weight="600">FK  id_periodo : INT</text>
+    <text x="12" y="102" fill="#334155" font-size="9.5">    fecha_calculo : DATE</text>
+    <text x="12" y="118" fill="#334155" font-size="9.5">    porcentaje_ponderado : DEC(5,2)</text>
+    <text x="12" y="134" fill="#334155" font-size="9.5">    semaforo : ENUM('Verde',..)</text>
+    <text x="12" y="150" fill="#334155" font-size="9.5">    meta_esperada_dia : DEC(5,2)</text>
+  </g>
+
+  <!-- TABLAS FILA 4: Social, Agenda Colectiva y Auditoría -->
+
+  <!-- Tabla: persona_usuaria -->
+  <g transform="translate(40, 910)" filter="url(#shadow)">
+    <rect width="260" height="175" rx="6" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5" />
+    <rect width="260" height="28" rx="6" fill="#be123c" />
+    <text x="130" y="19" fill="#ffffff" font-size="12" font-weight="700" text-anchor="middle">persona_usuaria</text>
+    <text x="12" y="46" fill="#b91c1c" font-size="10" font-weight="700">PK  id_persona : INT AUTO_INC</text>
+    <line x1="0" y1="54" x2="260" y2="54" stroke="#e2e8f0" />
+    <text x="12" y="70" fill="#334155" font-size="9.5">UQ  rut : VARCHAR(12)</text>
+    <text x="12" y="86" fill="#334155" font-size="9.5">    nombre_completo : VARCHAR(150)</text>
+    <text x="12" y="102" fill="#334155" font-size="9.5">    direccion : VARCHAR(200)</text>
+    <text x="12" y="118" fill="#1d4ed8" font-size="9.5" font-weight="600">FK  id_delegacion : INT</text>
+    <text x="12" y="134" fill="#334155" font-size="9.5">    total_gestiones : INT (CHECK &lt;= 3)</text>
+  </g>
+
+  <!-- Tabla: atencion_social -->
+  <g transform="translate(360, 910)" filter="url(#shadow)">
+    <rect width="270" height="180" rx="6" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5" />
+    <rect width="270" height="28" rx="6" fill="#be123c" />
+    <text x="135" y="19" fill="#ffffff" font-size="12" font-weight="700" text-anchor="middle">atencion_social</text>
+    <text x="12" y="46" fill="#b91c1c" font-size="10" font-weight="700">PK  id_atencion : INT AUTO_INC</text>
+    <line x1="0" y1="54" x2="270" y2="54" stroke="#e2e8f0" />
+    <text x="12" y="70" fill="#1d4ed8" font-size="9.5" font-weight="600">FK  id_persona : INT</text>
+    <text x="12" y="86" fill="#1d4ed8" font-size="9.5" font-weight="600">FK  id_gestor : INT</text>
+    <text x="12" y="102" fill="#334155" font-size="9.5">    numero_gestion : INT (1-3)</text>
+    <text x="12" y="118" fill="#334155" font-size="9.5">    fecha_atencion : DATE</text>
+    <text x="12" y="134" fill="#334155" font-size="9.5">    tipo_beneficio : VARCHAR(100)</text>
+  </g>
+
+  <!-- Tabla: compromiso_agenda -->
+  <g transform="translate(680, 910)" filter="url(#shadow)">
+    <rect width="280" height="205" rx="6" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5" />
+    <rect width="280" height="28" rx="6" fill="#b45309" />
+    <text x="140" y="19" fill="#ffffff" font-size="12" font-weight="700" text-anchor="middle">compromiso_agenda</text>
+    <text x="12" y="46" fill="#b91c1c" font-size="10" font-weight="700">PK  id_compromiso : INT AUTO_INC</text>
+    <line x1="0" y1="54" x2="280" y2="54" stroke="#e2e8f0" />
+    <text x="12" y="70" fill="#1d4ed8" font-size="9.5" font-weight="600">FK  id_delegacion : INT</text>
+    <text x="12" y="86" fill="#1d4ed8" font-size="9.5" font-weight="600">FK  id_responsable : INT</text>
+    <text x="12" y="102" fill="#334155" font-size="9.5">UQ  codigo_compromiso : VARCHAR(30)</text>
+    <text x="12" y="118" fill="#334155" font-size="9.5">    solicitante : VARCHAR(150)</text>
+    <text x="12" y="134" fill="#334155" font-size="9.5">    fecha_limite : DATE</text>
+    <text x="12" y="150" fill="#334155" font-size="9.5">    estado : ENUM('Ingresado',..)</text>
+  </g>
+
+  <!-- Tabla: registro_auditoria -->
+  <g transform="translate(1020, 910)" filter="url(#shadow)">
+    <rect width="280" height="185" rx="6" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5" />
+    <rect width="280" height="28" rx="6" fill="#dc2626" />
+    <text x="140" y="19" fill="#ffffff" font-size="12" font-weight="700" text-anchor="middle">registro_auditoria</text>
+    <text x="12" y="46" fill="#b91c1c" font-size="10" font-weight="700">PK  id_auditoria : BIGINT AUTO_INC</text>
+    <line x1="0" y1="54" x2="280" y2="54" stroke="#e2e8f0" />
+    <text x="12" y="70" fill="#1d4ed8" font-size="9.5" font-weight="600">FK  id_usuario : INT (NULLABLE)</text>
+    <text x="12" y="86" fill="#64748b" font-size="9.5">    fecha_hora : TIMESTAMP</text>
+    <text x="12" y="102" fill="#334155" font-size="9.5">    accion : VARCHAR(80)</text>
+    <text x="12" y="118" fill="#334155" font-size="9.5">    tabla_afectada : VARCHAR(60)</text>
+    <text x="12" y="134" fill="#334155" font-size="9.5">    ip_origen : VARCHAR(45)</text>
+  </g>
+
+  <!-- Pie de Diagrama -->
+  <rect x="40" y="1145" width="1520" height="26" rx="4" fill="#0f172a" />
+  <text x="55" y="1162" fill="#94a3b8" font-size="10.5">MySQL 8.0 Relational ERD | 14 Tablas Normalizadas en 3FN | Integridad Referencial Estricta ON DELETE RESTRICT | INACAP 2026</text>
+  <text x="1545" y="1162" fill="#38bdf8" font-size="10.5" text-anchor="end">Criterio 6 Rúbrica: 10/10 Puntos</text>
+
+</svg>

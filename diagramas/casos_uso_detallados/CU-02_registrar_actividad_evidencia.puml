@@ -1,0 +1,37 @@
+@startuml CU-02_registrar_actividad_evidencia
+!theme plain
+skinparam backgroundColor #FFFFFF
+skinparam roundcorner 8
+skinparam defaultFontName Arial
+skinparam defaultFontSize 11
+skinparam packageBackgroundColor #F8FAFC
+skinparam packageBorderColor #64748B
+left to right direction
+
+title Caso de Uso Específico: CU-02: Registrar Actividad en Terreno con Evidencia Fotográfica\nSistema SGR - Municipalidad de La Serena
+
+actor "Funcionario Territorial" as ACT_PRIMARY #e0f2fe
+actor "Sistema SGR" as ACT_SYS #f1f5f9
+
+rectangle "Sistema de Gestión de Resultados (SGR)" {
+    usecase "Registrar Actividad en Terreno" as UC_BASE #dbeafe
+    usecase "Validar Datos de Formulario" as INC_1 #f8fafc
+    usecase "Generar Código Único EVI-2026" as INC_2 #f8fafc
+    usecase "Adjuntar Evidencia Fotográfica" as INC_3 #f8fafc
+    usecase "Notificar Registro Duplicado" as EXT_1 #fff1f2
+    usecase "Gestionar Error de Validación" as EXT_2 #fff1f2
+
+    ' Relaciones de Inclusión
+    UC_BASE ..> INC_1 : <<include>>
+    UC_BASE ..> INC_2 : <<include>>
+    UC_BASE ..> INC_3 : <<include>>
+
+    ' Relaciones de Extensión
+    EXT_1 ..> UC_BASE : <<extend>>\n(Condición: Misma fecha, ítem y solicitante)
+    EXT_2 ..> UC_BASE : <<extend>>\n(Condición: Campos obligatorios vacíos)
+}
+
+ACT_PRIMARY --> UC_BASE
+UC_BASE --> ACT_SYS
+
+@enduml

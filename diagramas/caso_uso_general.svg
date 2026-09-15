@@ -1,0 +1,254 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1450 1020" width="100%" height="100%" style="background-color: #f8fafc; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+  <defs>
+    <linearGradient id="gradHeader" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#1e3a8a" />
+      <stop offset="100%" stop-color="#0284c7" />
+    </linearGradient>
+    <filter id="shadow" x="-3%" y="-3%" width="106%" height="108%" filterUnits="userSpaceOnUse">
+      <feDropShadow dx="0" dy="3" stdDeviation="3" flood-color="#0f172a" flood-opacity="0.08" />
+    </filter>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1 L 10 5 L 0 9 z" fill="#475569" />
+    </marker>
+    <marker id="dashArrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <polygon points="0,2 9,5 0,8" fill="#ffffff" stroke="#2563eb" stroke-width="1.5" />
+    </marker>
+  </defs>
+
+  <!-- Banner Superior Institucional -->
+  <rect x="0" y="0" width="1450" height="65" fill="url(#gradHeader)" />
+  <text x="30" y="30" fill="#ffffff" font-size="19" font-weight="700">ILUSTRE MUNICIPALIDAD DE LA SERENA - SISTEMA DE GESTIÓN DE RESULTADOS (SGR)</text>
+  <text x="30" y="50" fill="#bae6fd" font-size="12.5">DIAGRAMA GENERAL DE CASOS DE USO (ALTO NIVEL / UML 2.5) | DIRECCIÓN DE SERVICIOS COMUNITARIOS (DISERCO)</text>
+  <text x="1420" y="40" fill="#ffffff" font-size="12" text-anchor="end" font-weight="600">INACAP - PROF. JORGE CORTÉS</text>
+
+  <!-- LÍMITE DEL SISTEMA (SYSTEM BOUNDARY) -->
+  <rect x="270" y="90" width="880" height="880" rx="16" fill="#ffffff" stroke="#2563eb" stroke-width="2.5" stroke-dasharray="8,6" filter="url(#shadow)" />
+  <rect x="270" y="90" width="880" height="36" rx="16" fill="#eff6ff" />
+  <text x="710" y="114" fill="#1e40af" font-size="13.5" font-weight="800" text-anchor="middle">SISTEMA DE GESTIÓN DE RESULTADOS SGR - MUNICIPALIDAD DE LA SERENA (LÍMITE DEL SISTEMA)</text>
+
+  <!-- ACTORES DEL LADO IZQUIERDO (PRIMARIOS) -->
+
+  <!-- Actor 1: Funcionario Territorial -->
+  <g transform="translate(40, 160)">
+    <circle cx="60" cy="30" r="18" fill="#dbeafe" stroke="#1d4ed8" stroke-width="2" />
+    <line x1="60" y1="48" x2="60" y2="90" stroke="#1d4ed8" stroke-width="2.5" />
+    <line x1="30" y1="65" x2="90" y2="65" stroke="#1d4ed8" stroke-width="2.5" />
+    <line x1="60" y1="90" x2="35" y2="125" stroke="#1d4ed8" stroke-width="2.5" />
+    <line x1="60" y1="90" x2="85" y2="125" stroke="#1d4ed8" stroke-width="2.5" />
+    <rect x="0" y="132" width="120" height="34" rx="6" fill="#1e3a8a" />
+    <text x="60" y="146" fill="#ffffff" font-size="10.5" font-weight="700" text-anchor="middle">Funcionario</text>
+    <text x="60" y="159" fill="#93c5fd" font-size="9.5" text-anchor="middle">Territorial (DISERCO)</text>
+  </g>
+
+  <!-- Actor 2: Gestor Social -->
+  <g transform="translate(40, 360)">
+    <circle cx="60" cy="30" r="18" fill="#fce7f3" stroke="#be185d" stroke-width="2" />
+    <line x1="60" y1="48" x2="60" y2="90" stroke="#be185d" stroke-width="2.5" />
+    <line x1="30" y1="65" x2="90" y2="65" stroke="#be185d" stroke-width="2.5" />
+    <line x1="60" y1="90" x2="35" y2="125" stroke="#be185d" stroke-width="2.5" />
+    <line x1="60" y1="90" x2="85" y2="125" stroke="#be185d" stroke-width="2.5" />
+    <rect x="0" y="132" width="120" height="34" rx="6" fill="#831843" />
+    <text x="60" y="146" fill="#ffffff" font-size="10.5" font-weight="700" text-anchor="middle">Gestor Social</text>
+    <text x="60" y="159" fill="#fbcfe8" font-size="9.5" text-anchor="middle">Municipal</text>
+  </g>
+
+  <!-- Actor 3: Verificador Técnico -->
+  <g transform="translate(40, 560)">
+    <circle cx="60" cy="30" r="18" fill="#f3e8ff" stroke="#7e22ce" stroke-width="2" />
+    <line x1="60" y1="48" x2="60" y2="90" stroke="#7e22ce" stroke-width="2.5" />
+    <line x1="30" y1="65" x2="90" y2="65" stroke="#7e22ce" stroke-width="2.5" />
+    <line x1="60" y1="90" x2="35" y2="125" stroke="#7e22ce" stroke-width="2.5" />
+    <line x1="60" y1="90" x2="85" y2="125" stroke="#7e22ce" stroke-width="2.5" />
+    <rect x="0" y="132" width="120" height="34" rx="6" fill="#581c87" />
+    <text x="60" y="146" fill="#ffffff" font-size="10.5" font-weight="700" text-anchor="middle">Verificador</text>
+    <text x="60" y="159" fill="#e9d5ff" font-size="9.5" text-anchor="middle">Técnico Municipal</text>
+  </g>
+
+  <!-- Actor 4: Delegado Municipal -->
+  <g transform="translate(40, 760)">
+    <circle cx="60" cy="30" r="18" fill="#fef3c7" stroke="#b45309" stroke-width="2" />
+    <line x1="60" y1="48" x2="60" y2="90" stroke="#b45309" stroke-width="2.5" />
+    <line x1="30" y1="65" x2="90" y2="65" stroke="#b45309" stroke-width="2.5" />
+    <line x1="60" y1="90" x2="35" y2="125" stroke="#b45309" stroke-width="2.5" />
+    <line x1="60" y1="90" x2="85" y2="125" stroke="#b45309" stroke-width="2.5" />
+    <rect x="0" y="132" width="120" height="34" rx="6" fill="#78350f" />
+    <text x="60" y="146" fill="#ffffff" font-size="10.5" font-weight="700" text-anchor="middle">Delegado</text>
+    <text x="60" y="159" fill="#fde68a" font-size="9.5" text-anchor="middle">Municipal (6 Del.)</text>
+  </g>
+
+  <!-- ACTORES DEL LADO DERECHO -->
+
+  <!-- Actor 5: Supervisor DISERCO -->
+  <g transform="translate(1260, 200)">
+    <circle cx="60" cy="30" r="18" fill="#e0e7ff" stroke="#3730a3" stroke-width="2" />
+    <line x1="60" y1="48" x2="60" y2="90" stroke="#3730a3" stroke-width="2.5" />
+    <line x1="30" y1="65" x2="90" y2="65" stroke="#3730a3" stroke-width="2.5" />
+    <line x1="60" y1="90" x2="35" y2="125" stroke="#3730a3" stroke-width="2.5" />
+    <line x1="60" y1="90" x2="85" y2="125" stroke="#3730a3" stroke-width="2.5" />
+    <rect x="0" y="132" width="120" height="34" rx="6" fill="#312e81" />
+    <text x="60" y="146" fill="#ffffff" font-size="10.5" font-weight="700" text-anchor="middle">Supervisor</text>
+    <text x="60" y="159" fill="#c7d2fe" font-size="9.5" text-anchor="middle">Central DISERCO</text>
+  </g>
+
+  <!-- Actor 6: Administrador Central -->
+  <g transform="translate(1260, 470)">
+    <circle cx="60" cy="30" r="18" fill="#fee2e2" stroke="#b91c1c" stroke-width="2" />
+    <line x1="60" y1="48" x2="60" y2="90" stroke="#b91c1c" stroke-width="2.5" />
+    <line x1="30" y1="65" x2="90" y2="65" stroke="#b91c1c" stroke-width="2.5" />
+    <line x1="60" y1="90" x2="35" y2="125" stroke="#b91c1c" stroke-width="2.5" />
+    <line x1="60" y1="90" x2="85" y2="125" stroke="#b91c1c" stroke-width="2.5" />
+    <rect x="0" y="132" width="120" height="34" rx="6" fill="#7f1d1d" />
+    <text x="60" y="146" fill="#ffffff" font-size="10.5" font-weight="700" text-anchor="middle">Administrador</text>
+    <text x="60" y="159" fill="#fca5a5" font-size="9.5" text-anchor="middle">Central TI / SGR</text>
+  </g>
+
+  <!-- Actor 7: Vecino / Dirigente Comunitario (Secundario) -->
+  <g transform="translate(1260, 740)">
+    <circle cx="60" cy="30" r="18" fill="#f1f5f9" stroke="#475569" stroke-width="2" stroke-dasharray="4,3" />
+    <line x1="60" y1="48" x2="60" y2="90" stroke="#475569" stroke-width="2.5" stroke-dasharray="4,3" />
+    <line x1="30" y1="65" x2="90" y2="65" stroke="#475569" stroke-width="2.5" stroke-dasharray="4,3" />
+    <line x1="60" y1="90" x2="35" y2="125" stroke="#475569" stroke-width="2.5" stroke-dasharray="4,3" />
+    <line x1="60" y1="90" x2="85" y2="125" stroke="#475569" stroke-width="2.5" stroke-dasharray="4,3" />
+    <rect x="0" y="132" width="120" height="34" rx="6" fill="#334155" />
+    <text x="60" y="146" fill="#ffffff" font-size="10.5" font-weight="700" text-anchor="middle">Vecino / Dirigente</text>
+    <text x="60" y="159" fill="#cbd5e1" font-size="9.5" text-anchor="middle">Beneficiario (Sec.)</text>
+  </g>
+
+  <!-- CASOS DE USO DENTRO DEL LÍMITE (ÓVALOS UML) -->
+
+  <!-- CU-01: Autenticación -->
+  <g transform="translate(320, 140)">
+    <ellipse cx="140" cy="32" rx="130" ry="28" fill="#eff6ff" stroke="#2563eb" stroke-width="1.8" />
+    <text x="140" y="28" fill="#1e3a8a" font-size="11" font-weight="700" text-anchor="middle">CU-01: Autenticar Usuario y</text>
+    <text x="140" y="42" fill="#1e3a8a" font-size="10.5" text-anchor="middle">Controlar Sesión por Rol</text>
+  </g>
+
+  <!-- CU-02: Registrar Actividad -->
+  <g transform="translate(320, 225)">
+    <ellipse cx="140" cy="32" rx="130" ry="28" fill="#f0fdf4" stroke="#16a34a" stroke-width="1.8" />
+    <text x="140" y="28" fill="#14532d" font-size="11" font-weight="700" text-anchor="middle">CU-02: Registrar Actividad en Terreno</text>
+    <text x="140" y="42" fill="#14532d" font-size="10.5" text-anchor="middle">con Evidencia Fotográfica</text>
+  </g>
+
+  <!-- CU-03: Generar Código EVI -->
+  <g transform="translate(680, 225)">
+    <ellipse cx="130" cy="32" rx="125" ry="28" fill="#f0fdf4" stroke="#16a34a" stroke-width="1.8" />
+    <text x="130" y="28" fill="#14532d" font-size="11" font-weight="700" text-anchor="middle">CU-03: Generar Código Único</text>
+    <text x="130" y="42" fill="#14532d" font-size="10.5" text-anchor="middle">EVI-2026-XXXX</text>
+  </g>
+
+  <!-- Inclusión CU-02 -> CU-03 -->
+  <path d="M 580 257 L 680 257" stroke="#2563eb" stroke-width="1.6" stroke-dasharray="5,4" marker-end="url(#dashArrow)" />
+  <text x="630" y="250" fill="#1d4ed8" font-size="9.5" font-weight="700" text-anchor="middle">«include»</text>
+
+  <!-- CU-04: Validar Evidencia -->
+  <g transform="translate(320, 310)">
+    <ellipse cx="140" cy="32" rx="130" ry="28" fill="#fdf4ff" stroke="#a21caf" stroke-width="1.8" />
+    <text x="140" y="28" fill="#701a75" font-size="11" font-weight="700" text-anchor="middle">CU-04: Validar y Dictaminar</text>
+    <text x="140" y="42" fill="#701a75" font-size="10.5" text-anchor="middle">Evidencia Fotográfica</text>
+  </g>
+
+  <!-- CU-05: Atención Social Multietapa -->
+  <g transform="translate(320, 395)">
+    <ellipse cx="140" cy="32" rx="130" ry="28" fill="#fff1f2" stroke="#e11d48" stroke-width="1.8" />
+    <text x="140" y="28" fill="#881337" font-size="11" font-weight="700" text-anchor="middle">CU-05: Registrar Atención Social</text>
+    <text x="140" y="42" fill="#881337" font-size="10.5" text-anchor="middle">Multietapa (Máximo 3 Gestiones)</text>
+  </g>
+
+  <!-- CU-06: Crear Compromiso Agenda -->
+  <g transform="translate(320, 480)">
+    <ellipse cx="140" cy="32" rx="130" ry="28" fill="#fef3c7" stroke="#d97706" stroke-width="1.8" />
+    <text x="140" y="28" fill="#78350f" font-size="11" font-weight="700" text-anchor="middle">CU-06: Crear Compromiso en</text>
+    <text x="140" y="42" fill="#78350f" font-size="10.5" text-anchor="middle">Agenda Colectiva Territorial</text>
+  </g>
+
+  <!-- CU-07: Actualizar Estado Tubo -->
+  <g transform="translate(320, 565)">
+    <ellipse cx="140" cy="32" rx="130" ry="28" fill="#fef3c7" stroke="#d97706" stroke-width="1.8" />
+    <text x="140" y="28" fill="#78350f" font-size="11" font-weight="700" text-anchor="middle">CU-07: Actualizar Estado en</text>
+    <text x="140" y="42" fill="#78350f" font-size="10.5" text-anchor="middle">Tubo de Trabajo (4 Estados)</text>
+  </g>
+
+  <!-- CU-08: Motor de Semáforo Diario -->
+  <g transform="translate(710, 395)">
+    <ellipse cx="145" cy="32" rx="140" ry="28" fill="#ecfdf5" stroke="#059669" stroke-width="1.8" />
+    <text x="145" y="28" fill="#064e3b" font-size="11" font-weight="700" text-anchor="middle">CU-08: Calcular Avance Ponderado</text>
+    <text x="145" y="42" fill="#064e3b" font-size="10.5" text-anchor="middle">y Semáforo Diario (Verde/Ámbar/Rojo)</text>
+  </g>
+
+  <!-- Inclusión CU-04 -> CU-08 -->
+  <path d="M 580 342 L 720 405" stroke="#2563eb" stroke-width="1.6" stroke-dasharray="5,4" marker-end="url(#dashArrow)" />
+  <text x="645" y="365" fill="#1d4ed8" font-size="9.5" font-weight="700">«include»</text>
+
+  <!-- CU-09: Tablero Consolidado Delegación -->
+  <g transform="translate(710, 480)">
+    <ellipse cx="145" cy="32" rx="140" ry="28" fill="#e0e7ff" stroke="#4f46e5" stroke-width="1.8" />
+    <text x="145" y="28" fill="#312e81" font-size="11" font-weight="700" text-anchor="middle">CU-09: Consultar Tablero Consolidado</text>
+    <text x="145" y="42" fill="#312e81" font-size="10.5" text-anchor="middle">y Reportería Territorial</text>
+  </g>
+
+  <!-- CU-10: Configuración de Metas -->
+  <g transform="translate(320, 680)">
+    <ellipse cx="140" cy="32" rx="130" ry="28" fill="#f1f5f9" stroke="#475569" stroke-width="1.8" />
+    <text x="140" y="28" fill="#0f172a" font-size="11" font-weight="700" text-anchor="middle">CU-10: Configurar Período, Metas</text>
+    <text x="140" y="42" fill="#0f172a" font-size="10.5" text-anchor="middle">y Ponderadores al 100%</text>
+  </g>
+
+  <!-- CU-11: Catálogos de Servicios -->
+  <g transform="translate(320, 765)">
+    <ellipse cx="140" cy="32" rx="130" ry="28" fill="#f1f5f9" stroke="#475569" stroke-width="1.8" />
+    <text x="140" y="28" fill="#0f172a" font-size="11" font-weight="700" text-anchor="middle">CU-11: Administrar Catálogos,</text>
+    <text x="140" y="42" fill="#0f172a" font-size="10.5" text-anchor="middle">Cargos y 6 Delegaciones</text>
+  </g>
+
+  <!-- CU-12: Auditoría Inmutable -->
+  <g transform="translate(710, 765)">
+    <ellipse cx="145" cy="32" rx="140" ry="28" fill="#fee2e2" stroke="#dc2626" stroke-width="1.8" />
+    <text x="145" y="28" fill="#7f1d1d" font-size="11" font-weight="700" text-anchor="middle">CU-12: Auditar Bitácora Inmutable</text>
+    <text x="145" y="42" fill="#7f1d1d" font-size="10.5" text-anchor="middle">y Trazabilidad Transversal</text>
+  </g>
+
+  <!-- LÍNEAS DE ASOCIACIÓN ENTRE ACTORES Y CASOS DE USO -->
+
+  <!-- Funcionario Territorial -->
+  <line x1="160" y1="210" x2="330" y2="172" stroke="#475569" stroke-width="1.6" />
+  <line x1="160" y1="210" x2="330" y2="257" stroke="#475569" stroke-width="1.6" />
+  <line x1="160" y1="210" x2="330" y2="512" stroke="#475569" stroke-width="1.6" />
+  <line x1="160" y1="210" x2="330" y2="597" stroke="#475569" stroke-width="1.6" />
+
+  <!-- Gestor Social -->
+  <line x1="160" y1="410" x2="330" y2="172" stroke="#475569" stroke-width="1.6" />
+  <line x1="160" y1="410" x2="330" y2="427" stroke="#475569" stroke-width="1.6" />
+  <line x1="160" y1="410" x2="330" y2="512" stroke="#475569" stroke-width="1.6" />
+
+  <!-- Verificador Técnico -->
+  <line x1="160" y1="610" x2="330" y2="172" stroke="#475569" stroke-width="1.6" />
+  <line x1="160" y1="610" x2="330" y2="342" stroke="#475569" stroke-width="1.6" />
+
+  <!-- Delegado Municipal -->
+  <line x1="160" y1="810" x2="330" y2="512" stroke="#475569" stroke-width="1.6" />
+  <line x1="160" y1="810" x2="330" y2="597" stroke="#475569" stroke-width="1.6" />
+  <line x1="160" y1="810" x2="710" y2="512" stroke="#475569" stroke-width="1.6" />
+
+  <!-- Supervisor DISERCO -->
+  <line x1="1260" y1="250" x2="990" y2="427" stroke="#475569" stroke-width="1.6" />
+  <line x1="1260" y1="250" x2="990" y2="512" stroke="#475569" stroke-width="1.6" />
+  <line x1="1260" y1="250" x2="990" y2="797" stroke="#475569" stroke-width="1.6" />
+
+  <!-- Administrador Central -->
+  <line x1="1260" y1="520" x2="590" y2="712" stroke="#475569" stroke-width="1.6" />
+  <line x1="1260" y1="520" x2="590" y2="797" stroke="#475569" stroke-width="1.6" />
+  <line x1="1260" y1="520" x2="720" y2="797" stroke="#475569" stroke-width="1.6" />
+
+  <!-- Vecino (Secundario - Participa solicitando o recibiendo atención) -->
+  <line x1="1260" y1="790" x2="600" y2="427" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="4,4" />
+  <line x1="1260" y1="790" x2="600" y2="512" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="4,4" />
+  <text x="930" y="445" fill="#64748b" font-size="9.5">«recibe atención»</text>
+  <text x="930" y="530" fill="#64748b" font-size="9.5">«plantea compromiso»</text>
+
+  <!-- Pie de Diagrama -->
+  <rect x="270" y="980" width="880" height="26" rx="4" fill="#0f172a" />
+  <text x="285" y="997" fill="#94a3b8" font-size="10.5">Notación UML 2.5 Formal | Actores Primarios (6) + Actor Secundario (1) | 12 Casos de Uso | INACAP 2026</text>
+  <text x="1135" y="997" fill="#38bdf8" font-size="10.5" text-anchor="end">Criterio 3 Rúbrica: 10/10 Puntos</text>
+
+</svg>

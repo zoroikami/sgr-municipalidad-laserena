@@ -1,0 +1,140 @@
+@startuml Diagrama_Requerimientos_SGR
+!theme plain
+skinparam backgroundColor #FFFFFF
+skinparam roundcorner 8
+skinparam defaultFontName Arial
+skinparam defaultFontSize 11
+skinparam packageBackgroundColor #F8FAFC
+skinparam packageBorderColor #64748B
+
+title Diagrama Jerárquico de Requerimientos SysML (Visual Paradigm)\nSistema de Gestión de Resultados (SGR) - Ilustre Municipalidad de La Serena
+
+package "Meta Institucional DISERCO" {
+    class "REQ-00: Sistema SGR La Serena" as REQ_ROOT <<requirement>> {
+        Id = "REQ-ROOT-00"
+        Text = "Modernizar y transparentar la gestión de resultados territoriales de las 6 delegaciones de La Serena mediante trazabilidad rigurosa de evidencias, semaforización matemática diaria y agenda colectiva de compromisos vecinales."
+    }
+}
+
+package "EP-01: Identidad y Perfiles Territoriales" {
+    class "RF-01: Autenticación de Usuarios" as RF01 <<requirement>> {
+        Id = "RF-001"
+        Text = "Autenticar usuarios con credenciales institucionales y roles municipales."
+    }
+    class "RNF-01: Cifrado y Seguridad" as RNF01 <<requirement>> {
+        Id = "RNF-001"
+        Text = "Almacenamiento seguro con hash y control de expiración de sesión."
+    }
+}
+
+package "EP-02: Registro Operativo de Terreno" {
+    class "RF-04: Formulario Dinámico por Cargo" as RF04 <<requirement>> {
+        Id = "RF-004"
+        Text = "Filtrar ítems medibles según cargo municipal."
+    }
+    class "RF-05: Generación de Código EVI-2026" as RF05 <<requirement>> {
+        Id = "RF-005"
+        Text = "Asignar clave correlativa inmutable EVI-YYYY-XXXX a cada evidencia."
+    }
+    class "RF-06: Carga de Respaldo Fotográfico" as RF06 <<requirement>> {
+        Id = "RF-006"
+        Text = "Adjuntar fotografía y georreferenciación de terreno."
+    }
+    class "RF-07: Detección de Duplicados" as RF07 <<requirement>> {
+        Id = "RF-007"
+        Text = "Prevenir doble registro con misma fecha, ítem y solicitante."
+    }
+}
+
+package "EP-03: Bandeja de Verificación y Calidad" {
+    class "RF-08: Bandeja de Evidencias" as RF08 <<requirement>> {
+        Id = "RF-008"
+        Text = "Listado de evidencias pendientes de revisión técnica por delegación."
+    }
+    class "RF-09: Aprobación y Rechazo Técnico" as RF09 <<requirement>> {
+        Id = "RF-009"
+        Text = "Dictamen fundamentado que actualiza semáforo y porcentaje de avance."
+    }
+}
+
+package "EP-04: Atención Social Multietapa" {
+    class "RF-10: Ficha Única de Beneficiario" as RF10 <<requirement>> {
+        Id = "RF-010"
+        Text = "Registro único de vecinos vulnerables por RUT sin duplicar fichas."
+    }
+    class "RF-11: Concatenación de hasta 3 Gestiones" as RF11 <<requirement>> {
+        Id = "RF-011"
+        Text = "Seguimiento multietapa y bloqueo de cuarta gestión (RN-10)."
+    }
+}
+
+package "EP-05: Tubo de Trabajo y Agenda Colectiva" {
+    class "RF-13: Creación de Compromiso Vecinal" as RF13 <<requirement>> {
+        Id = "RF-013"
+        Text = "Registro con fecha límite, solicitante y área municipal."
+    }
+    class "RF-14: Flujo Kanban de 4 Estados" as RF14 <<requirement>> {
+        Id = "RF-014"
+        Text = "Ingresado, Pendiente, En Proceso y Realizado."
+    }
+    class "RF-15: Alerta de Compromiso Vencido" as RF15 <<requirement>> {
+        Id = "RF-015"
+        Text = "Alerta visual en rojo ante plazos expirados."
+    }
+}
+
+package "EP-06: Motor de Semáforo Diario" {
+    class "RF-17: Cumplimiento Ponderado al 100%" as RF17 <<requirement>> {
+        Id = "RF-017"
+        Text = "Sumatoria matemática de avances por ítem multiplicados por su ponderador."
+    }
+    class "RF-18: Semáforo Proporcional Diario" as RF18 <<requirement>> {
+        Id = "RF-018"
+        Text = "Comparación entre avance real y meta ideal al día (Verde, Ámbar, Rojo)."
+    }
+}
+
+package "EP-07: Tableros y Reportería" {
+    class "RF-19: Tablero Resumen de Delegación" as RF19 <<requirement>> {
+        Id = "RF-019"
+        Text = "Consolidado de semáforos, porcentajes y metas de todo el equipo."
+    }
+}
+
+package "EP-08: Administración y Auditoría" {
+    class "RF-22: Parametrización de Metas" as RF22 <<requirement>> {
+        Id = "RF-022"
+        Text = "Definición de trimestres y metas cuantitativas por cargo."
+    }
+    class "RF-23: Validación de Ponderaciones al 100%" as RF23 <<requirement>> {
+        Id = "RF-023"
+        Text = "Exigencia matemática de que los ponderadores sumen 100.00%."
+    }
+    class "RF-24: Bitácora Inmutable de Auditoría" as RF24 <<requirement>> {
+        Id = "RF-024"
+        Text = "Registro inalterable con IP, usuario, fecha y valores previos/nuevos."
+    }
+}
+
+REQ_ROOT <.. RF01 : <<deriveReqt>>
+REQ_ROOT <.. RF04 : <<deriveReqt>>
+REQ_ROOT <.. RF08 : <<deriveReqt>>
+REQ_ROOT <.. RF10 : <<deriveReqt>>
+REQ_ROOT <.. RF13 : <<deriveReqt>>
+REQ_ROOT <.. RF17 : <<deriveReqt>>
+REQ_ROOT <.. RF19 : <<deriveReqt>>
+REQ_ROOT <.. RF22 : <<deriveReqt>>
+
+RF01 <.. RNF01 : <<refine>>
+RF04 <.. RF05 : <<refine>>
+RF04 <.. RF06 : <<refine>>
+RF04 <.. RF07 : <<refine>>
+RF08 <.. RF09 : <<refine>>
+RF10 <.. RF11 : <<refine>>
+RF13 <.. RF14 : <<refine>>
+RF13 <.. RF15 : <<refine>>
+RF17 <.. RF18 : <<refine>>
+RF22 <.. RF23 : <<refine>>
+RF22 <.. RF24 : <<refine>>
+
+@enduml

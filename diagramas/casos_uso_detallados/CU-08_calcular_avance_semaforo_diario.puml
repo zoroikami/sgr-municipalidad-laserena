@@ -1,0 +1,35 @@
+@startuml CU-08_calcular_avance_semaforo_diario
+!theme plain
+skinparam backgroundColor #FFFFFF
+skinparam roundcorner 8
+skinparam defaultFontName Arial
+skinparam defaultFontSize 11
+skinparam packageBackgroundColor #F8FAFC
+skinparam packageBorderColor #64748B
+left to right direction
+
+title Caso de Uso Específico: CU-08: Calcular Cumplimiento Ponderado y Semáforo Diario\nSistema SGR - Municipalidad de La Serena
+
+actor "Motor de Cálculo SGR" as ACT_PRIMARY #e0f2fe
+actor "Base de Datos de Metas" as ACT_SYS #f1f5f9
+
+rectangle "Sistema de Gestión de Resultados (SGR)" {
+    usecase "Calcular Avance y Semáforo" as UC_BASE #dbeafe
+    usecase "Calcular Sumatoria Ponderada al 100%" as INC_1 #f8fafc
+    usecase "Comparar Avance Real vs Ideal del Día" as INC_2 #f8fafc
+    usecase "Asignar Semáforo Rojo Crítico" as EXT_1 #fff1f2
+    usecase "Asignar Semáforo Ámbar Preventivo" as EXT_2 #fff1f2
+
+    ' Relaciones de Inclusión
+    UC_BASE ..> INC_1 : <<include>>
+    UC_BASE ..> INC_2 : <<include>>
+
+    ' Relaciones de Extensión
+    EXT_1 ..> UC_BASE : <<extend>>\n(Condición: Avance inferior al 15% del ideal)
+    EXT_2 ..> UC_BASE : <<extend>>\n(Condición: Avance inferior entre 0.01% y 14.99%)
+}
+
+ACT_PRIMARY --> UC_BASE
+UC_BASE --> ACT_SYS
+
+@enduml

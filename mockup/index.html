@@ -1,0 +1,1281 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SGR | Sistema de Gestión de Resultados - Ilustre Municipalidad de La Serena</title>
+    <meta name="description" content="Prototipo funcional de alta fidelidad del Sistema de Gestión de Resultados (SGR) de la Ilustre Municipalidad de La Serena. Evaluación de Análisis y Diseño de Software INACAP.">
+    <link rel="icon" type="image/jpeg" href="assets/logo_laserena.jpg">
+    
+    <!-- CSS del Sistema de Diseño -->
+    <link rel="stylesheet" href="css/styles.css">
+    
+    <!-- Chart.js para visualización analítica de métricas -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+
+<div class="app-container">
+    <!-- ==========================================================================
+         SIDEBAR (Navegación Institucional y Menús)
+         ========================================================================== -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <img src="assets/logo_laserena.jpg" alt="Escudo La Serena" class="sidebar-logo">
+            <div class="sidebar-title">
+                <h2>SGR LA SERENA</h2>
+                <p>Gestión de Resultados</p>
+            </div>
+        </div>
+
+        <nav class="sidebar-menu">
+            <!-- Operación Territorial -->
+            <div class="menu-group">
+                <div class="menu-category">Operación Territorial</div>
+                <ul class="menu-list">
+                    <li class="menu-item active" id="nav-item-ficha">
+                        <a href="#ficha" onclick="sgrApp.navigate('ficha')">
+                            <i data-lucide="user-check"></i>
+                            <span>Mi Desempeño</span>
+                            <span class="badge-counter" id="badge-mi-semaforo">Óptimo</span>
+                        </a>
+                    </li>
+                    <li class="menu-item" id="nav-item-actividades">
+                        <a href="#actividades" onclick="sgrApp.navigate('actividades')">
+                            <i data-lucide="file-plus"></i>
+                            <span>Registro Actividades</span>
+                        </a>
+                    </li>
+                    <li class="menu-item" id="nav-item-agenda">
+                        <a href="#agenda" onclick="sgrApp.navigate('agenda')">
+                            <i data-lucide="kanban"></i>
+                            <span>Agenda Colectiva</span>
+                            <span class="badge-counter badge-alert" id="badge-vencidos">1 Vencido</span>
+                        </a>
+                    </li>
+                    <li class="menu-item" id="nav-item-social">
+                        <a href="#social" onclick="sgrApp.navigate('social')">
+                            <i data-lucide="heart-handshake"></i>
+                            <span>Atención Social</span>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- Supervisión y Calidad -->
+            <div class="menu-group">
+                <div class="menu-category">Supervisión y Control</div>
+                <ul class="menu-list">
+                    <li class="menu-item" id="nav-item-resumen">
+                        <a href="#resumen" onclick="sgrApp.navigate('resumen')">
+                            <i data-lucide="layout-dashboard"></i>
+                            <span>Tablero Delegación</span>
+                        </a>
+                    </li>
+                    <li class="menu-item" id="nav-item-validacion">
+                        <a href="#validacion" onclick="sgrApp.navigate('validacion')">
+                            <i data-lucide="shield-check"></i>
+                            <span>Bandeja Verificación</span>
+                            <span class="badge-counter" id="badge-pendientes-validacion">1</span>
+                        </a>
+                    </li>
+                    <li class="menu-item" id="nav-item-semaforo">
+                        <a href="#semaforo" onclick="sgrApp.navigate('semaforo')">
+                            <i data-lucide="activity"></i>
+                            <span>Semáforo Diario</span>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- Administración y Trazabilidad -->
+            <div class="menu-group">
+                <div class="menu-category">Gestión Central & Trazabilidad</div>
+                <ul class="menu-list">
+                    <li class="menu-item" id="nav-item-config">
+                        <a href="#config" onclick="sgrApp.navigate('config')">
+                            <i data-lucide="sliders"></i>
+                            <span>Metas y Ponderación</span>
+                        </a>
+                    </li>
+                    <li class="menu-item" id="nav-item-auditoria">
+                        <a href="#auditoria" onclick="sgrApp.navigate('auditoria')">
+                            <i data-lucide="file-text"></i>
+                            <span>Auditoría de Cambios</span>
+                        </a>
+                    </li>
+                    <li class="menu-item" id="nav-item-trazabilidad">
+                        <a href="#trazabilidad" onclick="sgrApp.navigate('trazabilidad')">
+                            <i data-lucide="git-branch"></i>
+                            <span>Matriz de Casos de Uso</span>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </nav>
+
+        <div class="sidebar-footer">
+            <div class="user-badge-sidebar">
+                <img src="assets/logo_laserena.jpg" alt="Avatar" class="user-avatar-sm" id="sidebar-user-avatar">
+                <div class="user-info-text">
+                    <div class="name" id="sidebar-user-name">Carlos Miranda Vera</div>
+                    <div class="role" id="sidebar-user-role">Funcionario Territorial</div>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- ==========================================================================
+         MAIN CONTENT WRAPPER
+         ========================================================================== -->
+    <div class="main-wrapper">
+        <!-- Barra Superior (Top Navbar) -->
+        <header class="top-navbar">
+            <div class="nav-left">
+                <button class="btn-toggle-sidebar" id="btn-toggle-sidebar" aria-label="Abrir Menú">
+                    <i data-lucide="menu"></i>
+                </button>
+                <div class="global-search" onclick="sgrApp.openSearchModal()">
+                    <i data-lucide="search"></i>
+                    <input type="text" placeholder="Buscar actividad, folio, vecino, funcionario..." readonly>
+                    <span class="search-shortcut">Ctrl+K</span>
+                </div>
+            </div>
+
+            <div class="nav-center">
+                <div class="period-pill" title="Período de medición activo: 01-07-2026 al 30-09-2026">
+                    <i data-lucide="calendar"></i>
+                    <span id="top-periodo-nombre">Q3 2026: Día 45/91 (49.5% esperado)</span>
+                </div>
+            </div>
+
+            <div class="nav-right">
+                <!-- Selector Dinámico de Roles para Pruebas -->
+                <div class="role-switcher" title="Cambiar usuario/rol activo para evaluar permisos">
+                    <i data-lucide="users" style="width: 16px; height: 16px; color: var(--color-gold);"></i>
+                    <select id="select-user-switcher" onchange="sgrApp.changeUser(this.value)">
+                        <option value="USR-001">Carlos Miranda (Funcionario Territorial - Rural)</option>
+                        <option value="USR-002">Marcela Gómez (Gestora Social - Las Compañías)</option>
+                        <option value="USR-003">Roberto Henríquez (Verificador / DISERCO)</option>
+                        <option value="USR-004">Ximena Alvarado (Delegada Municipal Rural)</option>
+                        <option value="USR-005">Rodrigo Tapia (Administrador Central SGR)</option>
+                    </select>
+                </div>
+
+                <!-- Botón de Notificaciones -->
+                <button class="nav-btn" id="btn-notifications" onclick="sgrApp.toggleNotifications()" title="Notificaciones del Sistema">
+                    <i data-lucide="bell"></i>
+                    <span class="notification-dot" id="top-notification-dot"></span>
+                </button>
+
+                <!-- Dropdown de Notificaciones -->
+                <div class="dropdown-menu" id="dropdown-notifications">
+                    <div class="dropdown-header">
+                        <span>Notificaciones del Sistema</span>
+                        <span class="badge-counter badge-alert" id="dropdown-noti-count">3 Nuevas</span>
+                    </div>
+                    <ul class="dropdown-list" id="dropdown-noti-list">
+                        <!-- Llenado dinámicamente -->
+                    </ul>
+                </div>
+
+                <!-- Botón Modo Oscuro / Claro -->
+                <button class="nav-btn" id="btn-theme-toggle" onclick="sgrApp.toggleTheme()" title="Cambiar Tema (Claro / Oscuro)">
+                    <i data-lucide="moon" id="theme-icon"></i>
+                </button>
+
+                <!-- Botón Reset de Datos de Prueba -->
+                <button class="btn btn-outline btn-sm" onclick="sgrApp.resetDatabase()" title="Restaurar datos semilla originales">
+                    <i data-lucide="rotate-ccw"></i>
+                    <span>Reiniciar BD</span>
+                </button>
+            </div>
+        </header>
+
+        <!-- ==========================================================================
+             VISTAS DE PANTALLAS (SPA)
+             ========================================================================== -->
+        <main class="content-area">
+
+            <!-- 1. VISTA: FICHA PERSONAL / MI DESEMPEÑO -->
+            <section id="view-ficha" class="sgr-view">
+                <div class="page-header">
+                    <div class="page-title">
+                        <h1 id="ficha-user-title">Ficha Personal de Desempeño</h1>
+                        <p id="ficha-user-subtitle">Seguimiento de cumplimiento individual, metas ponderadas y semáforo diario.</p>
+                    </div>
+                    <div class="page-actions">
+                        <button class="btn btn-gold" onclick="sgrApp.navigate('actividades')">
+                            <i data-lucide="plus-circle"></i>
+                            <span>Nueva Actividad</span>
+                        </button>
+                        <button class="btn btn-outline" onclick="window.print()">
+                            <i data-lucide="printer"></i>
+                            <span>Imprimir Ficha</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Banner de Semáforo Diario Individual -->
+                <div class="card" style="margin-bottom: 24px; border-left: 6px solid var(--semaforo-verde);" id="ficha-semaforo-banner">
+                    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
+                        <div>
+                            <span class="badge-semaforo badge-semaforo-verde" id="ficha-semaforo-badge">
+                                <i data-lucide="check-circle"></i>
+                                <span id="ficha-semaforo-text">Cumplimiento Óptimo (Verde)</span>
+                            </span>
+                            <h2 style="font-size: 1.4rem; margin-top: 8px;" id="ficha-cumplimiento-headline">
+                                58.3% Ponderado Alcanzado
+                            </h2>
+                            <p style="color: var(--text-secondary); font-size: 0.85rem;" id="ficha-semaforo-explicacion">
+                                Su avance ponderado (58.3%) supera la meta acumulada esperada al día 45 del trimestre (49.5%).
+                            </p>
+                        </div>
+                        <div style="text-align: right;">
+                            <div style="font-size: 0.8rem; color: var(--text-secondary); text-transform: uppercase; font-weight: 700;">
+                                Meta Esperada al Día (RN-007)
+                            </div>
+                            <div style="font-size: 1.8rem; font-weight: 800; font-family: 'Outfit'; color: var(--color-navy);" id="ficha-meta-esperada-val">
+                                49.5%
+                            </div>
+                            <div style="font-size: 0.75rem; color: var(--text-muted);">
+                                Período Q3: Día 45 de 91
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Desglose de Ítems de Medición con Ponderaciones (RN-001, RN-004, RN-005) -->
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Ítems de Medición del Cargo y Avance Ponderado</h3>
+                        <span class="badge-counter" style="background: rgba(37, 99, 235, 0.1); color: #2563eb; font-size: 0.78rem;">
+                            Suma Ponderadores: 100% (RN-001)
+                        </span>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="sgr-table" id="tabla-items-ficha">
+                            <thead>
+                                <tr>
+                                    <th>Ítem de Medición</th>
+                                    <th>Unidad</th>
+                                    <th>Ponderador</th>
+                                    <th>Meta Q3</th>
+                                    <th>Avance Validado</th>
+                                    <th>% Cumplimiento</th>
+                                    <th>Puntaje Ponderado</th>
+                                    <th>Progreso Visual</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tbody-items-ficha">
+                                <!-- Generado por JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Historial Reciente de Actividades del Funcionario -->
+                <div class="card" style="margin-top: 24px;">
+                    <div class="card-header">
+                        <h3>Últimas Actividades Registradas y Estado de Evidencia</h3>
+                        <button class="btn btn-outline btn-sm" onclick="sgrApp.navigate('actividades')">Ver Todas</button>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="sgr-table">
+                            <thead>
+                                <tr>
+                                    <th>Código Evidencia</th>
+                                    <th>Fecha</th>
+                                    <th>Ítem</th>
+                                    <th>Descripción / Lugar</th>
+                                    <th>Foto</th>
+                                    <th>Estado Verificación</th>
+                                    <th>Observación Verificador</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tbody-ultimas-actividades-ficha">
+                                <!-- Generado por JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 2. VISTA: REGISTRO DE ACTIVIDADES DIARIAS -->
+            <section id="view-actividades" class="sgr-view" style="display: none;">
+                <div class="page-header">
+                    <div class="page-title">
+                        <h1>Registro Diario de Actividades</h1>
+                        <p>Ingrese las actividades ejecutadas en terreno con respaldo de evidencia fotográfica única.</p>
+                    </div>
+                    <div class="page-actions">
+                        <button class="btn btn-outline" onclick="sgrApp.triggerDuplicateModal()">
+                            <i data-lucide="alert-triangle"></i>
+                            <span>Simular Duplicado (CU-07)</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="dashboard-grid">
+                    <!-- Formulario de Registro (Sección 8.1 de la guía) -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>Formulario Oficial de Ingreso de Actividad</h3>
+                            <span class="badge-counter" id="form-codigo-preview" style="background: var(--color-navy); color: #fff;">
+                                EVI-2026-0743
+                            </span>
+                        </div>
+
+                        <form id="form-actividad" onsubmit="sgrApp.handleSubmitActividad(event)">
+                            <div class="form-grid">
+                                <div class="form-group">
+                                    <label class="form-label">Código de Evidencia <span class="req">*</span> (Inmutable RN-010)</label>
+                                    <input type="text" class="form-control" id="form-act-codigo" readonly style="font-weight: 700; background: var(--bg-app);">
+                                </div>
+
+                                <div class="form-group">
+                                    <label class="form-label">Fecha de Ejecución <span class="req">*</span></label>
+                                    <input type="date" class="form-control" id="form-act-fecha" required>
+                                </div>
+
+                                <div class="form-group full-width">
+                                    <label class="form-label">Ítem de Medición del Cargo <span class="req">*</span></label>
+                                    <select class="form-control" id="form-act-item" required>
+                                        <!-- Opciones dinámicas según cargo -->
+                                    </select>
+                                </div>
+
+                                <div class="form-group full-width">
+                                    <label class="form-label">Actividad, Solicitud o Problema Atendido <span class="req">*</span></label>
+                                    <textarea class="form-control" id="form-act-desc" rows="2" placeholder="Ej: Reparación de luminarias y bacheo en Plaza Central de Algarrobito..." required></textarea>
+                                </div>
+
+                                <div class="form-group full-width">
+                                    <label class="form-label">Acción Ejecutada en Terreno <span class="req">*</span></label>
+                                    <textarea class="form-control" id="form-act-accion" rows="2" placeholder="Detalle la solución, catastro o gestión realizada..." required></textarea>
+                                </div>
+
+                                <div class="form-group">
+                                    <label class="form-label">Nombre del Contacto Vecinal / Dirigente</label>
+                                    <input type="text" class="form-control" id="form-act-contacto" placeholder="Ej: Hernán Castillo (Presidente JJ.VV)">
+                                </div>
+
+                                <div class="form-group">
+                                    <label class="form-label">Teléfono de Contacto</label>
+                                    <input type="tel" class="form-control" id="form-act-telefono" placeholder="+56 9 8451 2239">
+                                </div>
+
+                                <div class="form-group full-width">
+                                    <label class="form-label">Lugar / Georreferencia en La Serena</label>
+                                    <input type="text" class="form-control" id="form-act-geo" placeholder="Ej: Plaza Central Algarrobito, Ruta D-41, La Serena" value="Plaza Central Algarrobito, La Serena">
+                                </div>
+
+                                <!-- Switch Agenda Colectiva -->
+                                <div class="form-group full-width" style="display: flex; align-items: center; gap: 10px; padding: 10px 0;">
+                                    <input type="checkbox" id="form-act-agenda" style="width: 18px; height: 18px; cursor: pointer;">
+                                    <label for="form-act-agenda" style="font-size: 0.85rem; font-weight: 600; cursor: pointer;">
+                                        Ingresar automáticamente a la Agenda Colectiva (Tubo de Trabajo) para seguimiento futuro
+                                    </label>
+                                </div>
+
+                                <!-- Carga de Evidencia Fotográfica -->
+                                <div class="form-group full-width">
+                                    <label class="form-label">Evidencia Fotográfica Obligatoria <span class="req">*</span></label>
+                                    <div class="upload-box" onclick="document.getElementById('file-evidencia-input').click()">
+                                        <i data-lucide="camera" style="width: 32px; height: 32px; color: var(--color-gold); margin-bottom: 8px;"></i>
+                                        <div style="font-weight: 600; font-size: 0.9rem;" id="upload-box-text">Haga clic o arrastre una fotografía de respaldo</div>
+                                        <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 4px;">Formatos admitidos: JPG, PNG (Resolución nítida con fecha y hora)</div>
+                                        <img id="form-img-preview" src="assets/evidencia_terreno.jpg" style="max-height: 120px; border-radius: 8px; margin-top: 10px; display: block; margin-left: auto; margin-right: auto;" alt="Vista Previa">
+                                    </div>
+                                    <input type="file" id="file-evidencia-input" style="display: none;" accept="image/*" onchange="sgrApp.handleImageUpload(event)">
+                                </div>
+                            </div>
+
+                            <div style="margin-top: 24px; display: flex; justify-content: flex-end; gap: 12px;">
+                                <button type="button" class="btn btn-outline" onclick="sgrApp.resetFormActividad()">Limpiar</button>
+                                <button type="submit" class="btn btn-primary">
+                                    <i data-lucide="check"></i>
+                                    <span>Guardar y Enviar a Verificación</span>
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Panel Lateral: Guía y Validación Rápida -->
+                    <div>
+                        <div class="card" style="margin-bottom: 24px;">
+                            <div class="card-header">
+                                <h3>Ciclo de la Actividad (Sección 4.1)</h3>
+                            </div>
+                            <ol style="font-size: 0.82rem; color: var(--text-secondary); padding-left: 18px; line-height: 1.8;">
+                                <li><strong>01 Ingreso:</strong> El funcionario registra fecha, actividad, acción, contacto y clasificación.</li>
+                                <li><strong>02 Código:</strong> El sistema genera un código único inmutable (ej: <code>EVI-2026-0743</code>).</li>
+                                <li><strong>03 Evidencia:</strong> Se adjunta la fotografía en terreno.</li>
+                                <li><strong>04 Revisión:</strong> El verificador DISERCO aprueba o rechaza con observaciones.</li>
+                                <li><strong>05 Resultado:</strong> Solo registros aprobados incrementan el avance y semáforo (RN-009).</li>
+                            </ol>
+                        </div>
+
+                        <div class="card">
+                            <div class="card-header">
+                                <h3>Reglas de Negocio Vinculadas</h3>
+                            </div>
+                            <ul style="font-size: 0.8rem; color: var(--text-secondary); list-style: none; display: flex; flex-direction: column; gap: 8px;">
+                                <li><strong style="color: var(--color-navy);">RN-009:</strong> Las actividades no aprobadas no computan puntaje.</li>
+                                <li><strong style="color: var(--color-navy);">RN-010:</strong> El código de evidencia es permanente e irrepetible.</li>
+                                <li><strong style="color: var(--color-navy);">CU-07:</strong> Detección de duplicados para evitar doble contabilización.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tabla de Historial de Todas las Actividades -->
+                <div class="card" style="margin-top: 28px;">
+                    <div class="card-header">
+                        <h3>Historial Consolidado de Actividades Registradas</h3>
+                        <div style="display: flex; gap: 10px;">
+                            <input type="text" class="form-control" placeholder="Filtrar por texto..." style="padding: 5px 10px; font-size: 0.8rem;" oninput="sgrApp.filterTablaActividades(this.value)">
+                        </div>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="sgr-table" id="tabla-todas-actividades">
+                            <thead>
+                                <tr>
+                                    <th>Código</th>
+                                    <th>Fecha</th>
+                                    <th>Funcionario</th>
+                                    <th>Ítem</th>
+                                    <th>Descripción</th>
+                                    <th>Foto</th>
+                                    <th>Estado</th>
+                                    <th>Acción</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tbody-todas-actividades">
+                                <!-- Generado por JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 3. VISTA: BANDEJA DE VALIDACIÓN (ROL VERIFICADOR) -->
+            <section id="view-validacion" class="sgr-view" style="display: none;">
+                <div class="page-header">
+                    <div class="page-title">
+                        <h1>Bandeja de Validación de Evidencias (DISERCO)</h1>
+                        <p>Revisión técnica de fotografías y metadatos de respaldo para otorgar puntos de avance.</p>
+                    </div>
+                    <div class="page-actions">
+                        <span class="badge-counter" style="background: var(--semaforo-ambar); font-size: 0.85rem; padding: 6px 14px;">
+                            1 Evidencia Pendiente de Revisión
+                        </span>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Evidencias Remitidas por Delegaciones</h3>
+                        <div style="display: flex; gap: 8px;">
+                            <button class="btn btn-outline btn-sm active" onclick="sgrApp.filtrarValidacion('TODAS')">Todas</button>
+                            <button class="btn btn-outline btn-sm" onclick="sgrApp.filtrarValidacion('PENDIENTE')">Pendientes</button>
+                            <button class="btn btn-outline btn-sm" onclick="sgrApp.filtrarValidacion('APROBADA')">Aprobadas</button>
+                            <button class="btn btn-outline btn-sm" onclick="sgrApp.filtrarValidacion('RECHAZADA')">Rechazadas</button>
+                        </div>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="sgr-table">
+                            <thead>
+                                <tr>
+                                    <th>Código Evidencia</th>
+                                    <th>Fecha Ingreso</th>
+                                    <th>Funcionario</th>
+                                    <th>Delegación</th>
+                                    <th>Ítem de Medición</th>
+                                    <th>Foto Respaldo</th>
+                                    <th>Estado Actual</th>
+                                    <th>Acción Verificador</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tbody-validacion">
+                                <!-- Generado por JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 4. VISTA: TUBO DE TRABAJO / AGENDA COLECTIVA -->
+            <section id="view-agenda" class="sgr-view" style="display: none;">
+                <div class="page-header">
+                    <div class="page-title">
+                        <h1>Tubo de Trabajo / Agenda Colectiva</h1>
+                        <p>Gestión colaborativa de compromisos comunitarios. Exigencia mínima institucional: <strong>80% de cumplimiento</strong> (RN-006).</p>
+                    </div>
+                    <div class="page-actions">
+                        <button class="btn btn-primary" onclick="sgrApp.openNuevoCompromisoModal()">
+                            <i data-lucide="plus"></i>
+                            <span>Nuevo Compromiso</span>
+                        </button>
+                        <button class="btn btn-outline" onclick="sgrApp.openReasignarModal()">
+                            <i data-lucide="user-x"></i>
+                            <span>Reasignar por Ausencia</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Barra de Estado Colectivo (RN-006 y CA-03) -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-card-header">
+                            <span class="stat-title">Cumplimiento Colectivo</span>
+                            <div class="stat-icon-wrapper icon-blue"><i data-lucide="check-check"></i></div>
+                        </div>
+                        <div class="stat-value" id="agenda-kpi-pct">25.0%</div>
+                        <div class="stat-subtext" id="agenda-kpi-subtext">
+                            <span style="color: var(--semaforo-rojo); font-weight: 700;">Bajo el 80% exigido (RN-006)</span>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-card-header">
+                            <span class="stat-title">Compromisos Vencidos</span>
+                            <div class="stat-icon-wrapper icon-red"><i data-lucide="alert-octagon"></i></div>
+                        </div>
+                        <div class="stat-value" style="color: var(--semaforo-rojo);" id="agenda-kpi-vencidos">1</div>
+                        <div class="stat-subtext">
+                            <a href="javascript:void(0)" onclick="sgrApp.openAlertaVencidoModal()" style="color: var(--semaforo-rojo); font-weight: 700;">Ver alerta de vencimiento (CA-03)</a>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-card-header">
+                            <span class="stat-title">En Proceso / Activos</span>
+                            <div class="stat-icon-wrapper icon-gold"><i data-lucide="clock"></i></div>
+                        </div>
+                        <div class="stat-value" id="agenda-kpi-proceso">2</div>
+                        <div class="stat-subtext">Compromisos en gestión de cuadrillas</div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-card-header">
+                            <span class="stat-title">Total Compromisos</span>
+                            <div class="stat-icon-wrapper icon-green"><i data-lucide="list-checks"></i></div>
+                        </div>
+                        <div class="stat-value" id="agenda-kpi-total">5</div>
+                        <div class="stat-subtext">Registrados en el trimestre Q3</div>
+                    </div>
+                </div>
+
+                <!-- Tablero Kanban de 4 Estados de la Agenda Colectiva -->
+                <div class="kanban-board">
+                    <!-- 1. INGRESADO -->
+                    <div class="kanban-col">
+                        <div class="kanban-col-header col-ingresado">
+                            <span>1. Ingresado</span>
+                            <span class="badge-counter" id="badge-kanban-ingresado">1</span>
+                        </div>
+                        <div class="kanban-cards-wrapper" id="kanban-col-ingresado">
+                            <!-- Cards generadas por JS -->
+                        </div>
+                    </div>
+
+                    <!-- 2. PENDIENTE -->
+                    <div class="kanban-col">
+                        <div class="kanban-col-header col-pendiente">
+                            <span>2. Pendiente</span>
+                            <span class="badge-counter" id="badge-kanban-pendiente">1</span>
+                        </div>
+                        <div class="kanban-cards-wrapper" id="kanban-col-pendiente">
+                            <!-- Cards generadas por JS -->
+                        </div>
+                    </div>
+
+                    <!-- 3. EN PROCESO -->
+                    <div class="kanban-col">
+                        <div class="kanban-col-header col-enproceso">
+                            <span>3. En Proceso</span>
+                            <span class="badge-counter" id="badge-kanban-enproceso">2</span>
+                        </div>
+                        <div class="kanban-cards-wrapper" id="kanban-col-enproceso">
+                            <!-- Cards generadas por JS -->
+                        </div>
+                    </div>
+
+                    <!-- 4. REALIZADO -->
+                    <div class="kanban-col">
+                        <div class="kanban-col-header col-realizado">
+                            <span>4. Realizado</span>
+                            <span class="badge-counter" id="badge-kanban-realizado">1</span>
+                        </div>
+                        <div class="kanban-cards-wrapper" id="kanban-col-realizado">
+                            <!-- Cards generadas por JS -->
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 5. VISTA: TABLERO RESUMEN DELEGACIÓN (CONSOLIDADO) -->
+            <section id="view-resumen" class="sgr-view" style="display: none;">
+                <div class="page-header">
+                    <div class="page-title">
+                        <h1 id="resumen-del-title">Tablero Resumen Delegación Rural</h1>
+                        <p>Visión consolidada de metas, semáforos de equipo y actividad diaria institucional.</p>
+                    </div>
+                    <div class="page-actions">
+                        <select class="form-control" style="font-weight: 600;" onchange="sgrApp.changeDelegacionFilter(this.value)">
+                            <option value="DEL-RUR">Delegación Rural</option>
+                            <option value="DEL-COM">Delegación Las Compañías</option>
+                            <option value="DEL-PAM">Delegación La Pampa</option>
+                            <option value="DEL-ANT">Delegación La Antena - La Florida</option>
+                            <option value="DEL-CEN">Delegación Centro</option>
+                            <option value="DEL-MAR">Delegación Avenida del Mar</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- KPIs Delegación -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-card-header">
+                            <span class="stat-title">Cumplimiento Delegación</span>
+                            <div class="stat-icon-wrapper icon-blue"><i data-lucide="award"></i></div>
+                        </div>
+                        <div class="stat-value" id="kpi-del-cumplimiento">58.3%</div>
+                        <div class="stat-subtext">Ponderado consolidado del equipo</div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-card-header">
+                            <span class="stat-title">Semáforo General</span>
+                            <div class="stat-icon-wrapper icon-green"><i data-lucide="check-circle"></i></div>
+                        </div>
+                        <div class="stat-value" style="color: var(--semaforo-verde);" id="kpi-del-semaforo">ÓPTIMO</div>
+                        <div class="stat-subtext">Supera meta esperada de 49.5%</div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-card-header">
+                            <span class="stat-title">Actividades Aprobadas</span>
+                            <div class="stat-icon-wrapper icon-gold"><i data-lucide="file-check"></i></div>
+                        </div>
+                        <div class="stat-value" id="kpi-del-aprobadas">4</div>
+                        <div class="stat-subtext">De 5 remitidas (80% tasa de aprobación)</div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-card-header">
+                            <span class="stat-title">Compromisos Agenda</span>
+                            <div class="stat-icon-wrapper icon-red"><i data-lucide="kanban"></i></div>
+                        </div>
+                        <div class="stat-value" id="kpi-del-agenda">25.0%</div>
+                        <div class="stat-subtext" style="color: var(--semaforo-rojo);">1 compromiso vencido</div>
+                    </div>
+                </div>
+
+                <!-- Gráficos Analíticos -->
+                <div class="dashboard-grid">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>Cumplimiento Ponderado por Funcionario vs Meta Esperada (49.5%)</h3>
+                        </div>
+                        <div style="height: 280px;">
+                            <canvas id="chart-resumen-funcionarios"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>Distribución de Compromisos de Agenda</h3>
+                        </div>
+                        <div style="height: 280px; display: flex; align-items: center; justify-content: center;">
+                            <canvas id="chart-resumen-agenda"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tabla Resumen del Personal (Slide 18 & 19 de la presentación fuente) -->
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Personal Medido: Último Ingreso y Rendimiento al Día</h3>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="sgr-table">
+                            <thead>
+                                <tr>
+                                    <th>Funcionario</th>
+                                    <th>Cargo</th>
+                                    <th>Último Ingreso</th>
+                                    <th>Días sin Ingreso</th>
+                                    <th>Total Actividades</th>
+                                    <th>Promedio Diario</th>
+                                    <th>% Cumplimiento</th>
+                                    <th>Semáforo al Día</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tbody-resumen-personal">
+                                <!-- Generado por JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 6. VISTA: ATENCIÓN SOCIAL MULTIETAPA (ROL GESTOR SOCIAL) -->
+            <section id="view-social" class="sgr-view" style="display: none;">
+                <div class="page-header">
+                    <div class="page-title">
+                        <h1>Atención Social Multietapa</h1>
+                        <p>Seguimiento integral de hasta 3 gestiones por persona usuaria sin duplicidad de ficha (RN-012 y HU-03).</p>
+                    </div>
+                    <div class="page-actions">
+                        <button class="btn btn-primary" onclick="sgrApp.openNuevaAtencionModal()">
+                            <i data-lucide="user-plus"></i>
+                            <span>Nueva Persona / Ficha</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Casos Sociales en Seguimiento Activo</h3>
+                        <div style="display: flex; gap: 10px;">
+                            <input type="text" class="form-control" placeholder="Buscar por RUT o Nombre..." style="padding: 6px 12px; font-size: 0.8rem;" oninput="sgrApp.filterCasosSociales(this.value)">
+                        </div>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="sgr-table">
+                            <thead>
+                                <tr>
+                                    <th>ID Caso</th>
+                                    <th>RUT Beneficiario</th>
+                                    <th>Nombre Completo</th>
+                                    <th>Tramo RSH</th>
+                                    <th>Etapa Actual (Máx 3)</th>
+                                    <th>Última Gestión</th>
+                                    <th>Profesional Asignada</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tbody-casos-sociales">
+                                <!-- Generado por JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 7. VISTA: MONITOR SEMÁFORO DIARIO -->
+            <section id="view-semaforo" class="sgr-view" style="display: none;">
+                <div class="page-header">
+                    <div class="page-title">
+                        <h1>Monitor del Semáforo Diario (RN-008)</h1>
+                        <p>Seguimiento matemático continuo según fecha y días hábiles del período trimestral.</p>
+                    </div>
+                    <div class="page-actions">
+                        <span class="badge-counter" style="background: var(--color-navy); color: #fff; padding: 6px 14px;">
+                            Fórmula: % Cumplimiento vs Meta Esperada al Día
+                        </span>
+                    </div>
+                </div>
+
+                <div class="dashboard-grid">
+                    <!-- Simulador de Semáforo en Tiempo Real -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>Simulador Interactivo de Semáforo Diario</h3>
+                        </div>
+                        <p style="font-size: 0.82rem; color: var(--text-secondary); margin-bottom: 20px;">
+                            Ajuste los valores de simulación para observar cómo el motor calcula inmediatamente el semáforo y evalúa los umbrales Verde, Ámbar y Rojo.
+                        </p>
+
+                        <div class="form-group" style="margin-bottom: 16px;">
+                            <label class="form-label">Días Transcurridos del Trimestre: <strong id="sim-dias-val">45 días</strong> (de 91)</label>
+                            <input type="range" class="form-control" id="sim-dias-input" min="1" max="91" value="45" oninput="sgrApp.actualizarSimulador()">
+                        </div>
+
+                        <div class="form-group" style="margin-bottom: 20px;">
+                            <label class="form-label">Avance Ponderado del Funcionario: <strong id="sim-avance-val">58.3%</strong></label>
+                            <input type="range" class="form-control" id="sim-avance-input" min="0" max="150" value="58" oninput="sgrApp.actualizarSimulador()">
+                        </div>
+
+                        <div style="background: var(--bg-app); padding: 18px; border-radius: var(--radius-md); border: 1px solid var(--border-color);">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <div>
+                                    <div style="font-size: 0.75rem; color: var(--text-secondary); text-transform: uppercase;">Semáforo Resultante</div>
+                                    <span class="badge-semaforo badge-semaforo-verde" id="sim-semaforo-badge" style="font-size: 0.95rem; margin-top: 6px;">
+                                        <i data-lucide="check-circle"></i>
+                                        <span id="sim-semaforo-text">Óptimo (Verde)</span>
+                                    </span>
+                                </div>
+                                <div style="text-align: right;">
+                                    <div style="font-size: 0.75rem; color: var(--text-secondary); text-transform: uppercase;">Meta al Día Calculada</div>
+                                    <div style="font-size: 1.5rem; font-weight: 800; color: var(--color-navy);" id="sim-meta-esperada-calc">49.5%</div>
+                                </div>
+                            </div>
+                            <p style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 12px;" id="sim-explicacion-calc">
+                                Avance (58%) ≥ Meta esperada (49.5%). El funcionario cumple a la fecha.
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Cuadro Teórico y Umbrales Oficiales -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>Criterios de Clasificación (Sección 7.1)</h3>
+                        </div>
+                        <div style="display: flex; flex-direction: column; gap: 14px;">
+                            <div style="display: flex; gap: 12px; align-items: flex-start;">
+                                <span class="badge-semaforo badge-semaforo-verde" style="flex-shrink: 0;">VERDE</span>
+                                <div style="font-size: 0.8rem;">
+                                    <strong>Avance ≥ Meta Esperada al Día:</strong> Desempeño óptimo. El funcionario avanza al ritmo o por sobre lo programado.
+                                </div>
+                            </div>
+
+                            <div style="display: flex; gap: 12px; align-items: flex-start;">
+                                <span class="badge-semaforo badge-semaforo-ambar" style="flex-shrink: 0;">ÁMBAR</span>
+                                <div style="font-size: 0.8rem;">
+                                    <strong>60% Meta Esperada ≤ Avance < Meta Esperada:</strong> Atención requerida. El funcionario presenta retraso recuperable.
+                                </div>
+                            </div>
+
+                            <div style="display: flex; gap: 12px; align-items: flex-start;">
+                                <span class="badge-semaforo badge-semaforo-rojo" style="flex-shrink: 0;">ROJO</span>
+                                <div style="font-size: 0.8rem;">
+                                    <strong>Avance < 60% Meta Esperada al Día:</strong> Riesgo crítico. Requiere intervención inmediata del Delegado o DISERCO.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 8. VISTA: CONFIGURACIÓN DE METAS Y PONDERADORES -->
+            <section id="view-config" class="sgr-view" style="display: none;">
+                <div class="page-header">
+                    <div class="page-title">
+                        <h1>Configuración de Metas y Ponderadores (RN-001)</h1>
+                        <p>Administración centralizada de parámetros, períodos y exigencia de suma 100% de ponderadores.</p>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Ponderadores e Ítems por Cargo Activo</h3>
+                        <div id="config-suma-status" class="badge-counter badge-semaforo-verde" style="font-size: 0.85rem; padding: 6px 14px;">
+                            Suma Ponderadores: 100% (Válido)
+                        </div>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="sgr-table" id="tabla-config-items">
+                            <thead>
+                                <tr>
+                                    <th>Cargo</th>
+                                    <th>Ítem de Medición</th>
+                                    <th>Unidad</th>
+                                    <th>Ponderación (%)</th>
+                                    <th>Meta Trimestral</th>
+                                    <th>Acción</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tbody-config-items">
+                                <!-- Generado por JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 9. VISTA: AUDITORÍA DE CAMBIOS (INMUTABLE) -->
+            <section id="view-auditoria" class="sgr-view" style="display: none;">
+                <div class="page-header">
+                    <div class="page-title">
+                        <h1>Log de Auditoría y Trazabilidad (CA-09)</h1>
+                        <p>Registro cronológico e inmutable de operaciones críticas, validaciones y cambios de estado.</p>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Eventos Registrados en el Sistema</h3>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="sgr-table">
+                            <thead>
+                                <tr>
+                                    <th>ID Log</th>
+                                    <th>Fecha y Hora</th>
+                                    <th>Usuario / Rol</th>
+                                    <th>Acción Ejecutada</th>
+                                    <th>Entidad Afectada</th>
+                                    <th>Valor Anterior</th>
+                                    <th>Valor Nuevo</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tbody-auditoria">
+                                <!-- Generado por JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 10. VISTA: MATRIZ DE TRAZABILIDAD Y CASOS DE USO -->
+            <section id="view-trazabilidad" class="sgr-view" style="display: none;">
+                <div class="page-header">
+                    <div class="page-title">
+                        <h1>Matriz de Trazabilidad: Requisitos vs Casos de Uso vs Mockup</h1>
+                        <p>Evidencia explícita de trazabilidad académica conforme a <code>Relación entre los artefactos.pdf</code>.</p>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Mapeo de Requerimientos a Pantallas y Modales</h3>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="sgr-table">
+                            <thead>
+                                <tr>
+                                    <th>Requerimiento</th>
+                                    <th>Caso de Uso</th>
+                                    <th>Actor Principal</th>
+                                    <th>Pantalla / Modal en Mockup</th>
+                                    <th>Regla de Negocio</th>
+                                    <th>Estado Prototipo</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><strong>RF-009 / RF-010</strong></td>
+                                    <td>CU-02 Registrar Actividad</td>
+                                    <td>Funcionario Territorial</td>
+                                    <td>Vista "Registro Actividades"</td>
+                                    <td>RN-010 (Código único)</td>
+                                    <td><span class="badge-semaforo badge-semaforo-verde">100% Funcional</span></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>RF-014</strong></td>
+                                    <td>CU-04 Validar Evidencia</td>
+                                    <td>Verificador DISERCO</td>
+                                    <td>Bandeja Verificación + Modal Visor</td>
+                                    <td>RN-009 (Aporte de avance)</td>
+                                    <td><span class="badge-semaforo badge-semaforo-verde">100% Funcional</span></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>RF-016 / RF-017</strong></td>
+                                    <td>CU-06 Crear Compromiso</td>
+                                    <td>Funcionario</td>
+                                    <td>Agenda Colectiva (Kanban)</td>
+                                    <td>RN-006 (Umbral 80%)</td>
+                                    <td><span class="badge-semaforo badge-semaforo-verde">100% Funcional</span></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>RF-022 / RF-023</strong></td>
+                                    <td>CU-08 Calcular Semáforo</td>
+                                    <td>Sistema</td>
+                                    <td>Ficha Personal + Monitor Semáforo</td>
+                                    <td>RN-007 / RN-008 (Semáforo)</td>
+                                    <td><span class="badge-semaforo badge-semaforo-verde">100% Funcional</span></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>RF-015</strong></td>
+                                    <td>CU-05 Atención Multietapa</td>
+                                    <td>Gestor Social</td>
+                                    <td>Vista "Atención Social"</td>
+                                    <td>RN-012 (Máx 3 gestiones)</td>
+                                    <td><span class="badge-semaforo badge-semaforo-verde">100% Funcional</span></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Extensión</strong></td>
+                                    <td>CU-07 Notificar Duplicado</td>
+                                    <td>Sistema</td>
+                                    <td>Modal de Advertencia Duplicado</td>
+                                    <td>Evitar doble cómputo</td>
+                                    <td><span class="badge-semaforo badge-semaforo-verde">100% Funcional</span></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Extensión</strong></td>
+                                    <td>CU-08 / CU-09 Error Validación</td>
+                                    <td>Sistema</td>
+                                    <td>Modal de Campos Incompletos</td>
+                                    <td>Integridad de formulario</td>
+                                    <td><span class="badge-semaforo badge-semaforo-verde">100% Funcional</span></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Operativo</strong></td>
+                                    <td>CA-03 Compromiso Vencido</td>
+                                    <td>Sistema</td>
+                                    <td>Modal Alerta Operativa</td>
+                                    <td>No dejar caer compromisos</td>
+                                    <td><span class="badge-semaforo badge-semaforo-verde">100% Funcional</span></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+</div>
+
+<!-- ==========================================================================
+     MODALES INTERACTIVOS (CU-04, CU-07, CU-08, CA-03, etc.)
+     ========================================================================== -->
+
+<!-- 1. MODAL VISOR Y VALIDACIÓN DE EVIDENCIA (CU-04 - ROL VERIFICADOR) -->
+<div class="modal-overlay" id="modal-evidencia">
+    <div class="modal-container" style="max-width: 800px;">
+        <div class="modal-header">
+            <div>
+                <h3 id="modal-evi-titulo">Validación de Evidencia EVI-2026-0742</h3>
+                <span style="font-size: 0.75rem; color: var(--text-secondary);" id="modal-evi-subtitulo">
+                    Funcionario: Marcela Gómez Pizarro | Delegación Las Compañías
+                </span>
+            </div>
+            <button class="modal-close" onclick="sgrApp.closeModal('modal-evidencia')">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                <div>
+                    <img id="modal-evi-img" src="assets/evidencia_social.jpg" alt="Evidencia" style="width: 100%; height: 260px; object-fit: cover; border-radius: 8px; border: 1px solid var(--border-color); cursor: zoom-in;" onclick="window.open(this.src)">
+                    <div style="font-size: 0.72rem; color: var(--text-muted); margin-top: 6px; text-align: center;">
+                        <i data-lucide="map-pin" style="width: 12px; height: 12px;"></i> <span id="modal-evi-geo">Delegación Las Compañías, La Serena</span>
+                    </div>
+                </div>
+                <div>
+                    <div style="margin-bottom: 12px;">
+                        <label class="form-label">Ítem Evaluado:</label>
+                        <div style="font-size: 0.85rem; font-weight: 700;" id="modal-evi-item">Fichas de Asistencia Social Multietapa</div>
+                    </div>
+                    <div style="margin-bottom: 12px;">
+                        <label class="form-label">Descripción de la Actividad:</label>
+                        <div style="font-size: 0.8rem; color: var(--text-secondary);" id="modal-evi-desc">
+                            Atención y diagnóstico socioeconómico urgente a adulto mayor en situación de vulnerabilidad.
+                        </div>
+                    </div>
+                    <div style="margin-bottom: 12px;">
+                        <label class="form-label">Contacto Vecinal:</label>
+                        <div style="font-size: 0.8rem;" id="modal-evi-contacto">Teresa Araya Godoy (+56 9 9231 4455)</div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Observaciones del Verificador <span class="req">*</span>:</label>
+                        <textarea class="form-control" id="modal-evi-observacion" rows="3" placeholder="Ingrese el dictamen técnico o fundamento de la aprobación/rechazo..."></textarea>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-outline" onclick="sgrApp.closeModal('modal-evidencia')">Cancelar</button>
+            <button class="btn btn-danger" onclick="sgrApp.dictaminarEvidencia('RECHAZADA')">
+                <i data-lucide="x"></i>
+                <span>Rechazar Evidencia</span>
+            </button>
+            <button class="btn btn-success" onclick="sgrApp.dictaminarEvidencia('APROBADA')">
+                <i data-lucide="check"></i>
+                <span>Aprobar Evidencia (+1 Avance)</span>
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- 2. MODAL ALERTA DE DUPLICADO (CU-07 NOTIFICAR EMPLEADO/REGISTRO DUPLICADO) -->
+<div class="modal-overlay" id="modal-duplicado">
+    <div class="modal-container" style="max-width: 480px; text-align: center;">
+        <div class="modal-body" style="padding-top: 32px;">
+            <div class="alert-icon-big alert-icon-amber">
+                <i data-lucide="alert-triangle"></i>
+            </div>
+            <h3 style="font-size: 1.3rem; margin-bottom: 10px;">¡Actividad Potencialmente Duplicada!</h3>
+            <p style="font-size: 0.88rem; color: var(--text-secondary); line-height: 1.6;">
+                El sistema detectó que ya existe un registro idéntico con fecha <strong>14-08-2026</strong> en el lugar <strong>Plaza Central Algarrobito</strong> bajo el folio <code>EVI-2026-0741</code>.
+            </p>
+            <div style="background: var(--bg-app); border: 1px dashed var(--border-color); padding: 12px; border-radius: 8px; margin-top: 16px; font-size: 0.78rem; text-align: left;">
+                <strong>Caso de Uso CU-07:</strong> El sistema rechaza el doble registro para garantizar la transparencia de los indicadores municipales.
+            </div>
+        </div>
+        <div class="modal-footer" style="justify-content: center;">
+            <button class="btn btn-primary" onclick="sgrApp.closeModal('modal-duplicado')">Comprendido, Corregir Registro</button>
+        </div>
+    </div>
+</div>
+
+<!-- 3. MODAL ERROR DE VALIDACIÓN / DATOS INCOMPLETOS (CU-08 / CU-09) -->
+<div class="modal-overlay" id="modal-error-validacion">
+    <div class="modal-container" style="max-width: 480px; text-align: center;">
+        <div class="modal-body" style="padding-top: 32px;">
+            <div class="alert-icon-big alert-icon-red">
+                <i data-lucide="alert-octagon"></i>
+            </div>
+            <h3 style="font-size: 1.3rem; margin-bottom: 10px;">Error de Validación en el Formulario</h3>
+            <p style="font-size: 0.88rem; color: var(--text-secondary); line-height: 1.6;" id="modal-error-msg">
+                Existen campos obligatorios sin completar o con formato inválido. Por favor complete la descripción y la evidencia fotográfica antes de guardar.
+            </p>
+            <div style="background: var(--bg-app); border: 1px dashed var(--border-color); padding: 12px; border-radius: 8px; margin-top: 16px; font-size: 0.78rem; text-align: left;">
+                <strong>Caso de Uso CU-08 & CU-09:</strong> Gestión de Error de Validación y Detección de Datos Incompletos.
+            </div>
+        </div>
+        <div class="modal-footer" style="justify-content: center;">
+            <button class="btn btn-danger" onclick="sgrApp.closeModal('modal-error-validacion')">Revisar Campos Faltantes</button>
+        </div>
+    </div>
+</div>
+
+<!-- 4. MODAL ALERTA COMPROMISO VENCIDO (CA-03 "QUE NO EXPLOTE LA BOMBA") -->
+<div class="modal-overlay" id="modal-alerta-vencido">
+    <div class="modal-container" style="max-width: 520px;">
+        <div class="modal-header" style="background: var(--semaforo-rojo-bg); border-bottom-color: rgba(239, 68, 68, 0.3);">
+            <div style="display: flex; align-items: center; gap: 10px; color: var(--semaforo-rojo-text);">
+                <i data-lucide="alarm-clock-off" style="width: 24px; height: 24px;"></i>
+                <h3 style="color: var(--semaforo-rojo-text);">Alerta Operativa: Compromiso Vencido</h3>
+            </div>
+            <button class="modal-close" onclick="sgrApp.closeModal('modal-alerta-vencido')">&times;</button>
+        </div>
+        <div class="modal-body">
+            <p style="font-size: 0.88rem; color: var(--text-primary); line-height: 1.6; margin-bottom: 14px;">
+                Se ha detectado un compromiso con la comunidad cuya fecha límite ha expirado sin registrarse como <strong>Realizado</strong>:
+            </p>
+            <div style="background: var(--bg-app); padding: 16px; border-radius: 8px; border-left: 4px solid var(--semaforo-rojo);">
+                <div style="font-weight: 700; font-size: 0.95rem;">Asamblea El Romero APR - Fosa Séptica Móvil</div>
+                <div style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 4px;">
+                    Solicitante: JJ.VV El Romero | Responsable: Carlos Miranda Vera
+                </div>
+                <div style="font-size: 0.8rem; color: var(--semaforo-rojo); font-weight: 700; margin-top: 6px;">
+                    Fecha Comprometida: 10-08-2026 (Expiró hace 4 días)
+                </div>
+            </div>
+            <p style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 14px;">
+                <strong>Criterio CA-03 & PPT Slide 13:</strong> "Informar al usuario cuando no podamos cumplir en fecha para que no explote la bomba". Se debe reprogramar e informar a la directiva comunitaria.
+            </p>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-outline" onclick="sgrApp.closeModal('modal-alerta-vencido')">Cerrar</button>
+            <button class="btn btn-gold" onclick="sgrApp.reprogramarCompromiso('TUB-2026-02')">
+                <i data-lucide="calendar"></i>
+                <span>Reprogramar Fecha y Notificar</span>
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- 5. MODAL NUEVO COMPROMISO AGENDA COLECTIVA -->
+<div class="modal-overlay" id="modal-nuevo-compromiso">
+    <div class="modal-container" style="max-width: 580px;">
+        <div class="modal-header">
+            <h3>Nuevo Compromiso con la Comunidad</h3>
+            <button class="modal-close" onclick="sgrApp.closeModal('modal-nuevo-compromiso')">&times;</button>
+        </div>
+        <form onsubmit="sgrApp.handleSubmitCompromiso(event)">
+            <div class="modal-body">
+                <div class="form-grid">
+                    <div class="form-group full-width">
+                        <label class="form-label">Origen / Motivo del Compromiso <span class="req">*</span></label>
+                        <input type="text" class="form-control" id="modal-comp-origen" placeholder="Ej: Solicitud de contenedores de basura" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Vecino o Entidad Solicitante <span class="req">*</span></label>
+                        <input type="text" class="form-control" id="modal-comp-solicitante" placeholder="Ej: JJ.VV Las Rojas" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Territorio / Localidad <span class="req">*</span></label>
+                        <input type="text" class="form-control" id="modal-comp-territorio" placeholder="Ej: Las Rojas, Sector Cancha" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Fecha Comprometida <span class="req">*</span></label>
+                        <input type="date" class="form-control" id="modal-comp-fecha" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Área Municipal de Apoyo</label>
+                        <input type="text" class="form-control" id="modal-comp-area" placeholder="Ej: Dirección de Aseo y Ornato">
+                    </div>
+                    <div class="form-group full-width">
+                        <label class="form-label">Observación o Detalle</label>
+                        <textarea class="form-control" id="modal-comp-obs" rows="2" placeholder="Detalles de la gestión a realizar..."></textarea>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline" onclick="sgrApp.closeModal('modal-nuevo-compromiso')">Cancelar</button>
+                <button type="submit" class="btn btn-primary">Crear Compromiso</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- 6. MODAL DETALLE CASO SOCIAL Y GESTIÓN MULTIETAPA (RN-012) -->
+<div class="modal-overlay" id="modal-caso-social">
+    <div class="modal-container" style="max-width: 680px;">
+        <div class="modal-header">
+            <div>
+                <h3 id="modal-caso-titulo">Ficha Social: Teresa Araya Godoy</h3>
+                <span style="font-size: 0.75rem; color: var(--text-secondary);" id="modal-caso-subtitulo">
+                    RUT: 5.892.311-2 | Tramo RSH: 40% Menor Ingreso
+                </span>
+            </div>
+            <button class="modal-close" onclick="sgrApp.closeModal('modal-caso-social')">&times;</button>
+        </div>
+        <div class="modal-body">
+            <h4 style="font-size: 0.95rem; margin-bottom: 12px;">Historial de Gestiones Multietapa (Máximo 3 - RN-012):</h4>
+            <div id="modal-caso-timeline" style="display: flex; flex-direction: column; gap: 14px;">
+                <!-- Timeline generado por JS -->
+            </div>
+
+            <!-- Formulario para agregar siguiente etapa -->
+            <div id="modal-caso-agregar-wrapper" style="margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--border-color);">
+                <h5 style="font-size: 0.85rem; margin-bottom: 8px;">Registrar Siguiente Gestión para este Caso:</h5>
+                <div class="form-group">
+                    <textarea class="form-control" id="modal-nueva-gestion-texto" rows="2" placeholder="Detalle la derivación, subsidio o entrega de ayuda efectuada..."></textarea>
+                </div>
+                <button type="button" class="btn btn-primary btn-sm" style="margin-top: 8px;" onclick="sgrApp.agregarGestionActual()">
+                    <i data-lucide="plus"></i>
+                    <span>Guardar Gestión en Ficha Única</span>
+                </button>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-outline" onclick="sgrApp.closeModal('modal-caso-social')">Cerrar</button>
+        </div>
+    </div>
+</div>
+
+<!-- 7. MODAL BÚSQUEDA GLOBAL RÁPIDA (CTRL + K) -->
+<div class="modal-overlay" id="modal-search">
+    <div class="modal-container" style="max-width: 600px;">
+        <div style="padding: 16px; border-bottom: 1px solid var(--border-color); display: flex; align-items: center; gap: 12px;">
+            <i data-lucide="search" style="color: var(--text-muted);"></i>
+            <input type="text" id="modal-search-input" placeholder="Buscar por código, funcionario, vecino, ítem o delegación..." style="width: 100%; border: none; outline: none; font-size: 1rem; background: transparent; color: var(--text-primary);" oninput="sgrApp.executeGlobalSearch(this.value)">
+            <button class="modal-close" onclick="sgrApp.closeModal('modal-search')">&times;</button>
+        </div>
+        <div class="modal-body" style="max-height: 380px; padding: 12px 16px;">
+            <div id="search-results-list" style="display: flex; flex-direction: column; gap: 8px;">
+                <div style="color: var(--text-muted); font-size: 0.82rem; text-align: center; padding: 20px;">
+                    Escriba al menos 2 letras para buscar en toda la plataforma...
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Contenedor para Alertas Flotantes (Toasts) -->
+<div class="toast-container" id="toast-container"></div>
+
+<!-- Scripts de la Aplicación Mockup -->
+<script src="js/data.js"></script>
+<script src="js/calculations.js"></script>
+<script src="js/app.js"></script>
+
+<script>
+    // Inicializar iconos de Lucide al cargar el DOM
+    document.addEventListener("DOMContentLoaded", () => {
+        lucide.createIcons();
+    });
+</script>
+
+</body>
+</html>

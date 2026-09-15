@@ -1,0 +1,46 @@
+# =============================================================================
+# .gitignore - Sistema de Gestión de Resultados (SGR) La Serena
+# Proyecto Integrado INACAP - Profesor Jorge Cortés
+# =============================================================================
+
+# Entornos Virtuales de Python
+.venv/
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Bytecode y Caché de Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.pytest_cache/
+
+# IDEs y Editores de Código
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.project
+.pydevproject
+.settings/
+
+# Archivos de Sistema Operativo
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# Logs y Archivos Temporales de Ejecución
+*.log
+*.tmp
+*.bak
+scratch/
+.tempmediaStorage/

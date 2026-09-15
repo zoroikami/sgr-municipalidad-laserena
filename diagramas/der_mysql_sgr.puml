@@ -1,0 +1,192 @@
+@startuml DER_MySQL_SGR
+!theme plain
+skinparam backgroundColor #FFFFFF
+skinparam roundcorner 4
+skinparam defaultFontName Arial
+skinparam defaultFontSize 10
+
+title Diagrama Entidad-Relación Relacional (DER) MySQL 8.0\nSistema de Gestión de Resultados (SGR) - Ilustre Municipalidad de La Serena
+
+entity "delegacion" as delegacion {
+    * id_delegacion : INT [PK]
+    --
+    * codigo : VARCHAR(20) [UQ]
+    * nombre : VARCHAR(100)
+    * direccion : VARCHAR(200)
+    * telefono : VARCHAR(25)
+    * activa : BOOLEAN
+}
+
+entity "rol" as rol {
+    * id_rol : INT [PK]
+    --
+    * codigo : VARCHAR(30) [UQ]
+    * nombre : VARCHAR(80)
+}
+
+entity "cargo" as cargo {
+    * id_cargo : INT [PK]
+    --
+    * nombre_cargo : VARCHAR(100) [UQ]
+    * departamento : VARCHAR(100)
+}
+
+entity "usuario" as usuario {
+    * id_usuario : INT [PK]
+    --
+    * id_delegacion : INT [FK]
+    * id_cargo : INT [FK]
+    * rut : VARCHAR(12) [UQ]
+    * nombres : VARCHAR(100)
+    * apellidos : VARCHAR(100)
+    * email : VARCHAR(120) [UQ]
+    * password_hash : VARCHAR(255)
+    * estado : ENUM('Activo','Inactivo')
+}
+
+entity "usuario_rol" as usuario_rol {
+    * id_usuario : INT [PK, FK]
+    * id_rol : INT [PK, FK]
+}
+
+entity "periodo_medicion" as periodo_medicion {
+    * id_periodo : INT [PK]
+    --
+    * codigo : VARCHAR(20) [UQ]
+    * nombre : VARCHAR(100)
+    * fecha_inicio : DATE
+    * fecha_termino : DATE
+    * dias_totales : INT
+}
+
+entity "item_medicion" as item_medicion {
+    * id_item : INT [PK]
+    --
+    * codigo : VARCHAR(30) [UQ]
+    * nombre_item : VARCHAR(150)
+    * unidad_medida : VARCHAR(50)
+}
+
+entity "meta_item" as meta_item {
+    * id_meta : INT [PK]
+    --
+    * id_periodo : INT [FK]
+    * id_cargo : INT [FK]
+    * id_item : INT [FK]
+    * meta_cantidad : INT
+    * ponderacion_porcentaje : DECIMAL(5,2)
+}
+
+entity "actividad" as actividad {
+    * id_actividad : INT [PK]
+    --
+    * id_usuario : INT [FK]
+    * id_delegacion : INT [FK]
+    * id_item : INT [FK]
+    * codigo_actividad : VARCHAR(30) [UQ]
+    * fecha_realizacion : DATE
+    * sector_territorio : VARCHAR(150)
+    * solicitante : VARCHAR(150)
+    * descripcion : TEXT
+}
+
+entity "evidencia" as evidencia {
+    * id_evidencia : INT [PK]
+    --
+    * id_actividad : INT [FK, UQ 1:1]
+    * codigo_evidencia : VARCHAR(30) [UQ]
+    * ruta_fotografia : VARCHAR(255)
+    * estado_validacion : ENUM
+}
+
+entity "validacion_evidencia" as validacion_evidencia {
+    * id_validacion : INT [PK]
+    --
+    * id_evidencia : INT [FK]
+    * id_verificador : INT [FK]
+    * fecha_validacion : TIMESTAMP
+    * dictamen : ENUM('Aprobado','Rechazado')
+    observacion_tecnica : TEXT
+}
+
+entity "persona_usuaria" as persona_usuaria {
+    * id_persona : INT [PK]
+    --
+    * rut : VARCHAR(12) [UQ]
+    * nombre_completo : VARCHAR(150)
+    * id_delegacion : INT [FK]
+    * total_gestiones_periodo : INT
+}
+
+entity "atencion_social" as atencion_social {
+    * id_atencion : INT [PK]
+    --
+    * id_persona : INT [FK]
+    * id_gestor : INT [FK]
+    * numero_gestion : INT (1-3)
+    * fecha_atencion : DATE
+    * tipo_beneficio : VARCHAR(100)
+}
+
+entity "compromiso_agenda" as compromiso_agenda {
+    * id_compromiso : INT [PK]
+    --
+    * id_delegacion : INT [FK]
+    * id_responsable : INT [FK]
+    * codigo_compromiso : VARCHAR(30) [UQ]
+    * solicitante_dirigente : VARCHAR(150)
+    * fecha_limite : DATE
+    * estado : ENUM('Ingresado','Pendiente','En_Proceso','Realizado')
+}
+
+entity "historial_compromiso" as historial_compromiso {
+    * id_historial : INT [PK]
+    --
+    * id_compromiso : INT [FK]
+    * id_usuario_cambio : INT [FK]
+    * estado_anterior : ENUM
+    * estado_nuevo : ENUM
+}
+
+entity "indicador_desempeno" as indicador_desempeno {
+    * id_indicador : INT [PK]
+    --
+    * id_usuario : INT [FK]
+    * id_periodo : INT [FK]
+    * fecha_calculo : DATE
+    * porcentaje_ponderado : DECIMAL(5,2)
+    * semaforo : ENUM('Verde','Ambar','Rojo')
+}
+
+entity "registro_auditoria" as registro_auditoria {
+    * id_auditoria : BIGINT [PK]
+    --
+    id_usuario : INT [FK]
+    * fecha_hora : TIMESTAMP
+    * accion : VARCHAR(80)
+    * tabla_afectada : VARCHAR(60)
+}
+
+delegacion ||--o{ usuario : "1:N"
+cargo ||--o{ usuario : "1:N"
+usuario ||--o{ usuario_rol : "1:N"
+rol ||--o{ usuario_rol : "1:N"
+periodo_medicion ||--o{ meta_item : "1:N"
+cargo ||--o{ meta_item : "1:N"
+item_medicion ||--o{ meta_item : "1:N"
+usuario ||--o{ actividad : "1:N"
+delegacion ||--o{ actividad : "1:N"
+item_medicion ||--o{ actividad : "1:N"
+actividad ||--|| evidencia : "1:1"
+evidencia ||--o{ validacion_evidencia : "1:N"
+usuario ||--o{ validacion_evidencia : "1:N"
+delegacion ||--o{ persona_usuaria : "1:N"
+persona_usuaria ||--|{ atencion_social : "1:1..3"
+usuario ||--o{ atencion_social : "1:N"
+delegacion ||--o{ compromiso_agenda : "1:N"
+usuario ||--o{ compromiso_agenda : "1:N"
+compromiso_agenda ||--|{ historial_compromiso : "1:N"
+usuario ||--o{ indicador_desempeno : "1:N"
+periodo_medicion ||--o{ indicador_desempeno : "1:N"
+
+@enduml

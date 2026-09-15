@@ -1,0 +1,392 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1500 1120" width="100%" height="100%" style="background-color: #f8fafc; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+  <defs>
+    <linearGradient id="gradHeader" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#1e3a8a" />
+      <stop offset="100%" stop-color="#0284c7" />
+    </linearGradient>
+    <linearGradient id="gradRoot" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#1e3a8a" />
+      <stop offset="100%" stop-color="#172554" />
+    </linearGradient>
+    <filter id="shadow" x="-3%" y="-3%" width="106%" height="108%" filterUnits="userSpaceOnUse">
+      <feDropShadow dx="0" dy="4" stdDeviation="4" flood-color="#0f172a" flood-opacity="0.08" />
+    </filter>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1 L 10 5 L 0 9 z" fill="#64748b" />
+    </marker>
+    <marker id="hollowArrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <polygon points="0,2 9,5 0,8" fill="#ffffff" stroke="#64748b" stroke-width="1.5" />
+    </marker>
+  </defs>
+
+  <!-- Banner Superior Institucional -->
+  <rect x="0" y="0" width="1500" height="70" fill="url(#gradHeader)" />
+  <text x="30" y="32" fill="#ffffff" font-size="20" font-weight="700">ILUSTRE MUNICIPALIDAD DE LA SERENA - SISTEMA DE GESTIÓN DE RESULTADOS (SGR)</text>
+  <text x="30" y="54" fill="#bae6fd" font-size="13">DIAGRAMA JERÁRQUICO DE REQUERIMIENTOS SYSML / VISUAL PARADIGM | EVALUACIÓN PROYECTO INTEGRADO</text>
+  <text x="1470" y="44" fill="#ffffff" font-size="12" text-anchor="end" font-weight="600">INACAP 2026 - PROF. JORGE CORTÉS</text>
+
+  <!-- Requerimiento Raíz / Meta Institucional -->
+  <g transform="translate(425, 95)" filter="url(#shadow)">
+    <rect width="650" height="110" rx="8" fill="#ffffff" stroke="#1e3a8a" stroke-width="2" />
+    <path d="M 0 8 Q 0 0 8 0 L 642 0 Q 650 0 650 8 L 650 32 L 0 32 Z" fill="url(#gradRoot)" />
+    <text x="325" y="21" fill="#ffffff" font-size="12" font-weight="700" text-anchor="middle">«requirement» REQ-ROOT-00: Meta Institucional DISERCO La Serena</text>
+    <text x="20" y="52" fill="#0f172a" font-size="12" font-weight="600">Id: REQ-ROOT-00</text>
+    <text x="20" y="70" fill="#334155" font-size="11.5">Text: Modernizar y transparentar la gestión de resultados territoriales de las 6 delegaciones</text>
+    <text x="20" y="86" fill="#334155" font-size="11.5">de La Serena mediante trazabilidad rigurosa de evidencias, semaforización diaria y agenda</text>
+    <text x="20" y="102" fill="#334155" font-size="11.5">colectiva de compromisos vecinales con los dirigentes comunitarios.</text>
+  </g>
+
+  <!-- Líneas Conectoras desde Raíz a Épicas -->
+  <path d="M 750 205 L 750 235" stroke="#64748b" stroke-width="1.8" stroke-dasharray="5,4" />
+  <path d="M 195 235 L 1305 235" stroke="#64748b" stroke-width="1.8" stroke-dasharray="5,4" />
+  
+  <path d="M 195 235 L 195 270" stroke="#64748b" stroke-width="1.8" stroke-dasharray="5,4" marker-end="url(#hollowArrow)" />
+  <path d="M 565 235 L 565 270" stroke="#64748b" stroke-width="1.8" stroke-dasharray="5,4" marker-end="url(#hollowArrow)" />
+  <path d="M 935 235 L 935 270" stroke="#64748b" stroke-width="1.8" stroke-dasharray="5,4" marker-end="url(#hollowArrow)" />
+  <path d="M 1305 235 L 1305 270" stroke="#64748b" stroke-width="1.8" stroke-dasharray="5,4" marker-end="url(#hollowArrow)" />
+
+  <text x="750" y="228" fill="#475569" font-size="10.5" font-weight="600" text-anchor="middle" background="#ffffff">«deriveReqt»</text>
+
+  <!-- FILA 1 DE ÉPICAS (Y = 270) -->
+
+  <!-- EP-01: Identidad y Perfiles -->
+  <g transform="translate(30, 270)" filter="url(#shadow)">
+    <rect width="330" height="375" rx="8" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5" />
+    <rect width="330" height="30" rx="8" fill="#e0f2fe" />
+    <text x="165" y="20" fill="#0369a1" font-size="12" font-weight="700" text-anchor="middle">EP-01: Identidad y Perfiles Territoriales</text>
+
+    <!-- RF-01 -->
+    <g transform="translate(12, 40)">
+      <rect width="306" height="70" rx="6" fill="#f8fafc" stroke="#94a3b8" />
+      <text x="10" y="18" fill="#0f172a" font-size="11" font-weight="700">«RF-001» Autenticación de Usuarios</text>
+      <text x="10" y="34" fill="#475569" font-size="9.5">Id: RF-001 | Rol: Todos los funcionarios</text>
+      <text x="10" y="48" fill="#334155" font-size="9.5">Autenticación unificada con credenciales</text>
+      <text x="10" y="60" fill="#334155" font-size="9.5">institucionales y validación de estado activo.</text>
+    </g>
+
+    <!-- RF-02 -->
+    <g transform="translate(12, 118)">
+      <rect width="306" height="70" rx="6" fill="#f8fafc" stroke="#94a3b8" />
+      <text x="10" y="18" fill="#0f172a" font-size="11" font-weight="700">«RF-002» Control de Acceso por Roles</text>
+      <text x="10" y="34" fill="#475569" font-size="9.5">Id: RF-002 | Rol: Funcionario, Verificador, etc.</text>
+      <text x="10" y="48" fill="#334155" font-size="9.5">Restricción de vistas y permisos según matriz</text>
+      <text x="10" y="60" fill="#334155" font-size="9.5">de perfiles comunales oficial de La Serena.</text>
+    </g>
+
+    <!-- RF-03 -->
+    <g transform="translate(12, 196)">
+      <rect width="306" height="70" rx="6" fill="#f8fafc" stroke="#94a3b8" />
+      <text x="10" y="18" fill="#0f172a" font-size="11" font-weight="700">«RF-003» Asignación por Delegación</text>
+      <text x="10" y="34" fill="#475569" font-size="9.5">Id: RF-003 | Rol: Administrador</text>
+      <text x="10" y="48" fill="#334155" font-size="9.5">Adscripción territorial a una de las 6</text>
+      <text x="10" y="60" fill="#334155" font-size="9.5">delegaciones oficiales municipales.</text>
+    </g>
+
+    <!-- RNF-01 -->
+    <g transform="translate(12, 274)">
+      <rect width="306" height="65" rx="6" fill="#fef2f2" stroke="#f87171" />
+      <text x="10" y="18" fill="#991b1b" font-size="11" font-weight="700">«RNF-001» Cifrado y Sesión Segura</text>
+      <text x="10" y="34" fill="#7f1d1d" font-size="9.5">Id: RNF-001 | Categoría: Seguridad</text>
+      <text x="10" y="48" fill="#7f1d1d" font-size="9.5">Hash seguro para claves y cierre automático</text>
+      <text x="10" y="59" fill="#7f1d1d" font-size="9.5">de sesión tras 15 minutos de inactividad.</text>
+    </g>
+
+    <text x="165" y="360" fill="#64748b" font-size="9" text-anchor="middle">Refinamiento: RF-001 «refine» RNF-001</text>
+  </g>
+
+  <!-- EP-02: Registro Operativo de Terreno -->
+  <g transform="translate(400, 270)" filter="url(#shadow)">
+    <rect width="330" height="375" rx="8" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5" />
+    <rect width="330" height="30" rx="8" fill="#f0fdf4" />
+    <text x="165" y="20" fill="#166534" font-size="12" font-weight="700" text-anchor="middle">EP-02: Registro Operativo de Terreno</text>
+
+    <!-- RF-04 -->
+    <g transform="translate(12, 40)">
+      <rect width="306" height="58" rx="6" fill="#f8fafc" stroke="#94a3b8" />
+      <text x="10" y="17" fill="#0f172a" font-size="11" font-weight="700">«RF-004» Formulario Dinámico por Cargo</text>
+      <text x="10" y="32" fill="#475569" font-size="9.5">Id: RF-004 | Rol: Funcionario Territorial</text>
+      <text x="10" y="46" fill="#334155" font-size="9.5">Despliegue exclusivo de ítems según cargo.</text>
+    </g>
+
+    <!-- RF-05 -->
+    <g transform="translate(12, 104)">
+      <rect width="306" height="58" rx="6" fill="#f8fafc" stroke="#94a3b8" />
+      <text x="10" y="17" fill="#0f172a" font-size="11" font-weight="700">«RF-005» Generación Código EVI-2026</text>
+      <text x="10" y="32" fill="#475569" font-size="9.5">Id: RF-005 | Rol: Sistema SGR</text>
+      <text x="10" y="46" fill="#334155" font-size="9.5">Código correlativo alfanumérico inmutable.</text>
+    </g>
+
+    <!-- RF-06 -->
+    <g transform="translate(12, 168)">
+      <rect width="306" height="58" rx="6" fill="#f8fafc" stroke="#94a3b8" />
+      <text x="10" y="17" fill="#0f172a" font-size="11" font-weight="700">«RF-006» Respaldo Fotográfico y Geo</text>
+      <text x="10" y="32" fill="#475569" font-size="9.5">Id: RF-006 | Rol: Funcionario Territorial</text>
+      <text x="10" y="46" fill="#334155" font-size="9.5">Carga de fotografía de terreno y sector.</text>
+    </g>
+
+    <!-- RF-07 -->
+    <g transform="translate(12, 232)">
+      <rect width="306" height="58" rx="6" fill="#f8fafc" stroke="#94a3b8" />
+      <text x="10" y="17" fill="#0f172a" font-size="11" font-weight="700">«RF-007» Detección de Duplicados</text>
+      <text x="10" y="32" fill="#475569" font-size="9.5">Id: RF-007 | Rol: Sistema SGR</text>
+      <text x="10" y="46" fill="#334155" font-size="9.5">Bloqueo de misma fecha, ítem y solicitante.</text>
+    </g>
+
+    <!-- RNF-02 -->
+    <g transform="translate(12, 296)">
+      <rect width="306" height="58" rx="6" fill="#fffbeb" stroke="#f59e0b" />
+      <text x="10" y="17" fill="#92400e" font-size="11" font-weight="700">«RNF-002» Validación Visual y Modales</text>
+      <text x="10" y="32" fill="#78350f" font-size="9.5">Id: RNF-002 | Categoría: Usabilidad / UX</text>
+      <text x="10" y="46" fill="#78350f" font-size="9.5">Modales contextuales de advertencia y error.</text>
+    </g>
+
+    <text x="165" y="366" fill="#64748b" font-size="9" text-anchor="middle">Refinamiento: RF-004 «refine» RF-005, RF-006, RF-007</text>
+  </g>
+
+  <!-- EP-03: Bandeja de Verificación -->
+  <g transform="translate(770, 270)" filter="url(#shadow)">
+    <rect width="330" height="375" rx="8" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5" />
+    <rect width="330" height="30" rx="8" fill="#fdf4ff" />
+    <text x="165" y="20" fill="#86198f" font-size="12" font-weight="700" text-anchor="middle">EP-03: Bandeja de Verificación y Calidad</text>
+
+    <!-- RF-08 -->
+    <g transform="translate(12, 40)">
+      <rect width="306" height="75" rx="6" fill="#f8fafc" stroke="#94a3b8" />
+      <text x="10" y="18" fill="#0f172a" font-size="11" font-weight="700">«RF-008» Bandeja de Evidencias</text>
+      <text x="10" y="34" fill="#475569" font-size="9.5">Id: RF-008 | Rol: Verificador Técnico</text>
+      <text x="10" y="48" fill="#334155" font-size="9.5">Listado clasificado de evidencias pendientes</text>
+      <text x="10" y="60" fill="#334155" font-size="9.5">ordenadas por fecha y delegación comunal.</text>
+    </g>
+
+    <!-- RF-09 -->
+    <g transform="translate(12, 125)">
+      <rect width="306" height="85" rx="6" fill="#f8fafc" stroke="#94a3b8" />
+      <text x="10" y="18" fill="#0f172a" font-size="11" font-weight="700">«RF-009» Aprobación y Rechazo Técnico</text>
+      <text x="10" y="34" fill="#475569" font-size="9.5">Id: RF-009 | Rol: Verificador Técnico</text>
+      <text x="10" y="48" fill="#334155" font-size="9.5">Dictamen de aprobación, rechazo o solicitud</text>
+      <text x="10" y="60" fill="#334155" font-size="9.5">de corrección con registro de observación</text>
+      <text x="10" y="72" fill="#334155" font-size="9.5">obligatoria que actualiza el semáforo diario.</text>
+    </g>
+
+    <!-- RNF-03 -->
+    <g transform="translate(12, 220)">
+      <rect width="306" height="75" rx="6" fill="#eff6ff" stroke="#3b82f6" />
+      <text x="10" y="18" fill="#1e40af" font-size="11" font-weight="700">«RNF-003» Rendimiento y Zoom de Imagen</text>
+      <text x="10" y="34" fill="#1e3a8a" font-size="9.5">Id: RNF-003 | Categoría: Rendimiento</text>
+      <text x="10" y="48" fill="#1e3a8a" font-size="9.5">Tiempo de respuesta inferior a 1.5s y visor</text>
+      <text x="10" y="60" fill="#1e3a8a" font-size="9.5">con capacidad de zoom fotográfico en modal.</text>
+    </g>
+
+    <text x="165" y="340" fill="#64748b" font-size="9" text-anchor="middle">Refinamiento: RF-008 «refine» RF-009, RNF-003</text>
+  </g>
+
+  <!-- EP-04: Atención Social Multietapa -->
+  <g transform="translate(1140, 270)" filter="url(#shadow)">
+    <rect width="330" height="375" rx="8" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5" />
+    <rect width="330" height="30" rx="8" fill="#fff1f2" />
+    <text x="165" y="20" fill="#be123c" font-size="12" font-weight="700" text-anchor="middle">EP-04: Atención Social Multietapa</text>
+
+    <!-- RF-10 -->
+    <g transform="translate(12, 40)">
+      <rect width="306" height="75" rx="6" fill="#f8fafc" stroke="#94a3b8" />
+      <text x="10" y="18" fill="#0f172a" font-size="11" font-weight="700">«RF-010» Ficha de Persona Usuaria</text>
+      <text x="10" y="34" fill="#475569" font-size="9.5">Id: RF-010 | Rol: Gestor Social</text>
+      <text x="10" y="48" fill="#334155" font-size="9.5">Registro único de antecedentes de vecinos</text>
+      <text x="10" y="60" fill="#334155" font-size="9.5">vulnerables sin duplicación de fichas.</text>
+    </g>
+
+    <!-- RF-11 -->
+    <g transform="translate(12, 125)">
+      <rect width="306" height="85" rx="6" fill="#f8fafc" stroke="#94a3b8" />
+      <text x="10" y="18" fill="#0f172a" font-size="11" font-weight="700">«RF-011» Concatenación (Hasta 3 Gestiones)</text>
+      <text x="10" y="34" fill="#475569" font-size="9.5">Id: RF-011 | Rol: Gestor Social</text>
+      <text x="10" y="48" fill="#334155" font-size="9.5">Registro de hasta 3 visitas o beneficios</text>
+      <text x="10" y="60" fill="#334155" font-size="9.5">por persona en el período y bloqueo de una</text>
+      <text x="10" y="72" fill="#334155" font-size="9.5">cuarta atención conforme a la regla RN-10.</text>
+    </g>
+
+    <!-- RF-12 -->
+    <g transform="translate(12, 220)">
+      <rect width="306" height="75" rx="6" fill="#f8fafc" stroke="#94a3b8" />
+      <text x="10" y="18" fill="#0f172a" font-size="11" font-weight="700">«RF-012» Línea de Tiempo Social</text>
+      <text x="10" y="34" fill="#475569" font-size="9.5">Id: RF-012 | Rol: Gestor Social / Delegado</text>
+      <text x="10" y="48" fill="#334155" font-size="9.5">Visualización cronológica interactiva del</text>
+      <text x="10" y="60" fill="#334155" font-size="9.5">historial de ayudas y atenciones entregadas.</text>
+    </g>
+
+    <text x="165" y="340" fill="#64748b" font-size="9" text-anchor="middle">Refinamiento: RF-010 «refine» RF-011, RF-012</text>
+  </g>
+
+  <!-- FILA 2 DE ÉPICAS (Y = 675) -->
+
+  <!-- Líneas Conectoras desde Raíz a Fila 2 -->
+  <path d="M 195 235 L 195 675" stroke="#64748b" stroke-width="1.2" stroke-dasharray="4,4" />
+  <path d="M 565 235 L 565 675" stroke="#64748b" stroke-width="1.2" stroke-dasharray="4,4" />
+  <path d="M 935 235 L 935 675" stroke="#64748b" stroke-width="1.2" stroke-dasharray="4,4" />
+  <path d="M 1305 235 L 1305 675" stroke="#64748b" stroke-width="1.2" stroke-dasharray="4,4" />
+
+  <!-- EP-05: Tubo de Trabajo y Agenda -->
+  <g transform="translate(30, 675)" filter="url(#shadow)">
+    <rect width="330" height="395" rx="8" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5" />
+    <rect width="330" height="30" rx="8" fill="#fef3c7" />
+    <text x="165" y="20" fill="#b45309" font-size="12" font-weight="700" text-anchor="middle">EP-05: Tubo de Trabajo y Agenda Colectiva</text>
+
+    <!-- RF-13 -->
+    <g transform="translate(12, 40)">
+      <rect width="306" height="58" rx="6" fill="#f8fafc" stroke="#94a3b8" />
+      <text x="10" y="17" fill="#0f172a" font-size="11" font-weight="700">«RF-013» Compromiso Vecinal</text>
+      <text x="10" y="32" fill="#475569" font-size="9.5">Id: RF-013 | Rol: Delegado / Funcionario</text>
+      <text x="10" y="46" fill="#334155" font-size="9.5">Registro con fecha límite, sector y área.</text>
+    </g>
+
+    <!-- RF-14 -->
+    <g transform="translate(12, 104)">
+      <rect width="306" height="58" rx="6" fill="#f8fafc" stroke="#94a3b8" />
+      <text x="10" y="17" fill="#0f172a" font-size="11" font-weight="700">«RF-014» Flujo Kanban de 4 Estados</text>
+      <text x="10" y="32" fill="#475569" font-size="9.5">Id: RF-014 | Rol: Equipo Territorial</text>
+      <text x="10" y="46" fill="#334155" font-size="9.5">Ingresado, Pendiente, En Proceso, Realizado.</text>
+    </g>
+
+    <!-- RF-15 -->
+    <g transform="translate(12, 168)">
+      <rect width="306" height="58" rx="6" fill="#f8fafc" stroke="#94a3b8" />
+      <text x="10" y="17" fill="#0f172a" font-size="11" font-weight="700">«RF-015» Alerta de Vencimiento</text>
+      <text x="10" y="32" fill="#475569" font-size="9.5">Id: RF-015 | Rol: Sistema SGR</text>
+      <text x="10" y="46" fill="#334155" font-size="9.5">Identificación visual de plazos vencidos o &lt;48h.</text>
+    </g>
+
+    <!-- RF-16 -->
+    <g transform="translate(12, 232)">
+      <rect width="306" height="58" rx="6" fill="#f8fafc" stroke="#94a3b8" />
+      <text x="10" y="17" fill="#0f172a" font-size="11" font-weight="700">«RF-016» Reasignación por Licencia</text>
+      <text x="10" y="32" fill="#475569" font-size="9.5">Id: RF-016 | Rol: Delegado Municipal</text>
+      <text x="10" y="46" fill="#334155" font-size="9.5">Transferencia de titular por ausencia o feriado.</text>
+    </g>
+
+    <text x="165" y="340" fill="#64748b" font-size="9" text-anchor="middle">Refinamiento: RF-013 «refine» RF-014, RF-015, RF-016</text>
+  </g>
+
+  <!-- EP-06: Motor de Cálculo y Semáforo -->
+  <g transform="translate(400, 675)" filter="url(#shadow)">
+    <rect width="330" height="395" rx="8" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5" />
+    <rect width="330" height="30" rx="8" fill="#ecfdf5" />
+    <text x="165" y="20" fill="#047857" font-size="12" font-weight="700" text-anchor="middle">EP-06: Motor de Semáforo Diario</text>
+
+    <!-- RF-17 -->
+    <g transform="translate(12, 40)">
+      <rect width="306" height="75" rx="6" fill="#f8fafc" stroke="#94a3b8" />
+      <text x="10" y="18" fill="#0f172a" font-size="11" font-weight="700">«RF-017» Avance Ponderado al 100%</text>
+      <text x="10" y="34" fill="#475569" font-size="9.5">Id: RF-017 | Rol: Sistema SGR</text>
+      <text x="10" y="48" fill="#334155" font-size="9.5">Cálculo matemático estricto por sumatoria</text>
+      <text x="10" y="60" fill="#334155" font-size="9.5">de avances por ítem multiplicados por su peso.</text>
+    </g>
+
+    <!-- RF-18 -->
+    <g transform="translate(12, 125)">
+      <rect width="306" height="85" rx="6" fill="#f8fafc" stroke="#94a3b8" />
+      <text x="10" y="18" fill="#0f172a" font-size="11" font-weight="700">«RF-018» Semáforo Proporcional Diario</text>
+      <text x="10" y="34" fill="#475569" font-size="9.5">Id: RF-018 | Rol: Sistema SGR</text>
+      <text x="10" y="48" fill="#334155" font-size="9.5">Comparación diaria entre avance real e ideal</text>
+      <text x="10" y="60" fill="#334155" font-size="9.5">según día del período (Día 76/91):</text>
+      <text x="10" y="72" fill="#334155" font-size="9.5">Verde (en meta), Ámbar (&lt;15%), Rojo (crítico).</text>
+    </g>
+
+    <!-- RNF-04 -->
+    <g transform="translate(12, 220)">
+      <rect width="306" height="75" rx="6" fill="#eff6ff" stroke="#3b82f6" />
+      <text x="10" y="18" fill="#1e40af" font-size="11" font-weight="700">«RNF-004» Precisión Numérica (2 Decimales)</text>
+      <text x="10" y="34" fill="#1e3a8a" font-size="9.5">Id: RNF-004 | Categoría: Calidad / Precisión</text>
+      <text x="10" y="48" fill="#1e3a8a" font-size="9.5">Tolerancia matemática exacta de dos decimales</text>
+      <text x="10" y="60" fill="#1e3a8a" font-size="9.5">con redondeo estándar y sin desfase acumulado.</text>
+    </g>
+
+    <text x="165" y="340" fill="#64748b" font-size="9" text-anchor="middle">Refinamiento: RF-017 «refine» RF-018, RNF-004</text>
+  </g>
+
+  <!-- EP-07: Tableros de Mando y Reportería -->
+  <g transform="translate(770, 675)" filter="url(#shadow)">
+    <rect width="330" height="395" rx="8" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5" />
+    <rect width="330" height="30" rx="8" fill="#e0e7ff" />
+    <text x="165" y="20" fill="#3730a3" font-size="12" font-weight="700" text-anchor="middle">EP-07: Tableros y Reportería Territorial</text>
+
+    <!-- RF-19 -->
+    <g transform="translate(12, 40)">
+      <rect width="306" height="75" rx="6" fill="#f8fafc" stroke="#94a3b8" />
+      <text x="10" y="18" fill="#0f172a" font-size="11" font-weight="700">«RF-019» Tablero Resumen de Delegación</text>
+      <text x="10" y="34" fill="#475569" font-size="9.5">Id: RF-019 | Rol: Delegado Municipal</text>
+      <text x="10" y="48" fill="#334155" font-size="9.5">Consolidado con semáforos, porcentajes</text>
+      <text x="10" y="60" fill="#334155" font-size="9.5">y metas individuales de todo el equipo.</text>
+    </g>
+
+    <!-- RF-20 -->
+    <g transform="translate(12, 125)">
+      <rect width="306" height="75" rx="6" fill="#f8fafc" stroke="#94a3b8" />
+      <text x="10" y="18" fill="#0f172a" font-size="11" font-weight="700">«RF-020» Gráficos Estadísticos y Radar</text>
+      <text x="10" y="34" fill="#475569" font-size="9.5">Id: RF-020 | Rol: Delegado / Supervisor</text>
+      <text x="10" y="48" fill="#334155" font-size="9.5">Visualización comparativa mediante Chart.js</text>
+      <text x="10" y="60" fill="#334155" font-size="9.5">para balances de gestión y concejo municipal.</text>
+    </g>
+
+    <!-- RF-21 -->
+    <g transform="translate(12, 210)">
+      <rect width="306" height="75" rx="6" fill="#f8fafc" stroke="#94a3b8" />
+      <text x="10" y="18" fill="#0f172a" font-size="11" font-weight="700">«RF-021» Buscador Global Omnibox</text>
+      <text x="10" y="34" fill="#475569" font-size="9.5">Id: RF-021 | Rol: Todos los perfiles</text>
+      <text x="10" y="48" fill="#334155" font-size="9.5">Búsqueda rápida por código EVI, nombre de</text>
+      <text x="10" y="60" fill="#334155" font-size="9.5">vecino, RUT o territorio con atajo Ctrl+K.</text>
+    </g>
+
+    <text x="165" y="340" fill="#64748b" font-size="9" text-anchor="middle">Refinamiento: RF-019 «refine» RF-020, RF-021</text>
+  </g>
+
+  <!-- EP-08: Administración y Auditoría -->
+  <g transform="translate(1140, 675)" filter="url(#shadow)">
+    <rect width="330" height="395" rx="8" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5" />
+    <rect width="330" height="30" rx="8" fill="#f1f5f9" />
+    <text x="165" y="20" fill="#334155" font-size="12" font-weight="700" text-anchor="middle">EP-08: Administración, Base de Datos y Auditoría</text>
+
+    <!-- RF-22 -->
+    <g transform="translate(12, 40)">
+      <rect width="306" height="70" rx="6" fill="#f8fafc" stroke="#94a3b8" />
+      <text x="10" y="18" fill="#0f172a" font-size="11" font-weight="700">«RF-022» Parametrización de Metas</text>
+      <text x="10" y="34" fill="#475569" font-size="9.5">Id: RF-022 | Rol: Administrador Central</text>
+      <text x="10" y="48" fill="#334155" font-size="9.5">Definición de fechas trimestrales y metas</text>
+      <text x="10" y="60" fill="#334155" font-size="9.5">cuantitativas asignadas a cada cargo.</text>
+    </g>
+
+    <!-- RF-23 -->
+    <g transform="translate(12, 118)">
+      <rect width="306" height="70" rx="6" fill="#f8fafc" stroke="#94a3b8" />
+      <text x="10" y="18" fill="#0f172a" font-size="11" font-weight="700">«RF-023» Control de Suma al 100%</text>
+      <text x="10" y="34" fill="#475569" font-size="9.5">Id: RF-023 | Rol: Sistema SGR</text>
+      <text x="10" y="48" fill="#334155" font-size="9.5">Validación estricta de que las ponderaciones</text>
+      <text x="10" y="60" fill="#334155" font-size="9.5">sumen 100% impidiendo guardado erróneo.</text>
+    </g>
+
+    <!-- RF-24 -->
+    <g transform="translate(12, 196)">
+      <rect width="306" height="70" rx="6" fill="#f8fafc" stroke="#94a3b8" />
+      <text x="10" y="18" fill="#0f172a" font-size="11" font-weight="700">«RF-024» Bitácora Inmutable de Auditoría</text>
+      <text x="10" y="34" fill="#475569" font-size="9.5">Id: RF-024 | Rol: Oficial de Seguridad / Auditor</text>
+      <text x="10" y="48" fill="#334155" font-size="9.5">Registro de transacciones con fecha, hora,</text>
+      <text x="10" y="60" fill="#334155" font-size="9.5">IP, usuario y valores anterior y nuevo.</text>
+    </g>
+
+    <!-- RNF-05 -->
+    <g transform="translate(12, 274)">
+      <rect width="306" height="65" rx="6" fill="#eff6ff" stroke="#3b82f6" />
+      <text x="10" y="18" fill="#1e40af" font-size="11" font-weight="700">«RNF-005» Integridad Referencial MySQL</text>
+      <text x="10" y="34" fill="#1e3a8a" font-size="9.5">Id: RNF-005 | Categoría: Integridad BD</text>
+      <text x="10" y="48" fill="#1e3a8a" font-size="9.5">Tercera Forma Normal (3FN) y restricciones</text>
+      <text x="10" y="59" fill="#1e3a8a" font-size="9.5">ON DELETE RESTRICT en claves foráneas.</text>
+    </g>
+
+    <text x="165" y="360" fill="#64748b" font-size="9" text-anchor="middle">Refinamiento: RF-022 «refine» RF-023, RF-024, RNF-005</text>
+  </g>
+
+  <!-- Pie de Diagrama -->
+  <rect x="30" y="1080" width="1440" height="30" rx="4" fill="#0f172a" />
+  <text x="45" y="1100" fill="#94a3b8" font-size="11">Notación: SysML / Visual Paradigm (Stereotype «requirement») | Trazabilidad: RF-001 a RF-024, RNF-001 a RNF-005 | Proyecto Integrado INACAP</text>
+  <text x="1455" y="1100" fill="#38bdf8" font-size="11" text-anchor="end">Coherencia Institucional Garantizada 100%</text>
+
+</svg>

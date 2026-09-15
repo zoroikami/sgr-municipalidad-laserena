@@ -1,0 +1,73 @@
+@startuml Caso_Uso_General_SGR
+!theme plain
+skinparam backgroundColor #FFFFFF
+skinparam roundcorner 8
+skinparam defaultFontName Arial
+skinparam defaultFontSize 11
+skinparam packageBackgroundColor #F8FAFC
+skinparam packageBorderColor #64748B
+left to right direction
+
+title Diagrama General de Casos de Uso (Alto Nivel)\nSistema de Gestión de Resultados (SGR) - Ilustre Municipalidad de La Serena
+
+actor "Funcionario\nTerritorial" as ACT_FUNC #e0f2fe
+actor "Gestor\nSocial" as ACT_SOC #fce7f3
+actor "Verificador\nTécnico" as ACT_VERIF #f3e8ff
+actor "Delegado\nMunicipal" as ACT_DEL #fef3c7
+actor "Supervisor\nDISERCO" as ACT_SUP #e0e7ff
+actor "Administrador\nCentral" as ACT_ADMIN #fee2e2
+actor "Vecino /\nCiudadano" as ACT_VECINO #f1f5f9
+
+rectangle "Sistema de Gestión de Resultados (SGR) - Municipalidad de La Serena" as SGR_BOUNDARY {
+    usecase "CU-01: Autenticar Usuario y Controlar Sesión" as CU01
+    usecase "CU-02: Registrar Actividad en Terreno con Evidencia" as CU02
+    usecase "CU-03: Generar Código Único EVI-2026-XXXX" as CU03
+    usecase "CU-04: Validar y Dictaminar Evidencia Fotográfica" as CU04
+    usecase "CU-05: Registrar Atención Social Multietapa (Máx 3)" as CU05
+    usecase "CU-06: Crear Compromiso en Agenda Colectiva" as CU06
+    usecase "CU-07: Actualizar Estado en Tubo de Trabajo" as CU07
+    usecase "CU-08: Calcular Avance Ponderado y Semáforo Diario" as CU08
+    usecase "CU-09: Consultar Tablero Consolidado de Delegación" as CU09
+    usecase "CU-10: Configurar Período, Metas y Ponderadores" as CU10
+    usecase "CU-11: Administrar Catálogos y 6 Delegaciones" as CU11
+    usecase "CU-12: Auditar Bitácora Inmutable de Eventos" as CU12
+}
+
+ACT_FUNC --> CU01
+ACT_FUNC --> CU02
+ACT_FUNC --> CU06
+ACT_FUNC --> CU07
+ACT_FUNC --> CU08
+
+ACT_SOC --> CU01
+ACT_SOC --> CU05
+ACT_SOC --> CU06
+ACT_SOC --> CU07
+ACT_SOC --> CU08
+
+ACT_VERIF --> CU01
+ACT_VERIF --> CU04
+
+ACT_DEL --> CU01
+ACT_DEL --> CU06
+ACT_DEL --> CU07
+ACT_DEL --> CU08
+ACT_DEL --> CU09
+
+ACT_SUP --> CU01
+ACT_SUP --> CU08
+ACT_SUP --> CU09
+ACT_SUP --> CU12
+
+ACT_ADMIN --> CU01
+ACT_ADMIN --> CU10
+ACT_ADMIN --> CU11
+ACT_ADMIN --> CU12
+
+CU05 ..> ACT_VECINO : <<recibe atención>>
+CU06 ..> ACT_VECINO : <<plantea solicitud>>
+
+CU02 ..> CU03 : <<include>>
+CU04 ..> CU08 : <<include>>
+
+@enduml
