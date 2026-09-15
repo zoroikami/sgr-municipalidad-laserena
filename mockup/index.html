@@ -3,13 +3,65 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SGR | Sistema de Gestión de Resultados - Ilustre Municipalidad de La Serena</title>
+    <title>SGR La Serena | Sistema de Gestión de Resultados</title>
     <meta name="description" content="Prototipo funcional de alta fidelidad del Sistema de Gestión de Resultados (SGR) de la Ilustre Municipalidad de La Serena. Evaluación de Análisis y Diseño de Software INACAP.">
     <link rel="icon" type="image/jpeg" href="assets/logo_laserena.jpg">
     
     <!-- CSS del Sistema de Diseño -->
     <link rel="stylesheet" href="css/styles.css">
     
+    <!-- Identidad visual SGR La Serena: rojo institucional + blanco patrimonial -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@600;700;800&display=swap" rel="stylesheet">
+    <style id="laserena-redesign">
+        :root {
+            --color-navy: #8e1525; --color-navy-dark: #5d0e19;
+            --color-gold: #c94a42; --color-gold-dark: #9f2f2b;
+            --bg-app: #f8f5f2; --bg-card: #ffffff; --bg-sidebar: #ffffff;
+            --text-primary: #2b2525; --text-secondary: #756b68; --text-muted: #9d918d;
+            --border-color: #eadfdc; --shadow-sm: 0 2px 10px rgba(93,14,25,.06);
+            --shadow-md: 0 12px 30px rgba(93,14,25,.10); --radius-md: 14px; --radius-lg: 20px;
+            --semaforo-verde: #23845b; --semaforo-verde-bg: #e7f4ed; --semaforo-verde-text: #17603f;
+            --semaforo-ambar: #b87518; --semaforo-ambar-bg: #fff4df; --semaforo-ambar-text: #85500d;
+            --semaforo-rojo: #b42332; --semaforo-rojo-bg: #fbe9eb; --semaforo-rojo-text: #8e1525;
+        }
+        * { scrollbar-color: #cfa8a5 #f8f5f2; }
+        body { background: var(--bg-app); color: var(--text-primary); font-family: 'DM Sans',Inter,system-ui,sans-serif; }
+        h1,h2,h3,h4,.sidebar-title h2,.page-title h1 { font-family: 'Playfair Display',Georgia,serif; letter-spacing: -.02em; }
+        .app-container { background: var(--bg-app); }
+        .sidebar { background: linear-gradient(180deg,#fff 0%,#fff 78%,#fbf2f0 100%); border-right: 1px solid var(--border-color); box-shadow: 8px 0 28px rgba(93,14,25,.05); }
+        .sidebar::before { content:''; display:block; height:7px; background:linear-gradient(90deg,#8e1525,#c94a42,#8e1525); }
+        .sidebar-header { padding-top:24px; }
+        .sidebar-logo { border:3px solid #f1d7d3; box-shadow:0 5px 16px rgba(142,21,37,.14); }
+        .sidebar-title h2 { color:var(--color-navy); font-size:1.18rem; } .sidebar-title p { color:var(--text-secondary); }
+        .menu-category { color:#a16e68; letter-spacing:.1em; font-size:.67rem; }
+        .menu-item a { border-radius:11px; color:#5d5350; } .menu-item a:hover { background:#fff1ef; color:var(--color-navy); }
+        .menu-item.active a { background:linear-gradient(100deg,#8e1525,#b52d39); color:#fff; box-shadow:0 7px 16px rgba(142,21,37,.2); }
+        .menu-item.active a i { color:#fff; } .badge-counter { background:#f8e5e3; color:#8e1525; } .badge-alert { background:#8e1525; color:#fff; }
+        .top-navbar { background:rgba(255,255,255,.94); border-bottom:1px solid var(--border-color); box-shadow:0 3px 16px rgba(93,14,25,.04); backdrop-filter:blur(12px); }
+        .global-search,.period-pill,.role-switcher { border-color:var(--border-color); background:#fffaf9; }
+        .global-search:focus-within { border-color:#c94a42; box-shadow:0 0 0 3px rgba(201,74,66,.12); }
+        .period-pill { color:var(--color-navy); } .period-pill i,.role-switcher i { color:var(--color-gold)!important; }
+        .nav-btn:hover { background:#fff1ef; color:var(--color-navy); }
+        .content-area { position:relative; } .content-area::before { content:'LA SERENA  ·  GESTIÓN QUE CONECTA'; display:block; color:#b98c86; font-size:.65rem; font-weight:700; letter-spacing:.18em; margin:0 0 10px 2px; }
+        .page-header { border-bottom:1px solid var(--border-color); padding-bottom:22px; margin-bottom:24px; }
+        .page-title h1 { color:var(--color-navy-dark); font-size:clamp(1.65rem,2.5vw,2.25rem); } .page-title p { color:var(--text-secondary); }
+        .card,.stat-card,.kanban-col { background:var(--bg-card); border:1px solid var(--border-color); box-shadow:var(--shadow-sm); }
+        .card { border-radius:var(--radius-lg); } .card:hover,.stat-card:hover { box-shadow:var(--shadow-md); border-color:#dfc4c0; } .card-header { border-bottom-color:var(--border-color); } .card-header h3 { color:var(--color-navy-dark); }
+        .btn-primary,.btn-gold,.btn-success { background:linear-gradient(135deg,#8e1525,#b52d39); border-color:#8e1525; color:#fff; box-shadow:0 6px 14px rgba(142,21,37,.18); }
+        .btn-primary:hover,.btn-gold:hover,.btn-success:hover { background:#6d101d; border-color:#6d101d; transform:translateY(-1px); } .btn-outline { border-color:#bd8a84; color:var(--color-navy); background:#fff; } .btn-outline:hover { background:#fff0ee; border-color:var(--color-navy); } .btn-danger { background:#b42332; border-color:#b42332; }
+        .stat-card { border-top:4px solid #c94a42; } .stat-title { color:var(--text-secondary); } .stat-value { color:var(--color-navy-dark); }
+        .stat-icon-wrapper { background:#fbe9e7!important; color:var(--color-navy)!important; } .icon-blue,.icon-gold,.icon-green,.icon-red { color:var(--color-navy)!important; }
+        .sgr-table th { background:#8e1525; color:#fff; border-color:#a52a38; } .sgr-table tr:nth-child(even) { background:#fffaf9; } .sgr-table tr:hover { background:#fff0ee; } .sgr-table td { border-color:var(--border-color); }
+        .form-control { border-color:#dfcbc7; background:#fff; } .form-control:focus { border-color:#c94a42; box-shadow:0 0 0 3px rgba(201,74,66,.12); }
+        .kanban-col { border-radius:16px; background:#fffaf9; } .kanban-col-header { border-radius:13px 13px 0 0; background:#f7e6e3!important; color:var(--color-navy-dark)!important; border-bottom:2px solid #e5c5c0; }
+        .kanban-card { border-left-color:#c94a42!important; box-shadow:0 3px 10px rgba(93,14,25,.06); } .modal-container { border:1px solid #ead2ce; box-shadow:0 22px 60px rgba(93,14,25,.22); }
+        .modal-header { background:#fff7f5; border-bottom-color:var(--border-color); } .modal-header h3 { color:var(--color-navy-dark); } .toast { border-left-color:var(--color-navy); } code { color:var(--color-navy); background:#fbe9e7; }
+        .sidebar-footer { background:#fbf2f0; border-top:1px solid var(--border-color); } .user-info-text .name { color:var(--color-navy-dark); font-weight:700; } .user-info-text .role { color:var(--text-secondary); }
+        @media (max-width:900px) { .content-area::before { margin-top:4px; } .page-title h1 { font-size:1.7rem; } }
+    </style>
+
     <!-- Chart.js para visualización analítica de métricas -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <!-- Lucide Icons -->
