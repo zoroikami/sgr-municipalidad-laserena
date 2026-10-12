@@ -27,14 +27,17 @@ fi
 # 2. Clonar o actualizar repositorio
 if [ ! -d "$APP_DIR" ]; then
     echo "[2/5] Clonando repositorio institucional..."
-    sudo git clone https://github.com/zoroikami/sgr-municipalidad-laserena.git "$APP_DIR"
+    sudo git clone -b feature/SGR-23-segunda-evaluacion-mantenedores-acceso https://github.com/zoroikami/sgr-municipalidad-laserena.git "$APP_DIR"
 else
     echo "[2/5] Actualizando repositorio existente..."
     cd "$APP_DIR"
-    sudo git pull origin main
+    sudo git fetch origin
+    sudo git checkout feature/SGR-23-segunda-evaluacion-mantenedores-acceso
+    sudo git pull origin feature/SGR-23-segunda-evaluacion-mantenedores-acceso
 fi
 
 cd "$APP_DIR"
+sudo git checkout feature/SGR-23-segunda-evaluacion-mantenedores-acceso
 
 # 3. Inicializar base de datos SQLite y datos semilla
 echo "[3/5] Inicializando base de datos relacional y semillas..."
