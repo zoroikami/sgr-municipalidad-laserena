@@ -1,0 +1,223 @@
+/* firma · macro: municipal records · theme: red, wine and warm paper · direction: minimal-modern · critique: P4 J5 E4 F4 H5 V4 */
+/* User palette. Native system typography follows the platform's text rendering. */
+
+:root {
+    --font-ui: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+    --type-title: clamp(1.625rem, 1.25rem + 1vw, 2rem);
+    --type-section: 1.25rem;
+    --type-subtitle: 1.125rem;
+    --type-body: 1rem;
+    --type-control: 0.9375rem;
+    --type-small: 0.875rem;
+    --type-caption: 0.8125rem;
+    --brand-cream: #efe1cf;
+    --brand-sand: #d7b59a;
+    --brand-wine: #4a1417;
+    --brand-page: color-mix(in srgb, var(--brand-cream) 38%, white);
+    --brand-divider: color-mix(in srgb, var(--brand-sand) 60%, white);
+    --brand-accent: #ad0000;
+    --brand-red: #ad0000;
+    --brand-red-dark: var(--brand-wine);
+    --brand-red-hover: var(--brand-wine);
+    --brand-white: #ffffff;
+    --brand-ink: var(--brand-wine);
+    --brand-muted: color-mix(in srgb, var(--brand-wine) 70%, white);
+    --brand-border: color-mix(in srgb, var(--brand-sand) 50%, white);
+    --brand-surface: color-mix(in srgb, var(--brand-cream) 35%, white);
+    --brand-soft: var(--brand-cream);
+    --brand-row-hover: color-mix(in srgb, var(--brand-cream) 26%, white);
+    --brand-row-rule: color-mix(in srgb, var(--brand-sand) 28%, white);
+    --brand-focus: #ad0000;
+    --status-active-bg: #d9f99d;
+    --status-active-ink: #365314;
+    --status-active-border: #bef264;
+    --action-view-bg: #e0f2fe;
+    --action-view-ink: #075985;
+    --action-view-border: #bae6fd;
+    --action-view-pressed: #7dd3fc;
+    --action-edit-bg: #fef3c7;
+    --action-edit-ink: #713f12;
+    --action-edit-border: #fde68a;
+    --action-edit-pressed: #fcd34d;
+    --action-delete-bg: #fee2e2;
+    --action-delete-border: #fecaca;
+    --chrome-on-brand: color-mix(in srgb, var(--brand-white) 14%, transparent);
+    --chrome-on-brand-hover: color-mix(in srgb, var(--brand-white) 22%, transparent);
+    --chrome-on-brand-border: color-mix(in srgb, var(--brand-white) 30%, transparent);
+    --brand-footer: #000000;
+    --brand-footer-text: #999999;
+    --brand-save: #287346;
+    --brand-save-hover: #205d39;
+    --brand-save-active: #194a2d;
+    --brand-save-disabled: #e0e9df;
+    --excel-green: #107c41;
+    --space-xs: 0.25rem;
+    --space-sm: 0.5rem;
+    --space-md: 0.75rem;
+    --space-lg: 1rem;
+    --space-xl: 1.5rem;
+    --space-2xl: 2rem;
+    --ease-ui: cubic-bezier(0.2, 0.7, 0.2, 1);
+
+    --primary: var(--brand-red);
+    --primary-dark: var(--brand-red-dark);
+    --primary-light: var(--brand-red-hover);
+    --primary-soft: var(--brand-soft);
+    --accent: var(--brand-accent);
+    --color-primary: var(--brand-red);
+    --color-primary-dark: var(--brand-red-dark);
+    --color-accent: var(--brand-accent);
+    --color-navy: var(--brand-red);
+    --color-navy-dark: var(--brand-red-dark);
+    --color-navy-light: var(--brand-red-hover);
+    --color-gold: var(--brand-red);
+    --color-gold-dark: var(--brand-red-dark);
+    --color-gold-hover: var(--brand-red-hover);
+    --bg-body: var(--brand-page);
+    --bg-page: var(--brand-page);
+    --bg-app: var(--brand-page);
+    --bg-card: var(--brand-white);
+    --bg-input: var(--brand-white);
+    --bg-header: var(--brand-red);
+    --bg-sidebar: var(--brand-white);
+    --text-main: var(--brand-ink);
+    --text-primary: var(--brand-ink);
+    --text-secondary: var(--brand-muted);
+    --text-muted: var(--brand-muted);
+    --text-light: var(--brand-muted);
+    --border-color: var(--brand-border);
+    --border-focus: var(--brand-focus);
+}
+
+body {
+    background: var(--bg-page) !important;
+    color: var(--brand-ink);
+    font-family: var(--font-ui);
+    font-weight: 400;
+    font-optical-sizing: auto;
+    -webkit-font-smoothing: antialiased;
+}
+
+body :is(div, p, span, a, button, input, select, textarea, label, table, th, td, small, strong, b, h1, h2, h3, h4, h5, h6) {
+    font-family: var(--font-ui) !important;
+}
+
+button, input, select, textarea { font: inherit; }
+h1, h2, h3, h4 { letter-spacing: -0.025em; line-height: 1.2; }
+h1, h2, h3, h4, strong, b { font-weight: 700; }
+.topbar-brand { font-weight: 800; }
+button, a, select { touch-action: manipulation; }
+:is(button, a, input, select, textarea):focus-visible {
+    outline: 2px solid var(--brand-focus);
+    outline-offset: 3px;
+}
+
+.topbar-logo, .sidebar-logo, .navbar-brand img, .auth-header img {
+    object-fit: contain;
+    border-radius: 0;
+    border: 0;
+    padding: 0;
+    box-shadow: none;
+    background: transparent;
+}
+
+.excel-icon { width: 1.25rem; height: 1.25rem; flex-shrink: 0; }
+.btn-export-excel {
+    min-height: 2.75rem;
+    color: var(--excel-green);
+    border-color: var(--brand-border);
+    gap: var(--space-sm);
+    box-shadow: none;
+    white-space: nowrap;
+}
+.btn-export-excel:hover { border-color: var(--excel-green); box-shadow: none; }
+.btn-export-excel:active { background: var(--brand-surface); }
+.btn-export-excel:disabled { background: var(--brand-surface); color: var(--brand-muted); cursor: not-allowed; }
+
+/* Shared identity for the institutional portal and first evaluation. */
+.sidebar, .app-container, .sgr-sidebar { background: var(--brand-white); }
+.sidebar::before, .menu-item.active a, .btn-launch, .btn-gold {
+    background: var(--brand-red) !important;
+}
+.sidebar-logo { width: 3.5rem; height: 3.5rem; }
+.navbar-brand img { width: 3.5rem; height: 3.5rem; }
+.btn-launch, .btn-primary, .btn-gold { box-shadow: none; }
+.btn-launch:hover, .btn-primary:hover, .btn-gold:hover { transform: none; }
+
+/* The SVG has no backing rectangle. Light surfaces use a monochrome ink treatment. */
+.navbar-brand img, .sidebar-logo, .auth-header img, .user-avatar-sm {
+    background: transparent;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+    object-fit: contain;
+    filter: brightness(0) saturate(100%) invert(10%) sepia(32%) saturate(2369%) hue-rotate(326deg) brightness(95%) contrast(99%);
+}
+.topbar-logo { width: 5.5rem; height: 4rem; }
+.navbar-brand img, .sidebar-logo { width: 5rem; height: 4rem; }
+.auth-header img { width: 7rem; height: 6rem; }
+.navbar, .sgr-sidebar, .sidebar { background: var(--brand-surface); }
+.app-container { background: var(--brand-page); }
+.hero-badge, .feature-icon, .badge-pts, .del-chip, .content-area::before {
+    background: var(--brand-soft);
+    border-color: var(--brand-divider);
+    color: var(--brand-red-dark);
+}
+.nav-link-btn.active { background: var(--brand-soft); border-left-color: var(--brand-accent); }
+.auth-wrapper { background: var(--brand-page); }
+.auth-card, .feature-card, .stat-card { border-color: var(--brand-border); }
+.btn-save-attention { background: var(--brand-save); color: var(--brand-white); box-shadow: none; }
+.btn-save-attention:hover { background: var(--brand-save-hover); }
+.btn-save-attention:active { background: var(--brand-save-active); }
+.btn-save-attention:focus-visible { outline-color: var(--brand-save); }
+.btn-save-attention:disabled {
+    background: var(--brand-save-disabled);
+    color: var(--brand-muted);
+    cursor: not-allowed;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+}
+
+/* Copyright strip matches the municipal portal, at the end of every page. */
+.municipal-copyright {
+    width: 100%;
+    margin: 0;
+    padding: var(--space-sm);
+    background: var(--brand-footer);
+    color: var(--brand-footer-text);
+    border: 0;
+    text-align: left;
+    line-height: 1.5;
+}
+.municipal-copyright small { font-size: var(--type-small); font-weight: 400; }
+.municipal-copyright p { margin: 0; color: inherit; }
+
+/* Platform-style chrome: a shared rhythm for navigation, controls and the footer. */
+.municipal-copyright {
+    padding: var(--space-lg) var(--space-2xl);
+    line-height: 1.5;
+}
+.municipal-copyright small { display: block; font-size: var(--type-caption); }
+.navbar, .top-navbar {
+    background: color-mix(in srgb, var(--brand-white) 94%, transparent);
+    backdrop-filter: blur(16px);
+    border-bottom: 1px solid var(--brand-border);
+    box-shadow: none;
+}
+.sidebar, .sidebar-footer { background: var(--brand-surface); box-shadow: none; }
+.menu-item a { border-radius: 8px; }
+.btn-launch, .btn-gold, .btn-outline {
+    min-height: 2.75rem;
+    border-radius: 8px;
+    font-weight: 500;
+    box-shadow: none;
+}
+@media (max-width: 600px) {
+    .municipal-copyright { padding: var(--space-lg); }
+}
+@media (prefers-reduced-transparency: reduce) {
+    .navbar, .top-navbar { background: var(--brand-white); backdrop-filter: none; }
+}
