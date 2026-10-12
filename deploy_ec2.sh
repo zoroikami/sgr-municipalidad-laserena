@@ -21,8 +21,7 @@ if command -v apt-get &> /dev/null; then
     sudo apt-get install -y python3 python3-pip git curl
 elif command -v dnf &> /dev/null; then
     echo "[1/5] Actualizando paquetes en Amazon Linux 2023..."
-    sudo dnf update -y
-    sudo dnf install -y python3 python3-pip git curl
+    sudo dnf install -y git python3
 fi
 
 # 2. Clonar o actualizar repositorio
