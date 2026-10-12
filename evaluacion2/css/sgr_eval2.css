@@ -38,6 +38,10 @@
 body {
     font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     background-color: var(--bg-page);
+    background-image: url("../assets/fondo_lineas.png");
+    background-repeat: repeat;
+    background-size: 420px auto;
+    background-attachment: fixed;
     color: var(--text-main);
     line-height: 1.5;
     min-height: 100vh;
@@ -165,7 +169,8 @@ body {
 
 /* Barra de Switcher Rápido para Demostración */
 .role-demo-bar {
-    background: #fff4f2;
+    background: rgba(255, 244, 242, 0.90);
+    backdrop-filter: blur(8px);
     border-bottom: 1px solid var(--border-color);
     padding: 6px 28px;
     display: flex;
@@ -218,7 +223,8 @@ body {
 /* Sidebar lateral */
 .sgr-sidebar {
     width: 250px;
-    background: #ffffff;
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(8px);
     border-right: 1px solid var(--border-color);
     flex-shrink: 0;
     padding: 24px 0;
@@ -707,7 +713,11 @@ textarea.form-control {
    ========================================================================== */
 .auth-wrapper {
     min-height: 100vh;
-    background: linear-gradient(135deg, #f8f5f2 0%, #fae8e6 100%);
+    background:
+        linear-gradient(135deg, rgba(248, 245, 242, 0.65) 0%, rgba(250, 232, 230, 0.65) 100%),
+        url("../assets/fondo_lineas.png");
+    background-size: auto, 420px auto;
+    background-attachment: fixed;
     display: flex;
     align-items: center;
     justify-content: center;

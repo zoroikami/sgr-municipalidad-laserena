@@ -1110,3 +1110,27 @@ h1, h2, h3, h4, h5, h6 {
         grid-template-columns: 1fr;
     }
 }
+
+/* ==========================================================================
+   Fondo de líneas topográficas institucionales
+   ========================================================================== */
+body {
+    background-color: var(--bg-app);
+    background-image: url("../assets/fondo_lineas.png");
+    background-repeat: repeat;
+    background-size: 420px auto;
+    background-attachment: fixed;
+}
+
+/* El contenido sigue legible sobre el fondo */
+.card,
+.modal-container {
+    background: var(--bg-card);
+}
+
+/* En modo oscuro, atenuar las líneas para que no choquen */
+[data-theme="dark"] body {
+    background-image: linear-gradient(rgba(9, 14, 23, 0.88), rgba(9, 14, 23, 0.88)),
+                      url("../assets/fondo_lineas.png");
+}
+
