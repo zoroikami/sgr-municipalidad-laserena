@@ -149,15 +149,81 @@ Cada commit se encabeza con el identificador de la tarea de Planner, seguido de 
 
 ---
 
-## 7. Equipo de Desarrollo y Asignación de Roles
+## 7. Segunda Evaluación: Mantenedores, Acceso, Roles y Pruebas
 
-| **Desarrollador 1 (Dev 1)** | Harold Concha
-| **Desarrollador 2 (Dev 2)** | Keoni Vergara
-| **Desarrollador 3 (Dev 3)** | Claudio Romo
+Para la **Segunda Evaluación**, se incorporó la solución operativa integral que cubre el 100% de la pauta y rúbrica oficial:
+
+### Módulos y Pantallas Implementadas:
+1. **Acceso al Sistema (Login):** Validación de credenciales institucionales, diferenciación de perfiles y estados de cuenta.
+2. **Flujo de Recuperación de Contraseña (3 Pasos):**
+   * **Paso 1 (Solicitar Código):** Formulario con respuesta neutra de seguridad institucional.
+   * **Paso 2 (Validar Código):** 6 casillas independientes con captura individual, soporte para pegar (paste), expiración de 10 min y límite estricto de 3 intentos fallidos.
+   * **Paso 3 (Crear Nueva Clave):** Validación en tiempo real de políticas de complejidad (mínimo 8 caracteres, mayúscula, número y símbolo especial) y retorno al login.
+3. **Los Seis Mantenedores (CRUD Completos):**
+   * **CRUD Delegaciones:** Código, nombre, dirección, comuna y estado.
+   * **CRUD Roles:** Código, nombre, descripción, permisos, alcance y estado.
+   * **CRUD Usuarios:** RUT, nombre, correo, rol, delegación asignada y estado.
+   * **CRUD Ítems y Metas:** Código, nombre, descripción, unidad de medida, meta y estado.
+   * **CRUD Tipo de Atención:** Código, nombre, descripción y estado.
+   * **CRUD Sub Atención:** Código, nombre, tipo de atención asociado y estado con validación de integridad referencial.
+   * *Cada mantenedor incluye:* Buscador inteligente en tiempo real, filtro por estado, paginación dinámica, modales de Crear/Editar/Ver y botón funcional de **Exportar a Excel (.xlsx)** con SheetJS.
+4. **Ingreso de Atención Ciudadana:** Formulario dependiente en cascada (Tipo de Atención $\rightarrow$ Subatención), contexto de delegación bloqueado al usuario activo, responsable y timestamp automáticos, y generación de folio correlativo único (`ATN-2026-XXXX`).
+5. **Identidad Visual y Cabecera de Delegación:** Normas gráficas de La Serena (`#8e1525`), logotipo oficial, SweetAlert2 en todas las alertas y distintivo permanente de delegación activa con selector para perfiles comunales.
+6. **Demostración de Roles:** Conmutador evaluativo y control estricto de permisos entre Superadministrador, Coordinador, Delegado Municipal y Operador.
+
+### Credenciales de Demostración para el Evaluador:
+
+| Perfil | Nombre | Correo Electrónico | Contraseña | Alcance Autorizado |
+| :--- | :--- | :--- | :--- | :--- |
+| **Superadministrador** | Harold Concha | `harold.concha@laserena.cl` | `Admin123*` | Todas las delegaciones y todos los mantenedores |
+| **Coordinador** | Keoni Vergara | `keoni.vergara@laserena.cl` | `Coord123*` | Supervisión comunal, metas y atenciones |
+| **Delegado Municipal** | Claudio Romo | `claudio.romo@laserena.cl` | `Deleg123*` | Delegación Las Compañías (`DEL02`) |
+| **Operador / Ventanilla** | Carlos Miranda | `carlos.miranda@laserena.cl` | `Oper123*` | Ingreso de atención en Delegación Centro (`DEL01`) |
+| **Consultor** | Luis Ejemplo | `luis@example.test` | `Luis1234*` | Sólo lectura y auditoría |
+
+### Instrucciones de Ejecución Local:
+
+```bash
+# 1. Inicializar base de datos SQLite relacional
+python server.py --init-db
+
+# 2. Iniciar el servidor SGR (Backend API + Interfaz Web)
+python server.py --port 8000
+
+# 3. Acceder en el navegador:
+# Portal General:     http://localhost:8000/
+# Segunda Evaluación: http://localhost:8000/evaluacion2/index.html
+# API Health:         http://localhost:8000/api/health
+```
+
+### Instrucciones de Despliegue en AWS EC2:
+
+El repositorio incluye el script automatizado [`deploy_ec2.sh`](deploy_ec2.sh) que instala dependencias y configura un servicio `systemd` en el puerto 80:
+
+```bash
+# En la instancia EC2 (Ubuntu o Amazon Linux):
+chmod +x deploy_ec2.sh
+./deploy_ec2.sh
+```
+
+### Plan y Evidencias de Pruebas:
+El informe formal y registro de pruebas de estrés (RPS, percentil 95 y matriz de casos de prueba) se encuentra en:
+* [`docs/PLAN_DE_PRUEBAS_EVAL2.md`](docs/PLAN_DE_PRUEBAS_EVAL2.md)
 
 ---
 
-## 8. Licencia y Derechos Institucionales
+## 8. Equipo de Desarrollo y Asignación de Roles
+
+| Integrante | Rol en el Proyecto |
+| :--- | :--- |
+| **Harold Concha** | Desarrollador 1 (Dev 1) - Módulos de Acceso, Auditoría y Seguridad |
+| **Keoni Vergara** | Desarrollador 2 (Dev 2) - Mantenedores Maestros, Motor de Datos y Despliegue AWS |
+| **Claudio Romo** | Desarrollador 3 (Dev 3) - Atención Ciudadana, Integración UI y Pruebas Funcionales |
+
+---
+
+## 9. Licencia y Derechos Institucionales
 
 Este proyecto ha sido desarrollado exclusivamente con fines académicos para la asignatura **Proyecto Integrado** de la carrera de Informática en **INACAP**, bajo la tutela del docente **Jorge Cortés**.  
 Todos los derechos sobre la identidad visual pertenecen a la **Ilustre Municipalidad de La Serena (2026)**.
+

@@ -44,3 +44,6 @@ desktop.ini
 *.bak
 scratch/
 .tempmediaStorage/
+*.db
+*.sqlite3
+
