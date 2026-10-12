@@ -5,23 +5,20 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SGR La Serena | Sistema de Gestión de Resultados - Portal Institucional</title>
     <meta name="description" content="Portal oficial y prototipo del Sistema de Gestión de Resultados (SGR) de la Ilustre Municipalidad de La Serena. Evaluación de Análisis y Diseño de Software INACAP.">
-    <link rel="icon" type="image/jpeg" href="mockup/assets/logo_laserena.jpg">
+    <link rel="icon" type="image/svg+xml" href="assets/municipal/logo-la-serena.svg">
     
     <!-- Fuentes Tipográficas -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
     
     <!-- Iconos Lucide -->
     <script src="https://unpkg.com/lucide@latest"></script>
 
     <style>
         :root {
-            --color-primary: #8e1525;
-            --color-primary-dark: #5d0e19;
-            --color-accent: #c94a42;
+            --color-primary: #ad0000;
+            --color-primary-dark: #660000;
+            --color-accent: #ad0000;
             --color-gold: #b87518;
-            --bg-body: #f8f5f2;
+            --bg-body: #ffffff;
             --bg-card: #ffffff;
             --text-main: #2b2525;
             --text-secondary: #6e6360;
@@ -143,8 +140,8 @@
             display: inline-flex;
             align-items: center;
             gap: 8px;
-            background: #fff0ee;
-            border: 1px solid #f1c9c4;
+            background: #f9dcdc;
+            border: 1px solid #e6e6e6;
             color: var(--color-primary);
             padding: 6px 16px;
             border-radius: 30px;
@@ -191,7 +188,7 @@
         }
 
         .btn-secondary:hover {
-            background: #fff5f3;
+            background: #f9f9f9;
             border-color: var(--color-accent);
         }
 
@@ -277,7 +274,7 @@
 
         .feature-card:hover {
             box-shadow: var(--shadow-lg);
-            border-color: #dfc4c0;
+            border-color: #cccccc;
         }
 
         .feature-card::before {
@@ -342,7 +339,7 @@
         }
 
         .deliverables-table tr:hover {
-            background: #fff8f7;
+            background: #f9f9f9;
         }
 
         .badge-pts {
@@ -355,7 +352,7 @@
         }
 
         .btn-view-artifact {
-            background: #f8f5f2;
+            background: #ffffff;
             border: 1px solid var(--border-color);
             color: var(--color-primary);
             padding: 6px 14px;
@@ -433,13 +430,14 @@
             }
         }
     </style>
+    <link rel="stylesheet" href="assets/municipal/brand.css">
 </head>
 <body>
 
     <!-- Navbar -->
     <nav class="navbar">
         <a href="#" class="navbar-brand">
-            <img src="mockup/assets/logo_laserena.jpg" alt="Escudo La Serena">
+            <img src="assets/municipal/logo-la-serena.svg" alt="Escudo La Serena">
             <div>
                 <h1>SGR LA SERENA</h1>
                 <p>Gestión de Resultados</p>
@@ -473,7 +471,7 @@
         </p>
 
         <div class="hero-actions">
-            <a href="evaluacion2/index.html" class="btn-launch" style="padding: 16px 32px; font-size: 1.05rem; background: linear-gradient(135deg, #8e1525, #c94a42);">
+            <a href="evaluacion2/index.html" class="btn-launch" style="padding: 16px 32px; font-size: 1.05rem; background: linear-gradient(135deg, #ad0000, #ad0000);">
                 <i data-lucide="arrow-right-circle"></i>
                 <span>INGRESAR A SEGUNDA EVALUACIÓN (SISTEMA COMPLETO)</span>
             </a>
@@ -644,6 +642,10 @@
         <p style="margin-top: 12px; font-size: 0.8rem;">
             Repositorio Oficial: <a href="https://github.com/zoroikami/sgr-municipalidad-laserena" target="_blank">github.com/zoroikami/sgr-municipalidad-laserena</a>
         </p>
+    </footer>
+
+    <footer class="municipal-copyright">
+        <small>© 2026 Ilustre Municipalidad de La Serena. Todos los derechos reservados.</small>
     </footer>
 
     <script>

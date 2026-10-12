@@ -260,12 +260,14 @@ class SGRRequestHandler(SimpleHTTPRequestHandler):
         path = parsed.path
         qs = parse_qs(parsed.query)
 
-        # Enrutamiento de raíz
+        # Redirigir para que el navegador resuelva los recursos relativos en evaluacion2.
         if path == "/" or path == "/index.html":
             eval2_path = os.path.join(os.path.dirname(__file__), "evaluacion2", "index.html")
             if os.path.exists(eval2_path):
-                self.path = "/evaluacion2/index.html"
-                return super().do_GET()
+                self.send_response(302)
+                self.send_header("Location", "/evaluacion2/index.html")
+                self.end_headers()
+                return
 
         # Health check
         if path == "/api/health":

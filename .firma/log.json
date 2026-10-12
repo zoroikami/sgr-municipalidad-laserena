@@ -1,0 +1,42 @@
+[
+  {
+    "date": "2026-10-12",
+    "family": "Product",
+    "macro": "municipal workspace",
+    "theme": "User palette with semantic lime, sky, yellow and red actions",
+    "direction": "minimal-modern",
+    "display": "Native system sans-serif",
+    "nav": "segmented profiles and compact module navigation",
+    "brief": "Apple-style shared controls, restrained header material, compact mobile navigation and consistent footer"
+  },
+  {
+    "date": "2026-10-12",
+    "family": "Product",
+    "macro": "municipal records",
+    "theme": "User red, wine, cream and sand palette",
+    "direction": "minimal-modern",
+    "display": "Native system sans-serif",
+    "nav": "segmented profiles (existing)",
+    "brief": "Apple-inspired table hierarchy, native formal typography, subtle record states and contextual actions"
+  },
+  {
+    "date": "2026-10-12",
+    "family": "Product",
+    "macro": "municipal workspace refinement",
+    "theme": "User cream, sand, terracotta and wine palette",
+    "direction": "minimal-modern",
+    "display": "Futura normal (existing)",
+    "nav": "segmented profiles (existing)",
+    "brief": "Transparent white vector logo, green save action, aligned attention form, history and delegation board"
+  },
+  {
+    "date": "2026-10-12",
+    "family": "Product",
+    "macro": "municipal workspace",
+    "theme": "La Serena",
+    "direction": "minimal-modern",
+    "display": "Futura normal",
+    "nav": "segmented profiles",
+    "brief": "Municipal identity, original logo, white background and Excel export icon"
+  }
+]

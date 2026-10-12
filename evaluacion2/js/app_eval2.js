@@ -98,6 +98,7 @@ class SGRApplication {
 
         // Actualizar chips de demostración de rol
         document.querySelectorAll(".role-chip").forEach(chip => {
+            chip.setAttribute("aria-pressed", String(chip.getAttribute("data-rol") === rol));
             if (chip.getAttribute("data-rol") === rol) {
                 chip.classList.add("active");
             } else {
@@ -124,7 +125,7 @@ class SGRApplication {
         allDelegaciones.forEach(del => {
             const opt = document.createElement("option");
             opt.value = del.codigo;
-            opt.textContent = `${del.codigo} | Delegación ${del.nombre}`;
+            opt.textContent = `Delegación ${del.nombre} · ${del.codigo}`;
             if (del.codigo === this.activeDelegacion) {
                 opt.selected = true;
             }
@@ -138,12 +139,15 @@ class SGRApplication {
         // Deshabilitar el select si el usuario solo tiene una delegación autorizada
         select.disabled = !esComunal;
 
-        // Actualizar texto de soporte
+        // El select nativo conserva teclado y permisos; la etiqueta muestra la jerarquía visual.
+        const actual = allDelegaciones.find(d => d.codigo === this.activeDelegacion);
         const descEl = document.getElementById("header-delegacion-name");
         if (descEl) {
-            const actual = allDelegaciones.find(d => d.codigo === this.activeDelegacion);
             descEl.textContent = actual ? `Delegación ${actual.nombre}` : "Delegación La Serena";
         }
+        const codeEl = document.getElementById("header-delegacion-code");
+        if (codeEl) codeEl.textContent = actual ? actual.codigo : this.activeDelegacion;
+        select.closest(".topbar-delegacion-pill")?.classList.toggle("is-disabled", select.disabled);
     }
 
     onHeaderDelegacionChange(newCodigo) {
@@ -155,7 +159,7 @@ class SGRApplication {
             title: "Contexto Actualizado",
             text: `Has cambiado a la ${delActual ? delActual.nombre : newCodigo}. Todos los listados y registros reflejan este ámbito.`,
             icon: "info",
-            confirmButtonColor: "#8e1525",
+            confirmButtonColor: "var(--primary)",
             timer: 2500
         });
 
@@ -179,8 +183,10 @@ class SGRApplication {
         document.querySelectorAll(".nav-link-btn").forEach(btn => {
             if (btn.getAttribute("data-target") === viewName) {
                 btn.classList.add("active");
+                btn.setAttribute("aria-current", "page");
             } else {
                 btn.classList.remove("active");
+                btn.removeAttribute("aria-current");
             }
         });
 
@@ -273,15 +279,15 @@ class SGRApplication {
         } else {
             tbody.innerHTML = paged.map(del => `
                 <tr>
-                    <td><strong>${del.codigo}</strong></td>
-                    <td>${del.nombre}</td>
+                    <td class="record-code">${del.codigo}</td>
+                    <td class="record-name">${del.nombre}</td>
                     <td>${del.comuna}</td>
                     <td><span class="badge-status ${del.estado.toLowerCase()}">${del.estado}</span></td>
                     <td>
-                        <div class="table-actions">
-                            <button class="action-link view" onclick="sgrApp.openModalView('delegaciones', ${del.id})">Ver</button>
-                            <button class="action-link edit" onclick="sgrApp.openModalEdit('delegaciones', ${del.id})">Editar</button>
-                            <button class="action-link delete" onclick="sgrApp.confirmDelete('delegaciones', ${del.id})">Eliminar</button>
+                        <div class="table-actions" role="group" aria-label="Acciones del registro">
+                            <button type="button" class="action-link view" onclick="sgrApp.openModalView('delegaciones', ${del.id})"><svg class="action-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg><span>Ver</span></button>
+                            <button type="button" class="action-link edit" onclick="sgrApp.openModalEdit('delegaciones', ${del.id})">Editar</button>
+                            <button type="button" class="action-link delete" onclick="sgrApp.confirmDelete('delegaciones', ${del.id})">Eliminar</button>
                         </div>
                     </td>
                 </tr>
@@ -328,15 +334,15 @@ class SGRApplication {
         } else {
             tbody.innerHTML = paged.map(r => `
                 <tr>
-                    <td><strong>${r.codigo}</strong></td>
-                    <td>${r.nombre}</td>
+                    <td class="record-code">${r.codigo}</td>
+                    <td class="record-name">${r.nombre}</td>
                     <td>${r.alcance}</td>
                     <td><span class="badge-status ${r.estado.toLowerCase()}">${r.estado}</span></td>
                     <td>
-                        <div class="table-actions">
-                            <button class="action-link view" onclick="sgrApp.openModalView('roles', ${r.id})">Ver</button>
-                            <button class="action-link edit" onclick="sgrApp.openModalEdit('roles', ${r.id})">Editar</button>
-                            <button class="action-link delete" onclick="sgrApp.confirmDelete('roles', ${r.id})">Eliminar</button>
+                        <div class="table-actions" role="group" aria-label="Acciones del registro">
+                            <button type="button" class="action-link view" onclick="sgrApp.openModalView('roles', ${r.id})"><svg class="action-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg><span>Ver</span></button>
+                            <button type="button" class="action-link edit" onclick="sgrApp.openModalEdit('roles', ${r.id})">Editar</button>
+                            <button type="button" class="action-link delete" onclick="sgrApp.confirmDelete('roles', ${r.id})">Eliminar</button>
                         </div>
                     </td>
                 </tr>
@@ -387,15 +393,15 @@ class SGRApplication {
         } else {
             tbody.innerHTML = paged.map(u => `
                 <tr>
-                    <td><strong>${u.nombre}</strong></td>
+                    <td class="record-name">${u.nombre}</td>
                     <td>${u.email}</td>
                     <td>${u.rol_nombre || u.rol_codigo}</td>
                     <td>${u.delegacion_nombre || u.delegacion_codigo}</td>
                     <td>
-                        <div class="table-actions">
-                            <button class="action-link view" onclick="sgrApp.openModalView('usuarios', ${u.id})">Ver</button>
-                            <button class="action-link edit" onclick="sgrApp.openModalEdit('usuarios', ${u.id})">Editar</button>
-                            <button class="action-link delete" onclick="sgrApp.confirmDelete('usuarios', ${u.id})">Eliminar</button>
+                        <div class="table-actions" role="group" aria-label="Acciones del registro">
+                            <button type="button" class="action-link view" onclick="sgrApp.openModalView('usuarios', ${u.id})"><svg class="action-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg><span>Ver</span></button>
+                            <button type="button" class="action-link edit" onclick="sgrApp.openModalEdit('usuarios', ${u.id})">Editar</button>
+                            <button type="button" class="action-link delete" onclick="sgrApp.confirmDelete('usuarios', ${u.id})">Eliminar</button>
                         </div>
                     </td>
                 </tr>
@@ -440,15 +446,15 @@ class SGRApplication {
         } else {
             tbody.innerHTML = paged.map(i => `
                 <tr>
-                    <td><strong>${i.codigo}</strong></td>
-                    <td>${i.nombre}</td>
+                    <td class="record-code">${i.codigo}</td>
+                    <td class="record-name">${i.nombre}</td>
                     <td>${i.descripcion}</td>
                     <td><span class="badge-status ${i.estado.toLowerCase()}">${i.estado}</span></td>
                     <td>
-                        <div class="table-actions">
-                            <button class="action-link view" onclick="sgrApp.openModalView('items_metas', ${i.id})">Ver</button>
-                            <button class="action-link edit" onclick="sgrApp.openModalEdit('items_metas', ${i.id})">Editar</button>
-                            <button class="action-link delete" onclick="sgrApp.confirmDelete('items_metas', ${i.id})">Eliminar</button>
+                        <div class="table-actions" role="group" aria-label="Acciones del registro">
+                            <button type="button" class="action-link view" onclick="sgrApp.openModalView('items_metas', ${i.id})"><svg class="action-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg><span>Ver</span></button>
+                            <button type="button" class="action-link edit" onclick="sgrApp.openModalEdit('items_metas', ${i.id})">Editar</button>
+                            <button type="button" class="action-link delete" onclick="sgrApp.confirmDelete('items_metas', ${i.id})">Eliminar</button>
                         </div>
                     </td>
                 </tr>
@@ -493,15 +499,15 @@ class SGRApplication {
         } else {
             tbody.innerHTML = paged.map(t => `
                 <tr>
-                    <td><strong>${t.codigo}</strong></td>
-                    <td>${t.nombre}</td>
+                    <td class="record-code">${t.codigo}</td>
+                    <td class="record-name">${t.nombre}</td>
                     <td>${t.descripcion}</td>
                     <td><span class="badge-status ${t.estado.toLowerCase()}">${t.estado}</span></td>
                     <td>
-                        <div class="table-actions">
-                            <button class="action-link view" onclick="sgrApp.openModalView('tipos_atencion', ${t.id})">Ver</button>
-                            <button class="action-link edit" onclick="sgrApp.openModalEdit('tipos_atencion', ${t.id})">Editar</button>
-                            <button class="action-link delete" onclick="sgrApp.confirmDelete('tipos_atencion', ${t.id})">Eliminar</button>
+                        <div class="table-actions" role="group" aria-label="Acciones del registro">
+                            <button type="button" class="action-link view" onclick="sgrApp.openModalView('tipos_atencion', ${t.id})"><svg class="action-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg><span>Ver</span></button>
+                            <button type="button" class="action-link edit" onclick="sgrApp.openModalEdit('tipos_atencion', ${t.id})">Editar</button>
+                            <button type="button" class="action-link delete" onclick="sgrApp.confirmDelete('tipos_atencion', ${t.id})">Eliminar</button>
                         </div>
                     </td>
                 </tr>
@@ -546,15 +552,15 @@ class SGRApplication {
         } else {
             tbody.innerHTML = paged.map(s => `
                 <tr>
-                    <td><strong>${s.codigo}</strong></td>
-                    <td>${s.nombre}</td>
+                    <td class="record-code">${s.codigo}</td>
+                    <td class="record-name">${s.nombre}</td>
                     <td>${s.tipo_nombre}</td>
                     <td><span class="badge-status ${s.estado.toLowerCase()}">${s.estado}</span></td>
                     <td>
-                        <div class="table-actions">
-                            <button class="action-link view" onclick="sgrApp.openModalView('sub_atenciones', ${s.id})">Ver</button>
-                            <button class="action-link edit" onclick="sgrApp.openModalEdit('sub_atenciones', ${s.id})">Editar</button>
-                            <button class="action-link delete" onclick="sgrApp.confirmDelete('sub_atenciones', ${s.id})">Eliminar</button>
+                        <div class="table-actions" role="group" aria-label="Acciones del registro">
+                            <button type="button" class="action-link view" onclick="sgrApp.openModalView('sub_atenciones', ${s.id})"><svg class="action-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg><span>Ver</span></button>
+                            <button type="button" class="action-link edit" onclick="sgrApp.openModalEdit('sub_atenciones', ${s.id})">Editar</button>
+                            <button type="button" class="action-link delete" onclick="sgrApp.confirmDelete('sub_atenciones', ${s.id})">Eliminar</button>
                         </div>
                     </td>
                 </tr>
@@ -641,7 +647,7 @@ class SGRApplication {
                 title: "Campos Incompletos",
                 text: "Por favor complete todos los campos obligatorios (*) antes de guardar.",
                 icon: "warning",
-                confirmButtonColor: "#8e1525"
+                confirmButtonColor: "var(--primary)"
             });
             return;
         }
@@ -672,7 +678,7 @@ class SGRApplication {
                 title: "¡Atención Registrada!",
                 html: `
                     <div style="text-align: left; font-size: 0.92rem; line-height: 1.6;">
-                        <p><strong>Folio Único:</strong> <span style="color:#8e1525; font-size:1.1rem; font-weight:700;">${folioGenerado}</span></p>
+                        <p><strong>Folio Único:</strong> <span style="color:var(--primary); font-size:1.1rem; font-weight:700;">${folioGenerado}</span></p>
                         <p><strong>Solicitante:</strong> ${solicitante}</p>
                         <p><strong>Delegación:</strong> ${delObj ? delObj.nombre : 'Centro'}</p>
                         <p><strong>Clasificación:</strong> ${tipoObj?.nombre} &rarr; ${subObj?.nombre}</p>
@@ -680,7 +686,7 @@ class SGRApplication {
                     </div>
                 `,
                 icon: "success",
-                confirmButtonColor: "#8e1525"
+                confirmButtonColor: "var(--primary)"
             });
 
             // Limpiar formulario
@@ -696,7 +702,7 @@ class SGRApplication {
                 title: "Error al registrar",
                 text: err.message,
                 icon: "error",
-                confirmButtonColor: "#8e1525"
+                confirmButtonColor: "var(--primary)"
             });
         }
     }
@@ -709,7 +715,7 @@ class SGRApplication {
             showCancelButton: true,
             confirmButtonText: "Sí, descartar",
             cancelButtonText: "Continuar editando",
-            confirmButtonColor: "#8e1525"
+            confirmButtonColor: "var(--primary)"
         }).then(res => {
             if (res.isConfirmed) {
                 document.getElementById("atn-solicitante").value = "";
@@ -756,12 +762,12 @@ class SGRApplication {
         } else {
             tbody.innerHTML = paged.map(a => `
                 <tr>
-                    <td><strong>${a.folio}</strong></td>
-                    <td>${a.solicitante_nombre}</td>
+                    <td class="record-code">${a.folio}</td>
+                    <td class="record-name">${a.solicitante_nombre}</td>
                     <td>${a.delegacion_nombre}</td>
-                    <td>${a.tipo_nombre} &rarr; ${a.subtipo_nombre}</td>
+                    <td><span class="record-name">${a.tipo_nombre}</span><span class="record-secondary">${a.subtipo_nombre}</span></td>
                     <td>${a.responsable_nombre}</td>
-                    <td><small>${a.fecha_registro}</small></td>
+                    <td class="record-date">${a.fecha_registro}</td>
                 </tr>
             `).join("");
         }
@@ -1189,7 +1195,7 @@ class SGRApplication {
                 title: "¡Guardado exitoso!",
                 text: "Los datos han sido persistidos correctamente.",
                 icon: "success",
-                confirmButtonColor: "#8e1525",
+                confirmButtonColor: "var(--primary)",
                 timer: 2000
             });
             this.renderCurrentView();
@@ -1199,7 +1205,7 @@ class SGRApplication {
                 title: "Error de validación",
                 text: err.message,
                 icon: "error",
-                confirmButtonColor: "#8e1525"
+                confirmButtonColor: "var(--primary)"
             });
         }
     }
@@ -1216,7 +1222,7 @@ class SGRApplication {
                     title: "Restricción de Integridad",
                     text: `No es posible eliminar '${nombre}' porque existen ${vinculados.length} subatenciones vinculadas a él. Debe reasignar o desactivar primero.`,
                     icon: "error",
-                    confirmButtonColor: "#8e1525"
+                    confirmButtonColor: "var(--primary)"
                 });
                 return;
             }
@@ -1229,7 +1235,7 @@ class SGRApplication {
             showCancelButton: true,
             confirmButtonText: "Sí, eliminar",
             cancelButtonText: "Cancelar",
-            confirmButtonColor: "#8e1525",
+            confirmButtonColor: "var(--primary)",
             cancelButtonColor: "#6e6360"
         }).then(async res => {
             if (res.isConfirmed) {
@@ -1239,7 +1245,7 @@ class SGRApplication {
                         title: "Registro eliminado",
                         text: `'${nombre}' ha sido eliminado exitosamente.`,
                         icon: "success",
-                        confirmButtonColor: "#8e1525",
+                        confirmButtonColor: "var(--primary)",
                         timer: 2000
                     });
                     this.renderCurrentView();
@@ -1248,7 +1254,7 @@ class SGRApplication {
                         title: "Error al eliminar",
                         text: err.message,
                         icon: "error",
-                        confirmButtonColor: "#8e1525"
+                        confirmButtonColor: "var(--primary)"
                     });
                 }
             }
@@ -1293,7 +1299,7 @@ class SGRApplication {
                 title: "Correo Requerido",
                 text: "Por favor ingrese un correo electrónico válido.",
                 icon: "warning",
-                confirmButtonColor: "#8e1525"
+                confirmButtonColor: "var(--primary)"
             });
             return;
         }
@@ -1323,13 +1329,13 @@ class SGRApplication {
             title: "Código Generado",
             html: `
                 <p style="font-size:0.92rem;">Si la cuenta existe, recibirás instrucciones.</p>
-                <div style="background:#fcf1f0; border:1px dashed #8e1525; padding:10px; margin-top:12px; border-radius:8px;">
+                <div style="background:var(--primary-soft); border:1px dashed var(--primary); padding:10px; margin-top:12px; border-radius:8px;">
                     <small style="color:#6e6360;">Código de verificación (Demostración de Evaluación):</small><br>
-                    <strong style="font-size:1.4rem; letter-spacing:4px; color:#8e1525;">${demoCode}</strong>
+                    <strong style="font-size:1.4rem; letter-spacing:4px; color:var(--primary);">${demoCode}</strong>
                 </div>
             `,
             icon: "info",
-            confirmButtonColor: "#8e1525",
+            confirmButtonColor: "var(--primary)",
             confirmButtonText: "Ingresar Código"
         }).then(() => {
             const emailMask = email.replace(/(.{2})(.*)(?=@)/, (gp1, gp2, gp3) => gp2 + "*".repeat(Math.max(gp3.length, 3)));
@@ -1421,7 +1427,7 @@ class SGRApplication {
                 title: "Código Incompleto",
                 text: "Debe ingresar las 6 casillas numéricas del código.",
                 icon: "warning",
-                confirmButtonColor: "#8e1525"
+                confirmButtonColor: "var(--primary)"
             });
             return;
         }
@@ -1431,7 +1437,7 @@ class SGRApplication {
                 title: "Código Expirado",
                 text: "El tiempo de vigencia de 10 minutos ha vencido. Por favor solicite un nuevo código.",
                 icon: "error",
-                confirmButtonColor: "#8e1525"
+                confirmButtonColor: "var(--primary)"
             });
             return;
         }
@@ -1442,7 +1448,7 @@ class SGRApplication {
                 title: "Límite Superado",
                 text: "Ha superado el límite de 3 intentos fallidos. Debe iniciar una nueva solicitud.",
                 icon: "error",
-                confirmButtonColor: "#8e1525"
+                confirmButtonColor: "var(--primary)"
             });
             this.showAuthView("recuperar-paso1");
             return;
@@ -1457,7 +1463,7 @@ class SGRApplication {
                 title: "Código Incorrecto",
                 text: `El código ingresado no es válido. Le quedan ${intentosRestantes} intentos.`,
                 icon: "error",
-                confirmButtonColor: "#8e1525"
+                confirmButtonColor: "var(--primary)"
             });
             return;
         }
@@ -1467,7 +1473,7 @@ class SGRApplication {
             title: "Código Verificado",
             text: "Identidad confirmada exitosamente. Proceda a crear su nueva contraseña.",
             icon: "success",
-            confirmButtonColor: "#8e1525",
+            confirmButtonColor: "var(--primary)",
             timer: 1800
         }).then(() => {
             this.showAuthView("recuperar-paso3");
@@ -1524,7 +1530,7 @@ class SGRApplication {
                 title: "Requisitos no cumplidos",
                 text: "La contraseña no cumple con todas las políticas de seguridad institucionales.",
                 icon: "warning",
-                confirmButtonColor: "#8e1525"
+                confirmButtonColor: "var(--primary)"
             });
             return;
         }
@@ -1534,7 +1540,7 @@ class SGRApplication {
                 title: "Las contraseñas no coinciden",
                 text: "Por favor confirme la misma contraseña en ambos campos.",
                 icon: "error",
-                confirmButtonColor: "#8e1525"
+                confirmButtonColor: "var(--primary)"
             });
             return;
         }
@@ -1552,12 +1558,12 @@ class SGRApplication {
                 title: "¡Contraseña Actualizada!",
                 text: "Su contraseña ha sido cambiada exitosamente. Ahora puede iniciar sesión con su nueva clave.",
                 icon: "success",
-                confirmButtonColor: "#8e1525"
+                confirmButtonColor: "var(--primary)"
             }).then(() => {
                 this.showAuthView("login");
             });
         } catch (err) {
-            Swal.fire({ title: "Error", text: err.message, icon: "error", confirmButtonColor: "#8e1525" });
+            Swal.fire({ title: "Error", text: err.message, icon: "error", confirmButtonColor: "var(--primary)" });
         }
     }
 
@@ -1572,7 +1578,7 @@ class SGRApplication {
                 title: "Campos requeridos",
                 text: "Debe ingresar su usuario o correo y contraseña.",
                 icon: "warning",
-                confirmButtonColor: "#8e1525"
+                confirmButtonColor: "var(--primary)"
             });
             return;
         }
@@ -1588,7 +1594,7 @@ class SGRApplication {
                 title: "Credenciales Incorrectas",
                 text: "Usuario o contraseña no válidos. Verifique sus datos o use los botones de acceso rápido.",
                 icon: "error",
-                confirmButtonColor: "#8e1525"
+                confirmButtonColor: "var(--primary)"
             });
             return;
         }
@@ -1598,7 +1604,7 @@ class SGRApplication {
                 title: "Cuenta Inactiva",
                 text: "Su usuario se encuentra inactivo. Contacte al administrador municipal.",
                 icon: "error",
-                confirmButtonColor: "#8e1525"
+                confirmButtonColor: "var(--primary)"
             });
             return;
         }
@@ -1611,7 +1617,7 @@ class SGRApplication {
             title: `¡Bienvenido, ${user.nombre}!`,
             text: `Sesión iniciada como ${user.rol_nombre || 'Funcionario'} en ${user.delegacion_nombre || 'Centro'}.`,
             icon: "success",
-            confirmButtonColor: "#8e1525",
+            confirmButtonColor: "var(--primary)",
             timer: 2000
         }).then(() => {
             this.showAppView();
@@ -1626,7 +1632,7 @@ class SGRApplication {
             showCancelButton: true,
             confirmButtonText: "Sí, salir",
             cancelButtonText: "Cancelar",
-            confirmButtonColor: "#8e1525"
+            confirmButtonColor: "var(--primary)"
         }).then(res => {
             if (res.isConfirmed) {
                 this.currentUser = null;
