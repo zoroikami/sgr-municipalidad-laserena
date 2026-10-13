@@ -167,8 +167,8 @@ Para la **Segunda Evaluación**, se incorporó la solución operativa integral q
    * **CRUD Sub Atención:** Código, nombre, tipo de atención asociado y estado con validación de integridad referencial.
    * *Cada mantenedor incluye:* Buscador inteligente en tiempo real, filtro por estado, paginación dinámica, modales de Crear/Editar/Ver y botón funcional de **Exportar a Excel (.xlsx)** con SheetJS.
 4. **Ingreso de Atención Ciudadana:** Formulario dependiente en cascada (Tipo de Atención $\rightarrow$ Subatención), contexto de delegación bloqueado al usuario activo, responsable y timestamp automáticos, y generación de folio correlativo único (`ATN-2026-XXXX`).
-5. **Identidad Visual y Cabecera de Delegación:** Normas gráficas de La Serena (`#8e1525`), logotipo oficial, SweetAlert2 en todas las alertas y distintivo permanente de delegación activa con selector para perfiles comunales.
-6. **Demostración de Roles:** Conmutador evaluativo y control estricto de permisos entre Superadministrador, Coordinador, Delegado Municipal y Operador.
+5. **Identidad Visual y Cabecera de Delegación:** Paleta institucional de La Serena: rojo luminoso `#DB3334`, rojo heráldico `#C41230` y rojo oscuro `#8B1D19`; logotipo horizontal vectorial, alertas SweetAlert2 por encima de los modales y distintivo de delegación activa con selector para perfiles comunales.
+6. **Acceso por credenciales:** Sin ingreso automático, accesos rápidos ni conmutador de perfiles. Se conservan las cuentas y los permisos de cada rol; los errores del servidor no habilitan acceso local alternativo. Los códigos de delegaciones e ítems/metas se generan automáticamente al guardar, y la paginación mantiene un número acotado de botones.
 
 ### Credenciales de Demostración para el Evaluador:
 

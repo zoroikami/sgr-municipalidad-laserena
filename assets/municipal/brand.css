@@ -1,4 +1,4 @@
-/* firma · macro: municipal records · theme: red, wine and warm paper · direction: minimal-modern · critique: P4 J5 E4 F4 H5 V4 */
+/* firma · macro: municipal records · theme: institutional luminous, heraldic and dark red · direction: minimal-modern · critique: P4 J5 E4 F4 H5 V4 */
 /* User palette. Native system typography follows the platform's text rendering. */
 
 :root {
@@ -10,24 +10,30 @@
     --type-control: 0.9375rem;
     --type-small: 0.875rem;
     --type-caption: 0.8125rem;
-    --brand-cream: #efe1cf;
-    --brand-sand: #d7b59a;
-    --brand-wine: #4a1417;
+    --brand-luminous: #DB3334;
+    --brand-heraldic: #C41230;
+    --brand-dark: #8B1D19;
+    --brand-cream: color-mix(in srgb, var(--brand-luminous) 6%, white);
+    --brand-sand: color-mix(in srgb, var(--brand-dark) 22%, white);
+    --brand-wine: var(--brand-dark);
     --brand-page: color-mix(in srgb, var(--brand-cream) 38%, white);
     --brand-divider: color-mix(in srgb, var(--brand-sand) 60%, white);
-    --brand-accent: #ad0000;
-    --brand-red: #ad0000;
+    --brand-accent: var(--brand-luminous);
+    --brand-red: var(--brand-heraldic);
     --brand-red-dark: var(--brand-wine);
     --brand-red-hover: var(--brand-wine);
     --brand-white: #ffffff;
-    --brand-ink: var(--brand-wine);
-    --brand-muted: color-mix(in srgb, var(--brand-wine) 70%, white);
+    --brand-ink: #302526;
+    --brand-muted: color-mix(in srgb, var(--brand-ink) 72%, white);
     --brand-border: color-mix(in srgb, var(--brand-sand) 50%, white);
     --brand-surface: color-mix(in srgb, var(--brand-cream) 35%, white);
     --brand-soft: var(--brand-cream);
     --brand-row-hover: color-mix(in srgb, var(--brand-cream) 26%, white);
     --brand-row-rule: color-mix(in srgb, var(--brand-sand) 28%, white);
-    --brand-focus: #ad0000;
+    --brand-focus: var(--brand-heraldic);
+    --layer-header: 1000;
+    --layer-modal: 2000;
+    --layer-alert: 3000;
     --status-active-bg: #d9f99d;
     --status-active-ink: #365314;
     --status-active-border: #bef264;
@@ -154,9 +160,9 @@ button, a, select { touch-action: manipulation; }
     object-fit: contain;
     filter: brightness(0) saturate(100%) invert(10%) sepia(32%) saturate(2369%) hue-rotate(326deg) brightness(95%) contrast(99%);
 }
-.topbar-logo { width: 5.5rem; height: 4rem; }
+.sgr-topbar .topbar-logo { width: clamp(10rem, 19vw, 15rem); height: 3.5rem; flex-shrink: 0; }
 .navbar-brand img, .sidebar-logo { width: 5rem; height: 4rem; }
-.auth-header img { width: 7rem; height: 6rem; }
+.auth-header img { width: 15rem; max-width: 100%; height: auto; aspect-ratio: 716 / 199; }
 .navbar, .sgr-sidebar, .sidebar { background: var(--brand-surface); }
 .app-container { background: var(--brand-page); }
 .hero-badge, .feature-icon, .badge-pts, .del-chip, .content-area::before {

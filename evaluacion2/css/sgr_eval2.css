@@ -4,22 +4,22 @@
  */
 
 :root {
-    --primary: #ad0000;
-    --primary-dark: #660000;
-    --primary-light: #ad0000;
+    --primary: #C41230;
+    --primary-dark: #8B1D19;
+    --primary-light: #DB3334;
     --primary-soft: #ffffff;
-    --accent: #ad0000;
+    --accent: #DB3334;
     --bg-page: #ffffff;
     --bg-card: #ffffff;
-    --bg-header: #ad0000;
+    --bg-header: #C41230;
     --border-color: #eadfdc;
-    --border-focus: #ad0000;
+    --border-focus: #C41230;
     --text-main: #2b2525;
     --text-muted: #6e6360;
     --text-light: #9d918d;
     --state-active: #1e7e4a;
     --state-active-bg: #eaf6ee;
-    --state-inactive: #ad0000;
+    --state-inactive: #C41230;
     --state-inactive-bg: #faeaec;
     --shadow-sm: 0 2px 8px rgba(93, 14, 25, 0.06);
     --shadow-md: 0 8px 24px rgba(93, 14, 25, 0.10);
@@ -60,7 +60,7 @@ body {
     padding: 0 28px;
     position: sticky;
     top: 0;
-    z-index: 1000;
+    z-index: var(--layer-header, 1000);
     box-shadow: 0 3px 12px rgba(93, 14, 25, 0.25);
 }
 
@@ -558,11 +558,11 @@ body {
 }
 
 .action-link.edit {
-    color: #ad0000;
+    color: var(--primary);
 }
 
 .action-link.edit:hover {
-    color: #660000;
+    color: var(--primary-dark);
 }
 
 .action-link.delete {
@@ -588,8 +588,14 @@ body {
 .pagination-controls {
     display: flex;
     align-items: center;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    min-width: 0;
+    max-width: 100%;
     gap: 6px;
 }
+
+.pagination-ellipsis { padding-inline: var(--space-xs); }
 
 .btn-page {
     border: 1px solid var(--border-color);
@@ -934,7 +940,7 @@ textarea.form-control {
     display: none;
     align-items: center;
     justify-content: center;
-    z-index: 2000;
+    z-index: var(--layer-modal, 2000);
     padding: 20px;
 }
 
@@ -1021,6 +1027,10 @@ textarea.form-control {
 .swal2-popup.sgr-swal {
     border-radius: 16px !important;
     font-family: 'DM Sans', sans-serif !important;
+}
+
+body > .swal2-container {
+    z-index: var(--layer-alert, 3000);
 }
 
 .swal2-confirm.sgr-swal-confirm {
@@ -1436,6 +1446,8 @@ select.form-control { min-height: 2.75rem; padding-block: var(--space-sm); }
     .attention-history .sgr-data-table { min-width: 56rem; }
     .table-card .table-pagination-footer { padding: var(--space-lg); }
     .table-pagination-footer .pagination-controls { margin-left: auto; }
+    .table-pagination-footer .pagination-controls { width: 100%; justify-content: center; gap: var(--space-xs); }
+    .pagination-controls .btn-page { max-width: 100%; overflow-wrap: anywhere; }
 }
 @media (prefers-contrast: more) {
     .sgr-data-table thead th, .sgr-data-table .record-code { color: var(--brand-ink); }

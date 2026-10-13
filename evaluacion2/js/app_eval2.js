@@ -33,24 +33,35 @@ class SGRApplication {
     }
 
     async init() {
-        await sgrDb.init();
-
-        // Verificar sesión activa o iniciar como Superadmin por defecto
-        const session = localStorage.getItem("SGR_SESSION_USER");
-        if (session) {
-            try {
-                this.currentUser = JSON.parse(session);
-            } catch (e) {
-                this.setCurrentUserByRole("ROL01"); // Superadmin por defecto
-            }
-        } else {
-            this.setCurrentUserByRole("ROL01"); // Harold Concha - Superadmin
+        this.setupEventListeners();
+        this.showAuthView("login");
+        try {
+            await sgrDb.init();
+        } catch (err) {
+            Swal.fire({ title: "Error de conexión", text: err.message, icon: "error" });
+            return;
         }
 
-        this.setupHeaderDelegacion();
-        this.setupEventListeners();
-        this.applyRolePermissions();
-        this.renderCurrentView();
+        localStorage.removeItem("SGR_SESSION_USER");
+        const session = localStorage.getItem("SGR_AUTH_SESSION_USER");
+        if (session) {
+            try {
+                const storedUser = JSON.parse(session);
+                const user = sgrDb.data.usuarios.find(record => record.id === storedUser.id && record.estado === "Activo");
+                if (user) {
+                    this.currentUser = { ...user };
+                    this.activeDelegacion = user.delegacion_codigo || "DEL01";
+                }
+            } catch (e) {
+                this.currentUser = null;
+            }
+        }
+
+        if (this.currentUser) {
+            this.showAppView();
+        } else {
+            localStorage.removeItem("SGR_AUTH_SESSION_USER");
+        }
 
         // Inicializar iconos de Lucide
         if (window.lucide) {
@@ -61,16 +72,6 @@ class SGRApplication {
     // =========================================================================
     // GESTIÓN DE USUARIOS Y ROLES (REQUISITO FUNDAMENTAL DE LA ENTREGA)
     // =========================================================================
-    setCurrentUserByRole(rolCodigo) {
-        const user = sgrDb.data.usuarios.find(u => u.rol_codigo === rolCodigo) || sgrDb.data.usuarios[0];
-        this.currentUser = { ...user };
-        this.activeDelegacion = user.delegacion_codigo || "DEL01";
-        localStorage.setItem("SGR_SESSION_USER", JSON.stringify(this.currentUser));
-        this.setupHeaderDelegacion();
-        this.applyRolePermissions();
-        this.updateHeaderUserInfo();
-    }
-
     applyRolePermissions() {
         if (!this.currentUser) return;
         const rol = this.currentUser.rol_codigo; // ROL01: Superadmin, ROL02: Coord, ROL03: Delegado, ROL04: Operador, ROL05: Consultor
@@ -93,16 +94,6 @@ class SGRApplication {
                 el.style.display = "";
             } else {
                 el.style.display = "none";
-            }
-        });
-
-        // Actualizar chips de demostración de rol
-        document.querySelectorAll(".role-chip").forEach(chip => {
-            chip.setAttribute("aria-pressed", String(chip.getAttribute("data-rol") === rol));
-            if (chip.getAttribute("data-rol") === rol) {
-                chip.classList.add("active");
-            } else {
-                chip.classList.remove("active");
             }
         });
 
@@ -235,6 +226,26 @@ class SGRApplication {
         }
     }
 
+    filterByVisibleColumns(moduleName, records) {
+        const query = (this.pagination[moduleName]?.search || "").toLowerCase().trim();
+        if (!query) return records;
+
+        const columns = {
+            delegaciones: ["codigo", "nombre", "comuna", "estado"],
+            roles: ["codigo", "nombre", "alcance", "estado"],
+            usuarios: ["nombre", "email", ["rol_nombre", "rol_codigo"], ["delegacion_nombre", "delegacion_codigo"]],
+            items_metas: ["codigo", "nombre", "descripcion", "estado"],
+            tipos_atencion: ["codigo", "nombre", "descripcion", "estado"],
+            sub_atenciones: ["codigo", "nombre", "tipo_nombre", "estado"],
+            atenciones: ["folio", "solicitante_nombre", "delegacion_nombre", "tipo_nombre", "subtipo_nombre", "responsable_nombre", "fecha_registro"]
+        };
+
+        return records.filter(record => (columns[moduleName] || []).some(column => {
+            const value = Array.isArray(column) ? record[column[0]] || record[column[1]] : record[column];
+            return String(value ?? "").toLowerCase().includes(query);
+        }));
+    }
+
     // =========================================================================
     // MANTENEDOR 1: DELEGACIONES MUNICIPALES (DISEÑO C3)
     // =========================================================================
@@ -248,15 +259,7 @@ class SGRApplication {
         }
 
         // Búsqueda inteligente insensible a mayúsculas/minúsculas
-        if (conf.search.trim()) {
-            const q = conf.search.toLowerCase().trim();
-            list = list.filter(d =>
-                d.codigo.toLowerCase().includes(q) ||
-                d.nombre.toLowerCase().includes(q) ||
-                d.direccion.toLowerCase().includes(q) ||
-                d.comuna.toLowerCase().includes(q)
-            );
-        }
+        list = this.filterByVisibleColumns("delegaciones", list);
 
         const total = list.length;
         const totalPages = Math.ceil(total / conf.limit) || 1;
@@ -309,15 +312,7 @@ class SGRApplication {
             list = list.filter(r => r.estado.toUpperCase() === conf.filter);
         }
 
-        if (conf.search.trim()) {
-            const q = conf.search.toLowerCase().trim();
-            list = list.filter(r =>
-                r.codigo.toLowerCase().includes(q) ||
-                r.nombre.toLowerCase().includes(q) ||
-                r.alcance.toLowerCase().includes(q) ||
-                (r.descripcion && r.descripcion.toLowerCase().includes(q))
-            );
-        }
+        list = this.filterByVisibleColumns("roles", list);
 
         const total = list.length;
         const totalPages = Math.ceil(total / conf.limit) || 1;
@@ -368,15 +363,7 @@ class SGRApplication {
             list = list.filter(u => u.estado.toUpperCase() === conf.filter);
         }
 
-        if (conf.search.trim()) {
-            const q = conf.search.toLowerCase().trim();
-            list = list.filter(u =>
-                u.nombre.toLowerCase().includes(q) ||
-                u.email.toLowerCase().includes(q) ||
-                (u.rol_nombre && u.rol_nombre.toLowerCase().includes(q)) ||
-                (u.delegacion_nombre && u.delegacion_nombre.toLowerCase().includes(q))
-            );
-        }
+        list = this.filterByVisibleColumns("usuarios", list);
 
         const total = list.length;
         const totalPages = Math.ceil(total / conf.limit) || 1;
@@ -422,14 +409,7 @@ class SGRApplication {
             list = list.filter(i => i.estado.toUpperCase() === conf.filter);
         }
 
-        if (conf.search.trim()) {
-            const q = conf.search.toLowerCase().trim();
-            list = list.filter(i =>
-                i.codigo.toLowerCase().includes(q) ||
-                i.nombre.toLowerCase().includes(q) ||
-                i.descripcion.toLowerCase().includes(q)
-            );
-        }
+        list = this.filterByVisibleColumns("items_metas", list);
 
         const total = list.length;
         const totalPages = Math.ceil(total / conf.limit) || 1;
@@ -475,14 +455,7 @@ class SGRApplication {
             list = list.filter(t => t.estado.toUpperCase() === conf.filter);
         }
 
-        if (conf.search.trim()) {
-            const q = conf.search.toLowerCase().trim();
-            list = list.filter(t =>
-                t.codigo.toLowerCase().includes(q) ||
-                t.nombre.toLowerCase().includes(q) ||
-                t.descripcion.toLowerCase().includes(q)
-            );
-        }
+        list = this.filterByVisibleColumns("tipos_atencion", list);
 
         const total = list.length;
         const totalPages = Math.ceil(total / conf.limit) || 1;
@@ -528,14 +501,7 @@ class SGRApplication {
             list = list.filter(s => s.estado.toUpperCase() === conf.filter);
         }
 
-        if (conf.search.trim()) {
-            const q = conf.search.toLowerCase().trim();
-            list = list.filter(s =>
-                s.codigo.toLowerCase().includes(q) ||
-                s.nombre.toLowerCase().includes(q) ||
-                s.tipo_nombre.toLowerCase().includes(q)
-            );
-        }
+        list = this.filterByVisibleColumns("sub_atenciones", list);
 
         const total = list.length;
         const totalPages = Math.ceil(total / conf.limit) || 1;
@@ -748,15 +714,7 @@ class SGRApplication {
             list = list.filter(a => a.delegacion_codigo === this.activeDelegacion);
         }
 
-        if (conf.search.trim()) {
-            const q = conf.search.toLowerCase().trim();
-            list = list.filter(a =>
-                a.folio.toLowerCase().includes(q) ||
-                a.solicitante_nombre.toLowerCase().includes(q) ||
-                a.tipo_nombre.toLowerCase().includes(q) ||
-                a.subtipo_nombre.toLowerCase().includes(q)
-            );
-        }
+        list = this.filterByVisibleColumns("atenciones", list);
 
         const total = list.length;
         const totalPages = Math.ceil(total / conf.limit) || 1;
@@ -797,17 +755,26 @@ class SGRApplication {
         const showingText = total === 0 ? "Mostrando 0 de 0 registros" : `Mostrando ${startIdx + 1} a ${endIdx} de ${total} registros`;
 
         let pagesHtml = "";
-        for (let i = 1; i <= totalPages; i++) {
-            pagesHtml += `<button class="btn-page ${i === currentPage ? 'active' : ''}" onclick="sgrApp.goToPage('${moduleName}', ${i})">${i}</button>`;
+        const pages = new Set([1, totalPages]);
+        const windowStart = Math.max(2, Math.min(currentPage - 1, totalPages - 3));
+        const windowEnd = Math.min(totalPages - 1, windowStart + 2);
+        for (let page = windowStart; page <= windowEnd; page++) pages.add(page);
+        let previousPage = 0;
+        for (const page of [...pages].sort((first, second) => first - second)) {
+            if (previousPage && page - previousPage > 1) {
+                pagesHtml += '<span class="pagination-ellipsis" aria-hidden="true">…</span>';
+            }
+            pagesHtml += `<button type="button" class="btn-page ${page === currentPage ? 'active' : ''}" ${page === currentPage ? 'aria-current="page"' : ''} aria-label="Página ${page}" onclick="sgrApp.goToPage('${moduleName}', ${page})">${page}</button>`;
+            previousPage = page;
         }
 
         footer.innerHTML = `
             <span>${showingText}</span>
-            <div class="pagination-controls">
-                <button class="btn-page" ${currentPage <= 1 ? 'disabled' : ''} onclick="sgrApp.goToPage('${moduleName}', ${currentPage - 1})">Anterior</button>
+            <nav class="pagination-controls" aria-label="Paginación de registros">
+                <button type="button" class="btn-page" ${currentPage <= 1 ? 'disabled' : ''} onclick="sgrApp.goToPage('${moduleName}', ${currentPage - 1})">Anterior</button>
                 ${pagesHtml}
-                <button class="btn-page" ${currentPage >= totalPages ? 'disabled' : ''} onclick="sgrApp.goToPage('${moduleName}', ${currentPage + 1})">Siguiente</button>
-            </div>
+                <button type="button" class="btn-page" ${currentPage >= totalPages ? 'disabled' : ''} onclick="sgrApp.goToPage('${moduleName}', ${currentPage + 1})">Siguiente</button>
+            </nav>
         `;
     }
 
@@ -852,14 +819,7 @@ class SGRApplication {
                 list = list.filter(item => (item.estado || "").toUpperCase() === conf.filter);
             }
             // Filtro de búsqueda por texto
-            if (conf.search && conf.search.trim()) {
-                const q = conf.search.toLowerCase().trim();
-                list = list.filter(item => {
-                    return Object.values(item).some(val => 
-                        val && String(val).toLowerCase().includes(q)
-                    );
-                });
-            }
+            list = this.filterByVisibleColumns(moduleName, list);
         }
 
         const titles = {
@@ -890,7 +850,7 @@ class SGRApplication {
             case "delegaciones":
                 titleEl.textContent = "Nueva Delegación Municipal";
                 bodyEl.innerHTML = `
-                    <div class="form-group"><label class="form-label">Código *</label><input type="text" id="m-del-codigo" class="form-control" placeholder="Ej: DEL07"></div>
+                    <p class="form-meta-note">El código de la delegación se genera automáticamente al guardar.</p>
                     <div class="form-group"><label class="form-label">Nombre *</label><input type="text" id="m-del-nombre" class="form-control" placeholder="Ej: Delegación Tierras Blancas"></div>
                     <div class="form-group"><label class="form-label">Dirección *</label><input type="text" id="m-del-direccion" class="form-control" placeholder="Ej: Av. Balmaceda 1200"></div>
                     <div class="form-group"><label class="form-label">Comuna</label><input type="text" id="m-del-comuna" class="form-control" value="La Serena" readonly></div>
@@ -944,7 +904,7 @@ class SGRApplication {
             case "items_metas":
                 titleEl.textContent = "Nuevo Ítem y Meta";
                 bodyEl.innerHTML = `
-                    <div class="form-group"><label class="form-label">Código *</label><input type="text" id="m-itm-codigo" class="form-control" placeholder="Ej: IT006"></div>
+                    <p class="form-meta-note">El código del ítem y meta se genera automáticamente al guardar.</p>
                     <div class="form-group"><label class="form-label">Nombre *</label><input type="text" id="m-itm-nombre" class="form-control" placeholder="Nombre del ítem"></div>
                     <div class="form-group"><label class="form-label">Descripción</label><input type="text" id="m-itm-desc" class="form-control" placeholder="Descripción de la meta"></div>
                     <div class="form-group"><label class="form-label">Unidad de Medida</label><input type="text" id="m-itm-unidad" class="form-control" value="Atenciones"></div>
@@ -1148,6 +1108,9 @@ class SGRApplication {
 
     async handleSaveModal(moduleName, id) {
         let payload = {};
+        const saveButton = document.getElementById("btn-modal-save");
+        if (saveButton.disabled) return;
+        saveButton.disabled = true;
 
         try {
             if (moduleName === "delegaciones") {
@@ -1157,7 +1120,6 @@ class SGRApplication {
                 const estado = document.getElementById("m-del-estado").value;
                 if (!nombre || !direccion) throw new Error("Complete Nombre y Dirección.");
                 payload = { nombre, direccion, comuna, estado };
-                if (!id) payload.codigo = document.getElementById("m-del-codigo").value.trim().toUpperCase();
 
             } else if (moduleName === "roles") {
                 const nombre = document.getElementById("m-rol-nombre").value.trim();
@@ -1197,7 +1159,6 @@ class SGRApplication {
                 const estado = document.getElementById("m-itm-estado").value;
                 if (!nombre) throw new Error("El nombre es requerido.");
                 payload = { nombre, descripcion, unidad_medida: unidad, meta_cantidad: meta, estado };
-                if (!id) payload.codigo = document.getElementById("m-itm-codigo").value.trim().toUpperCase();
 
             } else if (moduleName === "tipos_atencion") {
                 const nombre = document.getElementById("m-ta-nombre").value.trim();
@@ -1239,11 +1200,13 @@ class SGRApplication {
 
         } catch (err) {
             Swal.fire({
-                title: "Error de validación",
+                title: "No se pudo guardar",
                 text: err.message,
                 icon: "error",
                 confirmButtonColor: "var(--primary)"
             });
+        } finally {
+            saveButton.disabled = false;
         }
     }
 
@@ -1358,6 +1321,9 @@ class SGRApplication {
                     body: JSON.stringify({ email })
                 });
                 const data = await res.json();
+                if (!res.ok || !data.success) {
+                    throw new Error(data.message || "No se pudo solicitar el código de recuperación.");
+                }
                 if (data.exists === false) {
                     userExists = false;
                     demoCode = null;
@@ -1378,7 +1344,8 @@ class SGRApplication {
                 }
             }
         } catch (err) {
-            console.warn(err);
+            Swal.fire({ title: "No se pudo solicitar el código", text: err.message, icon: "error" });
+            return;
         }
 
         this.recoveryState.demoCode = demoCode;
@@ -1447,7 +1414,7 @@ class SGRApplication {
             title: "Bandeja de Correo Municipal",
             html: `
                 <div style="text-align: left; background: #ffffff; border: 1px solid #ebd9d7; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 14px rgba(0,0,0,0.08); margin-top: 6px;">
-                    <div style="background: #8e1525; color: #ffffff; padding: 12px 18px; display: flex; align-items: center; justify-content: space-between;">
+                    <div style="background: var(--primary); color: #ffffff; padding: 12px 18px; display: flex; align-items: center; justify-content: space-between;">
                         <span style="font-weight: 600; font-size: 0.95rem;">📨 Webmail Institucional · Municipalidad de La Serena</span>
                         <span style="font-size: 0.78rem; opacity: 0.9;">${now}</span>
                     </div>
@@ -1460,8 +1427,8 @@ class SGRApplication {
                         <p style="margin-top:0;">Estimado(a) <strong>${nombre}</strong>,</p>
                         <p>Se ha solicitado el restablecimiento de su clave de acceso para el Sistema de Gestión de Resultados (SGR). Su código oficial de verificación es:</p>
                         <div style="text-align: center; margin: 20px 0;">
-                            <div style="display: inline-block; background: #fcf1f0; border: 2px dashed #8e1525; padding: 10px 28px; border-radius: 8px;">
-                                <span style="font-size: 1.9rem; font-weight: 700; letter-spacing: 6px; color: #8e1525;">${code}</span>
+                            <div style="display: inline-block; background: #fcf1f0; border: 2px dashed var(--primary); padding: 10px 28px; border-radius: 8px;">
+                                <span style="font-size: 1.9rem; font-weight: 700; letter-spacing: 6px; color: var(--primary);">${code}</span>
                             </div>
                         </div>
                         <p style="font-size: 0.82rem; color: #6e6360; margin-bottom: 0;">
@@ -1691,11 +1658,19 @@ class SGRApplication {
 
         try {
             if (sgrDb.hasBackend) {
-                await fetch("/api/auth/cambiar-password", {
+                const response = await fetch("/api/auth/cambiar-password", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ email: this.recoveryState.email, password: pass })
                 });
+                const result = await response.json();
+                if (!response.ok || !result.success) {
+                    throw new Error(result.message || "No se pudo actualizar la contraseña.");
+                }
+            } else {
+                const user = sgrDb.data.usuarios.find(record => record.email.toLowerCase() === this.recoveryState.email.toLowerCase());
+                if (!user) throw new Error("No se encontró la cuenta que desea actualizar.");
+                await sgrDb.updateItem("usuarios", user.id, { password: pass, password_hash: pass });
             }
 
             Swal.fire({
@@ -1738,12 +1713,12 @@ class SGRApplication {
                     body: JSON.stringify({ usuario: usrInput, password: passInput })
                 });
                 const data = await res.json();
-                if (data.success && data.user) {
+                if (res.ok && data.success && data.user) {
                     user = data.user;
-                } else if (!data.success && res.status !== 500) {
+                } else {
                     Swal.fire({
-                        title: "Error de autenticación",
-                        text: data.message || "Usuario o contraseña no válidos.",
+                        title: res.status >= 500 ? "Error del servidor" : "Error de autenticación",
+                        text: data.message || (res.status >= 500 ? "No se pudo iniciar sesión. Intente nuevamente." : "Usuario o contraseña no válidos."),
                         icon: "error",
                         confirmButtonColor: "var(--primary)"
                     });
@@ -1751,23 +1726,25 @@ class SGRApplication {
                 }
             } catch (err) {
                 console.warn("Backend auth fetch error:", err);
+                Swal.fire({ title: "Error de conexión", text: "No se pudo conectar con el servidor. Intente nuevamente.", icon: "error" });
+                return;
             }
         }
 
         // Si no hay backend disponible, autenticar en memoria local
-        if (!user) {
+        if (!sgrDb.hasBackend) {
             user = sgrDb.data.usuarios.find(u =>
                 (u.email.toLowerCase() === usrInput.toLowerCase() || 
-                 u.nombre.toLowerCase().includes(usrInput.toLowerCase()) || 
+                 u.nombre.toLowerCase() === usrInput.toLowerCase() ||
                  u.rut === usrInput) &&
-                (passInput === "Admin123*" || passInput === "123456" || (u.password && u.password === passInput) || (u.password_hash && u.password_hash === passInput) || passInput.length >= 6)
+                ((u.password && u.password === passInput) || (u.password_hash && u.password_hash === passInput))
             );
         }
 
         if (!user) {
             Swal.fire({
                 title: "Credenciales Incorrectas",
-                text: "Usuario o contraseña no válidos. Verifique sus datos o use los botones de acceso rápido.",
+                text: "Usuario o contraseña no válidos. Verifique sus credenciales institucionales.",
                 icon: "error",
                 confirmButtonColor: "var(--primary)"
             });
@@ -1786,7 +1763,7 @@ class SGRApplication {
 
         this.currentUser = { ...user };
         this.activeDelegacion = user.delegacion_codigo || "DEL01";
-        localStorage.setItem("SGR_SESSION_USER", JSON.stringify(this.currentUser));
+        localStorage.setItem("SGR_AUTH_SESSION_USER", JSON.stringify({ id: user.id }));
 
         Swal.fire({
             title: `¡Bienvenido, ${user.nombre}!`,
@@ -1812,6 +1789,8 @@ class SGRApplication {
             if (res.isConfirmed) {
                 this.currentUser = null;
                 localStorage.removeItem("SGR_SESSION_USER");
+                localStorage.removeItem("SGR_AUTH_SESSION_USER");
+                document.getElementById("login-password").value = "";
                 this.showAuthView("login");
             }
         });

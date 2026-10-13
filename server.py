@@ -120,6 +120,14 @@ def get_db():
     conn.row_factory = sqlite3.Row
     return conn
 
+def next_record_code(cursor, table, prefix, width):
+    if table not in ("delegaciones", "items_metas"):
+        raise ValueError("Colección sin códigos automáticos")
+    cursor.execute(f"SELECT codigo FROM {table}")
+    numbers = [int(row[0][len(prefix):]) for row in cursor.fetchall()
+               if row[0].startswith(prefix) and row[0][len(prefix):].isdigit()]
+    return f"{prefix}{max(numbers, default=0) + 1:0{width}d}"
+
 def init_db():
     os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
     conn = get_db()
@@ -496,7 +504,7 @@ class SGRRequestHandler(SimpleHTTPRequestHandler):
                     return self.send_json(403, {"success": False, "message": "Esta cuenta se encuentra inactiva o suspendida. Contacte al administrador."})
 
                 # Para evaluación se valida coincidencia directa o hash simple
-                if user_dict["password_hash"] != password and password != "Admin123*":
+                if user_dict["password_hash"] != password:
                     return self.send_json(401, {"success": False, "message": "Contraseña incorrecta."})
 
                 del user_dict["password_hash"]
@@ -615,20 +623,21 @@ class SGRRequestHandler(SimpleHTTPRequestHandler):
 
             # CRUD Delegaciones - Crear
             elif path == "/api/delegaciones":
-                codigo = body.get("codigo", "").strip().upper()
                 nombre = body.get("nombre", "").strip()
                 direccion = body.get("direccion", "").strip()
                 comuna = body.get("comuna", "La Serena").strip()
                 estado = body.get("estado", "Activa")
 
-                if not codigo or not nombre:
-                    return self.send_json(400, {"success": False, "message": "Código y Nombre son obligatorios."})
+                if not nombre or not direccion:
+                    return self.send_json(400, {"success": False, "message": "Nombre y Dirección son obligatorios."})
 
                 try:
+                    c.execute("BEGIN IMMEDIATE")
+                    codigo = next_record_code(c, "delegaciones", "DEL", 2)
                     c.execute("INSERT INTO delegaciones (codigo, nombre, direccion, comuna, estado) VALUES (?, ?, ?, ?, ?)",
                               (codigo, nombre, direccion, comuna, estado))
                     conn.commit()
-                    return self.send_json(201, {"success": True, "message": "Delegación creada exitosamente", "id": c.lastrowid})
+                    return self.send_json(201, {"success": True, "message": "Delegación creada exitosamente", "id": c.lastrowid, "codigo": codigo})
                 except sqlite3.IntegrityError:
                     return self.send_json(409, {"success": False, "message": f"El código '{codigo}' ya se encuentra registrado."})
 
@@ -677,21 +686,22 @@ class SGRRequestHandler(SimpleHTTPRequestHandler):
 
             # CRUD Ítems y metas - Crear
             elif path == "/api/items-metas":
-                codigo = body.get("codigo", "").strip().upper()
                 nombre = body.get("nombre", "").strip()
                 descripcion = body.get("descripcion", "").strip()
                 unidad = body.get("unidad_medida", "Atenciones")
                 meta = int(body.get("meta_cantidad", 100))
                 estado = body.get("estado", "Activo")
 
-                if not codigo or not nombre:
-                    return self.send_json(400, {"success": False, "message": "Código y Nombre son obligatorios."})
+                if not nombre:
+                    return self.send_json(400, {"success": False, "message": "El Nombre es obligatorio."})
 
                 try:
+                    c.execute("BEGIN IMMEDIATE")
+                    codigo = next_record_code(c, "items_metas", "IT", 3)
                     c.execute("INSERT INTO items_metas (codigo, nombre, descripcion, unidad_medida, meta_cantidad, estado) VALUES (?, ?, ?, ?, ?, ?)",
                               (codigo, nombre, descripcion, unidad, meta, estado))
                     conn.commit()
-                    return self.send_json(201, {"success": True, "message": "Ítem y meta creados exitosamente", "id": c.lastrowid})
+                    return self.send_json(201, {"success": True, "message": "Ítem y meta creados exitosamente", "id": c.lastrowid, "codigo": codigo})
                 except sqlite3.IntegrityError:
                     return self.send_json(409, {"success": False, "message": f"El código '{codigo}' ya existe."})
 

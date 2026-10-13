@@ -2,8 +2,8 @@
 
 Los tres frontends cargan `brand.css` después de sus estilos para compartir tipografía, colores y logo.
 
-- Logo: `logo-la-serena.svg`, trazado vectorial de las formas blancas del original. Fondo transparente, sin rectángulo rojo ni borde exterior. El PNG original se conserva como fuente. La cabecera muestra el SVG blanco; las superficies claras aplican un filtro monocromático para mantener su legibilidad sin agregar un recuadro.
-- Paleta solicitada: rojo principal `#AD0000`, vino `#4A1417`, crema `#EFE1CF` y arena `#D7B59A`. Las superficies y los separadores usan mezclas de estos colores con blanco. El rojo principal proviene del [framework municipal](https://framework.laserena.cl/css/frameworkV1.css), verificado el 12-10-2026.
+- Logo: `logo-la-serena.svg`, trazado vectorial del logo horizontal adjunto (escudo, “LA SERENA” e “ILUSTRE MUNICIPALIDAD”), con las proporciones originales y los márgenes exteriores recortados en un lienzo de 716 × 199. Fondo transparente, sin imágenes raster incrustadas. El PNG histórico se conserva sin modificar. La cabecera muestra el SVG blanco; las superficies claras aplican un filtro monocromático para mantener su legibilidad sin agregar un recuadro.
+- Paleta institucional proporcionada el 13-10-2026: rojo luminoso `#DB3334`, rojo heráldico `#C41230` y rojo oscuro `#8B1D19`. Las superficies y los separadores usan mezclas de estos colores con blanco; los textos mantienen un neutro oscuro legible. El rojo heráldico identifica cabecera, botones principales y foco; el rojo oscuro sus estados de interacción y el luminoso los acentos.
 - Guardar atención: verde `#287346`, con estados de interacción y foco propios.
 - Estados activos: verde lima `#D9F99D`, texto `#365314`. Acciones: Ver en celeste suave, Editar en amarillo y Eliminar en rojo suave. Cada acción tiene estados de foco, hover, pulsación y deshabilitado, además de su etiqueta visible.
 - Tipografía formal de sistema: SF en macOS, Segoe UI en Windows y Helvetica/Arial como respaldo. No requiere descargas ni archivos de fuentes comerciales.
@@ -13,6 +13,10 @@ Los tres frontends cargan `brand.css` después de sus estilos para compartir tip
 
 La jerarquía tipográfica usa títulos de 26-32 px, encabezados de sección de 20 px, subtítulos de 18 px, texto de 16 px, controles de 15 px y notas de 13 px. Las tablas de evaluacion2 siguen principios de Apple: jerarquía contenida, filas sin bandas, separadores finos, cifras tabulares, estados discretos y acciones contextuales. Ver incluye un ojo SVG decorativo y conserva su etiqueta accesible. Cada tabla se desplaza dentro de su propio marco y tiene encabezados semánticos y una región accesible por teclado.
 
-Cabecera, perfiles, navegación, formularios, ventanas y botones siguen el mismo ritmo de espacios, tipografía y bordes. En móvil, perfiles y módulos se desplazan horizontalmente dentro de sus propios contenedores. La cabecera ofrece un material translúcido discreto, con alternativa opaca cuando el sistema solicita reducir transparencia.
+Cabecera, navegación, formularios, ventanas y botones siguen el mismo ritmo de espacios, tipografía y bordes. La aplicación exige credenciales y no ofrece perfiles automáticos, accesos rápidos ni barra de suplantación de roles. Las cuentas y permisos existentes se conservan. Las sesiones del antiguo acceso automático se descartan al actualizar.
+
+Los códigos de delegaciones (`DEL01`) e ítems/metas (`IT001`) se asignan al guardar, tanto en la API como en modo local. La API genera el correlativo dentro de una transacción de escritura y no acepta códigos elegidos por el cliente. Los códigos existentes se conservan y no se editan.
+
+SweetAlert2 se monta en `body`, por encima de cabecera y modales, con captura de teclado independiente. Los errores de guardado, eliminación y autenticación se presentan sin cierre automático. La paginación mantiene primera/última página y una ventana de tres páginas, con elipsis y controles que se ajustan al ancho disponible.
 
 Pie de página: franja negra al final de los tres frontends con “© 2026 Ilustre Municipalidad de La Serena. Todos los derechos reservados.”, basada en la [plantilla oficial](https://framework.laserena.cl/templates/footer.html). Su espaciado y tipografía siguen el patrón compartido. Se mantiene local, sin cargar scripts del sitio municipal.

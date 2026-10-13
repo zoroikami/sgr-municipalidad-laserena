@@ -25,12 +25,12 @@
     <!-- ======================================================================
          CONTENEDOR DE AUTENTICACIÓN (LOGIN Y RECUPERACIÓN - DISEÑOS C1 Y C2)
          ====================================================================== -->
-    <div id="sgr-auth-container" class="auth-wrapper" style="display: none;">
+    <div id="sgr-auth-container" class="auth-wrapper">
 
         <!-- DISEÑO 1: INICIAR SESIÓN (PDF PÁGINA 5) -->
         <div id="auth-card-login" class="auth-card">
             <div class="auth-header">
-                <img src="/assets/municipal/logo-la-serena.svg" alt="Escudo Oficial La Serena">
+                <img src="/assets/municipal/logo-la-serena.svg" alt="La Serena · Ilustre Municipalidad">
                 <h2 class="auth-title">Iniciar sesión</h2>
                 <p class="auth-desc">Accede con tu cuenta institucional.</p>
             </div>
@@ -60,38 +60,12 @@
                 </div>
             </form>
 
-            <!-- Acceso Rápido de Prueba para Evaluación de Roles -->
-            <div class="auth-quick-roles">
-                <div class="auth-quick-title">Accesos Rápidos de Evaluación (Demostración de Roles)</div>
-                <div class="auth-quick-btns">
-                    <button type="button" class="btn-quick-login" onclick="
-                        document.getElementById('login-username').value = 'harold.concha@laserena.cl';
-                        document.getElementById('login-password').value = 'Admin123*';
-                        sgrApp.submitLogin();
-                    ">👑 Superadmin</button>
-                    <button type="button" class="btn-quick-login" onclick="
-                        document.getElementById('login-username').value = 'keoni.vergara@laserena.cl';
-                        document.getElementById('login-password').value = 'Coord123*';
-                        sgrApp.submitLogin();
-                    ">📊 Coordinador</button>
-                    <button type="button" class="btn-quick-login" onclick="
-                        document.getElementById('login-username').value = 'claudio.romo@laserena.cl';
-                        document.getElementById('login-password').value = 'Deleg123*';
-                        sgrApp.submitLogin();
-                    ">🏛️ Delegado</button>
-                    <button type="button" class="btn-quick-login" onclick="
-                        document.getElementById('login-username').value = 'carlos.miranda@laserena.cl';
-                        document.getElementById('login-password').value = 'Oper123*';
-                        sgrApp.submitLogin();
-                    ">👤 Funcionario</button>
-                </div>
-            </div>
         </div>
 
         <!-- DISEÑO 2: RECUPERAR CONTRASEÑA - PASO 1 SOLICITAR CÓDIGO (PDF PÁGINA 5) -->
         <div id="auth-card-recuperar-paso1" class="auth-card" style="display: none;">
             <div class="auth-header">
-                <img src="/assets/municipal/logo-la-serena.svg" alt="Escudo Oficial La Serena">
+                <img src="/assets/municipal/logo-la-serena.svg" alt="La Serena · Ilustre Municipalidad">
                 <h2 class="auth-title">Recuperar contraseña</h2>
                 <div class="auth-step-pill">Paso 1 de 3 · Solicitar código</div>
                 <p class="auth-desc">Ingresa el correo asociado a tu cuenta.</p>
@@ -116,7 +90,7 @@
         <!-- DISEÑO 3: VALIDAR CÓDIGO - PASO 2 VERIFICACIÓN (PDF PÁGINA 6) -->
         <div id="auth-card-recuperar-paso2" class="auth-card" style="display: none;">
             <div class="auth-header">
-                <img src="/assets/municipal/logo-la-serena.svg" alt="Escudo Oficial La Serena">
+                <img src="/assets/municipal/logo-la-serena.svg" alt="La Serena · Ilustre Municipalidad">
                 <h2 class="auth-title">Validar código</h2>
                 <div class="auth-step-pill">Paso 2 de 3 · Verificación</div>
                 <p class="auth-desc" id="rec-masked-email">Código enviado a u***@example.test</p>
@@ -155,7 +129,7 @@
         <!-- DISEÑO 4: CREAR NUEVA CONTRASEÑA - PASO 3 NUEVA CLAVE (PDF PÁGINA 6) -->
         <div id="auth-card-recuperar-paso3" class="auth-card" style="display: none;">
             <div class="auth-header">
-                <img src="/assets/municipal/logo-la-serena.svg" alt="Escudo Oficial La Serena">
+                <img src="/assets/municipal/logo-la-serena.svg" alt="La Serena · Ilustre Municipalidad">
                 <h2 class="auth-title">Crear nueva contraseña</h2>
                 <div class="auth-step-pill">Paso 3 de 3 · Nueva clave</div>
             </div>
@@ -207,13 +181,12 @@
     <!-- ======================================================================
          APLICACIÓN PRINCIPAL: CABECERA, SIDEBAR Y VISTAS SGR
          ====================================================================== -->
-    <div id="sgr-app-container">
+    <div id="sgr-app-container" style="display: none;">
 
         <!-- CABECERA INSTITUCIONAL PERMANENTE (PDF PÁGINAS 2, 7 A 10) -->
         <header class="sgr-topbar">
             <div class="topbar-left">
-                <img src="/assets/municipal/logo-la-serena.svg" alt="Escudo La Serena" class="topbar-logo">
-                <div class="topbar-brand">SISTEMA MUNICIPAL</div>
+                <img src="/assets/municipal/logo-la-serena.svg" alt="La Serena · Ilustre Municipalidad" class="topbar-logo">
             </div>
 
             <!-- DISTINTIVO PERMANENTE DE DELEGACIÓN ACTIVA -->
@@ -232,8 +205,8 @@
             <!-- PERFIL DE USUARIO Y CIERRE DE SESIÓN -->
             <div class="topbar-right">
                 <div class="user-header-info">
-                    <div class="user-header-name" id="header-user-name">Harold Concha</div>
-                    <div class="user-header-role" id="header-user-role">Superadministrador</div>
+                    <div class="user-header-name" id="header-user-name"></div>
+                    <div class="user-header-role" id="header-user-role"></div>
                 </div>
                 <button type="button" class="btn-header-logout" onclick="sgrApp.logout()">
                     <i data-lucide="log-out"></i> Salir
@@ -241,30 +214,6 @@
             </div>
         </header>
 
-        <!-- BARRA RÁPIDA DE CONMUTACIÓN DE ROLES (DEMOSTRACIÓN EVALUATIVA) -->
-        <nav class="role-demo-bar" aria-label="Perfiles de evaluación">
-            <div class="role-demo-heading">
-                <span id="role-demo-label">Perfil de acceso</span>
-                <span class="role-demo-caption">Evaluación INACAP</span>
-            </div>
-            <div class="role-demo-chips" role="group" aria-labelledby="role-demo-label">
-                <button type="button" class="role-chip active" data-rol="ROL01" aria-pressed="true" title="Superadministrador: acceso total" onclick="sgrApp.setCurrentUserByRole('ROL01')">
-                    Superadministrador
-                </button>
-                <button type="button" class="role-chip" data-rol="ROL02" aria-pressed="false" title="Coordinador: supervisión comunal" onclick="sgrApp.setCurrentUserByRole('ROL02')">
-                    Coordinador
-                </button>
-                <button type="button" class="role-chip" data-rol="ROL03" aria-pressed="false" title="Delegado municipal: gestión local" onclick="sgrApp.setCurrentUserByRole('ROL03')">
-                    Delegado municipal
-                </button>
-                <button type="button" class="role-chip" data-rol="ROL04" aria-pressed="false" title="Operador: atención en ventanilla" onclick="sgrApp.setCurrentUserByRole('ROL04')">
-                    Operador
-                </button>
-                <button type="button" class="role-chip" data-rol="ROL05" aria-pressed="false" title="Consultor: solo lectura" onclick="sgrApp.setCurrentUserByRole('ROL05')">
-                    Consultor
-                </button>
-            </div>
-        </nav>
 
         <!-- LAYOUT: BARRA LATERAL + CONTENIDO -->
         <div class="sgr-app-layout">
