@@ -55,6 +55,7 @@ Type=simple
 User=root
 WorkingDirectory=/opt/sgr-municipalidad-laserena
 Environment="PORT=80"
+EnvironmentFile=-/opt/sgr-municipalidad-laserena/.env
 ExecStart=/usr/bin/python3 /opt/sgr-municipalidad-laserena/server.py --port 80
 Restart=always
 RestartSec=5

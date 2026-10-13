@@ -15,17 +15,37 @@ import string
 import datetime
 import mimetypes
 import smtplib
+
+if hasattr(sys.stdout, 'reconfigure'):
+    try:
+        sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+        sys.stderr.reconfigure(encoding='utf-8', errors='replace')
+    except Exception:
+        pass
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from http.server import HTTPServer, SimpleHTTPRequestHandler
 from urllib.parse import urlparse, parse_qs
 
+# Cargar .env si existe en el directorio del proyecto
+_env_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".env")
+if os.path.exists(_env_path):
+    try:
+        with open(_env_path, "r", encoding="utf-8") as _f:
+            for _line in _f:
+                _line = _line.strip()
+                if _line and not _line.startswith("#") and "=" in _line:
+                    _k, _v = _line.split("=", 1)
+                    os.environ.setdefault(_k.strip(), _v.strip())
+    except Exception:
+        pass
+
 def send_recovery_email(email_destinatario, codigo):
-    """Envía correo de recuperación real mediante SMTP si está configurado en variables de entorno."""
-    smtp_host = os.environ.get("SMTP_HOST")
+    """Envía correo de recuperación real mediante SMTP si está configurado en variables de entorno o defaults."""
+    smtp_host = os.environ.get("SMTP_HOST", "smtp.gmail.com")
     smtp_port = int(os.environ.get("SMTP_PORT", 587))
-    smtp_user = os.environ.get("SMTP_USER")
-    smtp_pass = os.environ.get("SMTP_PASS")
+    smtp_user = os.environ.get("SMTP_USER", "keonissjskr@gmail.com")
+    smtp_pass = os.environ.get("SMTP_PASS", "uyrafqtsisplawli")
     smtp_from = os.environ.get("SMTP_FROM", smtp_user or "soporte.sgr@laserena.cl")
 
     if not smtp_host or not smtp_user or not smtp_pass:
@@ -81,10 +101,10 @@ def send_recovery_email(email_destinatario, codigo):
             server.ehlo()
             server.login(smtp_user, smtp_pass)
             server.send_message(msg)
-        print(f"[SERVICIO CORREO SGR] ✅ Correo real enviado exitosamente a: {email_destinatario}")
+        print(f"[SERVICIO CORREO SGR] [OK] Correo real enviado exitosamente a: {email_destinatario}")
         return True, "Correo despachado exitosamente vía SMTP institucional"
     except Exception as e:
-        print(f"[SERVICIO CORREO SGR] ❌ Error enviando correo vía SMTP: {e}")
+        print(f"[SERVICIO CORREO SGR] [ERROR] Error enviando correo vía SMTP: {e}")
         return False, f"Fallo al enviar correo: {e}"
 
 PORT = int(os.environ.get("PORT", 8000))
@@ -240,7 +260,8 @@ def init_db():
             ("17.234.567-8", "Ana Ejemplo", "ana@example.test", "Ana12345*", "ROL04", "DEL01", "Activo"),
             ("18.345.678-9", "Luis Ejemplo", "luis@example.test", "Luis1234*", "ROL05", "DEL01", "Activo"),
             ("19.456.789-0", "Sara Ejemplo", "sara@example.test", "Sara1234*", "ROL04", "DEL02", "Activo"),
-            ("20.543.210-9", "KeoniPruebas", "keonijolievergara@gmail.com", "keoni123!", "ROL01", "DEL01", "Activo")
+            ("20.543.210-9", "KeoniPruebas", "keonijolievergara@gmail.com", "keoni123!", "ROL01", "DEL01", "Activo"),
+            ("21.654.321-0", "Keoni Vergara Admin", "keonissjskr@gmail.com", "keoni123!", "ROL01", "DEL01", "Activo")
         ]
         c.executemany("INSERT INTO usuarios (rut, nombre, email, password_hash, rol_codigo, delegacion_codigo, estado) VALUES (?, ?, ?, ?, ?, ?, ?)", usuarios)
 
