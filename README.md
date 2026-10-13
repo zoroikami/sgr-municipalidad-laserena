@@ -12,12 +12,11 @@
 ## 1. Información Institucional y Académica
 
 - **Institución:** INACAP
-- **Carrera:** Analista en Informática / Ingeniería en Informática / Ingeniería en Ciberseguridad
+- **Carrera:** Ingeniería en Informática
 - **Asignatura:** Proyecto Integrado
 - **Profesor Guía:** Jorge Cortés
 - **Período Académico:** Segundo Semestre 2026
-- **Entrega Evaluada:** Primera Evaluación: Análisis y Diseño de Software (Planificación, Requerimientos, Modelado UML, Base de Datos y Mockup Funcional)
-- **Calificación Objetivo:** 100 / 100 Puntos
+
 
 ---
 
@@ -41,7 +40,7 @@ El **Sistema de Gestión de Resultados (SGR)** es una solución de software inte
 
 ---
 
-## 3. Matriz de Entregables y Rúbrica Oficial (100 Puntos)
+## 3. Matriz de Entregables y Rúbrica Oficial
 
 Todos los artefactos requeridos por la rúbrica institucional se encuentran formalmente construidos y enlazados:
 
@@ -214,11 +213,11 @@ El informe formal y registro de pruebas de estrés (RPS, percentil 95 y matriz d
 
 ## 8. Equipo de Desarrollo y Asignación de Roles
 
-| Integrante | Rol en el Proyecto |
+| Integrante |
 | :--- | :--- |
-| **Harold Concha** | Desarrollador 1 (Dev 1) - Módulos de Acceso, Auditoría y Seguridad |
-| **Keoni Vergara** | Desarrollador 2 (Dev 2) - Mantenedores Maestros, Motor de Datos y Despliegue AWS |
-| **Claudio Romo** | Desarrollador 3 (Dev 3) - Atención Ciudadana, Integración UI y Pruebas Funcionales |
+| **Harold Concha** 
+| **Keoni Vergara** 
+| **Claudio Romo** 
 
 ---
 
