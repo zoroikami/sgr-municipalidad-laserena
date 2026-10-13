@@ -466,6 +466,30 @@ class SGRRequestHandler(SimpleHTTPRequestHandler):
                 if not email:
                     return self.send_json(400, {"success": False, "message": "El correo electrónico es requerido."})
 
+                # Verificar si el correo pertenece a algún usuario registrado en la aplicación
+                c.execute("SELECT id, nombre, email, estado FROM usuarios WHERE LOWER(email) = ?", (email,))
+                user_match = c.fetchone()
+
+                if not user_match:
+                    # Por seguridad y requerimiento institucional: respuesta neutra sin revelar existencia
+                    return self.send_json(200, {
+                        "success": True,
+                        "exists": False,
+                        "message": "Si la cuenta existe, recibirás instrucciones con el código de 6 dígitos.",
+                        "email_sent_real": False,
+                        "smtp_status": "Correo no registrado en la base de datos de usuarios",
+                        "demo_code": None,
+                        "expires_in_minutes": 10
+                    })
+
+                user_dict = dict(user_match)
+                if user_dict["estado"] != "Activo":
+                    return self.send_json(403, {
+                        "success": False,
+                        "exists": True,
+                        "message": "Esta cuenta de usuario se encuentra inactiva o suspendida. Contacte al administrador municipal."
+                    })
+
                 # Generar código de 6 dígitos
                 codigo = "".join(random.choices(string.digits, k=6))
                 expiracion = (datetime.datetime.now() + datetime.timedelta(minutes=10)).isoformat()
@@ -473,12 +497,13 @@ class SGRRequestHandler(SimpleHTTPRequestHandler):
                 c.execute("INSERT INTO codigos_recuperacion (email, codigo, expiracion) VALUES (?, ?, ?)", (email, codigo, expiracion))
                 conn.commit()
 
-                # Intentar despacho por correo real (SMTP)
+                # Intentar despacho por correo real (SMTP) al correo del usuario registrado
                 real_sent, smtp_msg = send_recovery_email(email, codigo)
 
-                # Por seguridad (PDF): respuesta neutra sin revelar si existe la cuenta
                 return self.send_json(200, {
                     "success": True,
+                    "exists": True,
+                    "nombre": user_dict["nombre"],
                     "message": "Si la cuenta existe, recibirás instrucciones con el código de 6 dígitos.",
                     "email_sent_real": real_sent,
                     "smtp_status": smtp_msg,

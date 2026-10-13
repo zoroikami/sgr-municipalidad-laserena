@@ -1347,6 +1347,8 @@ class SGRApplication {
         let demoCode = "849201";
         let emailSentReal = false;
         let smtpMsg = "";
+        let userExists = true;
+        let userNombre = "";
 
         try {
             if (sgrDb.hasBackend) {
@@ -1356,9 +1358,24 @@ class SGRApplication {
                     body: JSON.stringify({ email })
                 });
                 const data = await res.json();
-                if (data.demo_code) demoCode = data.demo_code;
-                if (data.email_sent_real) emailSentReal = true;
+                if (data.exists === false) {
+                    userExists = false;
+                    demoCode = null;
+                } else {
+                    if (data.demo_code) demoCode = data.demo_code;
+                    if (data.nombre) userNombre = data.nombre;
+                    if (data.email_sent_real) emailSentReal = true;
+                }
                 if (data.smtp_status) smtpMsg = data.smtp_status;
+            } else {
+                // Verificación en memoria local
+                const match = sgrDb.data.usuarios.find(u => u.email.toLowerCase() === email.toLowerCase());
+                if (match) {
+                    userNombre = match.nombre;
+                } else {
+                    userExists = false;
+                    demoCode = null;
+                }
             }
         } catch (err) {
             console.warn(err);
@@ -1368,6 +1385,8 @@ class SGRApplication {
         this.recoveryState.attempts = 0;
         this.recoveryState.emailSentReal = emailSentReal;
         this.recoveryState.smtpMsg = smtpMsg;
+        this.recoveryState.userExists = userExists;
+        this.recoveryState.userNombre = userNombre;
 
         console.log(`📨 [SGR La Serena - Servicio de Correo] Código para <${email}>:`, demoCode);
 
@@ -1403,7 +1422,25 @@ class SGRApplication {
     // Visor/Simulador de correo municipal para la evaluación
     openEmailSimulatorModal() {
         const email = this.recoveryState.email || "usuario@laserena.cl";
-        const code = this.recoveryState.demoCode || "849201";
+        const code = this.recoveryState.demoCode;
+
+        if (!code || this.recoveryState.userExists === false) {
+            Swal.fire({
+                title: "Bandeja Vacía",
+                html: `
+                    <div style="text-align: left; font-size: 0.92rem; line-height: 1.5;">
+                        <p>No se encontraron mensajes de recuperación para <strong>${email}</strong>.</p>
+                        <p style="color: #6e6360; font-size: 0.85rem;">Para recibir el código, el correo debe pertenecer a un usuario registrado en el sistema (precargado o creado en el mantenedor de usuarios).</p>
+                    </div>
+                `,
+                icon: "info",
+                confirmButtonColor: "var(--primary)"
+            });
+            return;
+        }
+
+        const localUser = sgrDb.data.usuarios.find(u => u.email.toLowerCase() === email.toLowerCase());
+        const nombre = localUser ? localUser.nombre : (this.recoveryState.userNombre || "Funcionario Municipal");
         const now = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
         Swal.fire({
@@ -1416,11 +1453,11 @@ class SGRApplication {
                     </div>
                     <div style="padding: 12px 18px; background: #faf8f7; border-bottom: 1px solid #ebd9d7; font-size: 0.84rem; color: #5a4f4c;">
                         <div><strong>De:</strong> Soporte SGR &lt;no-reply.sgr@laserena.cl&gt;</div>
-                        <div><strong>Para:</strong> ${email}</div>
+                        <div><strong>Para:</strong> ${nombre} &lt;${email}&gt;</div>
                         <div><strong>Asunto:</strong> Código de recuperación de contraseña · Sistema SGR</div>
                     </div>
                     <div style="padding: 20px 20px; color: #2d2624; font-size: 0.92rem; line-height: 1.5;">
-                        <p style="margin-top:0;">Estimado(a) funcionario(a),</p>
+                        <p style="margin-top:0;">Estimado(a) <strong>${nombre}</strong>,</p>
                         <p>Se ha solicitado el restablecimiento de su clave de acceso para el Sistema de Gestión de Resultados (SGR). Su código oficial de verificación es:</p>
                         <div style="text-align: center; margin: 20px 0;">
                             <div style="display: inline-block; background: #fcf1f0; border: 2px dashed #8e1525; padding: 10px 28px; border-radius: 8px;">
@@ -1690,11 +1727,42 @@ class SGRApplication {
             return;
         }
 
-        // Buscar usuario en base de datos
-        const user = sgrDb.data.usuarios.find(u =>
-            (u.email.toLowerCase() === usrInput.toLowerCase() || u.nombre.toLowerCase().includes(usrInput.toLowerCase()) || u.rut === usrInput) &&
-            (passInput === "Admin123*" || passInput === "123456" || passInput.length >= 6)
-        );
+        let user = null;
+
+        // Intentar autenticación formal en Backend API
+        if (sgrDb.hasBackend) {
+            try {
+                const res = await fetch("/api/auth/login", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ usuario: usrInput, password: passInput })
+                });
+                const data = await res.json();
+                if (data.success && data.user) {
+                    user = data.user;
+                } else if (!data.success && res.status !== 500) {
+                    Swal.fire({
+                        title: "Error de autenticación",
+                        text: data.message || "Usuario o contraseña no válidos.",
+                        icon: "error",
+                        confirmButtonColor: "var(--primary)"
+                    });
+                    return;
+                }
+            } catch (err) {
+                console.warn("Backend auth fetch error:", err);
+            }
+        }
+
+        // Si no hay backend disponible, autenticar en memoria local
+        if (!user) {
+            user = sgrDb.data.usuarios.find(u =>
+                (u.email.toLowerCase() === usrInput.toLowerCase() || 
+                 u.nombre.toLowerCase().includes(usrInput.toLowerCase()) || 
+                 u.rut === usrInput) &&
+                (passInput === "Admin123*" || passInput === "123456" || (u.password && u.password === passInput) || (u.password_hash && u.password_hash === passInput) || passInput.length >= 6)
+            );
+        }
 
         if (!user) {
             Swal.fire({
