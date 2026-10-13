@@ -5,12 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SGR La Serena | Sistema de Gestión de Resultados - Segunda Evaluación</title>
     <meta name="description" content="Sistema de Gestión de Resultados (SGR) para la Ilustre Municipalidad de La Serena. Segunda Evaluación de Proyecto Integrado INACAP.">
-    <link rel="icon" type="image/svg+xml" href="../assets/municipal/logo-la-serena.svg">
+    <link rel="icon" type="image/svg+xml" href="/assets/municipal/logo-la-serena.svg">
 
     <!-- Fuentes Tipográficas Institucionales -->
 
     <!-- CSS del Sistema de Diseño -->
-    <link rel="stylesheet" href="css/sgr_eval2.css">
+    <link rel="stylesheet" href="/evaluacion2/css/sgr_eval2.css">
 
     <!-- SweetAlert2 (Requisito Obligatorio A3) -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -18,7 +18,7 @@
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
-    <link rel="stylesheet" href="../assets/municipal/brand.css">
+    <link rel="stylesheet" href="/assets/municipal/brand.css">
 </head>
 <body>
 
@@ -30,7 +30,7 @@
         <!-- DISEÑO 1: INICIAR SESIÓN (PDF PÁGINA 5) -->
         <div id="auth-card-login" class="auth-card">
             <div class="auth-header">
-                <img src="../assets/municipal/logo-la-serena.svg" alt="Escudo Oficial La Serena">
+                <img src="/assets/municipal/logo-la-serena.svg" alt="Escudo Oficial La Serena">
                 <h2 class="auth-title">Iniciar sesión</h2>
                 <p class="auth-desc">Accede con tu cuenta institucional.</p>
             </div>
@@ -91,7 +91,7 @@
         <!-- DISEÑO 2: RECUPERAR CONTRASEÑA - PASO 1 SOLICITAR CÓDIGO (PDF PÁGINA 5) -->
         <div id="auth-card-recuperar-paso1" class="auth-card" style="display: none;">
             <div class="auth-header">
-                <img src="../assets/municipal/logo-la-serena.svg" alt="Escudo Oficial La Serena">
+                <img src="/assets/municipal/logo-la-serena.svg" alt="Escudo Oficial La Serena">
                 <h2 class="auth-title">Recuperar contraseña</h2>
                 <div class="auth-step-pill">Paso 1 de 3 · Solicitar código</div>
                 <p class="auth-desc">Ingresa el correo asociado a tu cuenta.</p>
@@ -116,7 +116,7 @@
         <!-- DISEÑO 3: VALIDAR CÓDIGO - PASO 2 VERIFICACIÓN (PDF PÁGINA 6) -->
         <div id="auth-card-recuperar-paso2" class="auth-card" style="display: none;">
             <div class="auth-header">
-                <img src="../assets/municipal/logo-la-serena.svg" alt="Escudo Oficial La Serena">
+                <img src="/assets/municipal/logo-la-serena.svg" alt="Escudo Oficial La Serena">
                 <h2 class="auth-title">Validar código</h2>
                 <div class="auth-step-pill">Paso 2 de 3 · Verificación</div>
                 <p class="auth-desc" id="rec-masked-email">Código enviado a u***@example.test</p>
@@ -155,7 +155,7 @@
         <!-- DISEÑO 4: CREAR NUEVA CONTRASEÑA - PASO 3 NUEVA CLAVE (PDF PÁGINA 6) -->
         <div id="auth-card-recuperar-paso3" class="auth-card" style="display: none;">
             <div class="auth-header">
-                <img src="../assets/municipal/logo-la-serena.svg" alt="Escudo Oficial La Serena">
+                <img src="/assets/municipal/logo-la-serena.svg" alt="Escudo Oficial La Serena">
                 <h2 class="auth-title">Crear nueva contraseña</h2>
                 <div class="auth-step-pill">Paso 3 de 3 · Nueva clave</div>
             </div>
@@ -212,7 +212,7 @@
         <!-- CABECERA INSTITUCIONAL PERMANENTE (PDF PÁGINAS 2, 7 A 10) -->
         <header class="sgr-topbar">
             <div class="topbar-left">
-                <img src="../assets/municipal/logo-la-serena.svg" alt="Escudo La Serena" class="topbar-logo">
+                <img src="/assets/municipal/logo-la-serena.svg" alt="Escudo La Serena" class="topbar-logo">
                 <div class="topbar-brand">SISTEMA MUNICIPAL</div>
             </div>
 
@@ -390,7 +390,7 @@
                             </div>
                             <div class="toolbar-actions">
                                 <button type="button" class="btn-export-excel" onclick="sgrApp.exportModuleToExcel('delegaciones')">
-                                    <img src="../assets/municipal/excel.svg" class="excel-icon" width="20" height="20" alt="" aria-hidden="true"> Exportar a Excel
+                                    <img src="/assets/municipal/excel.svg" class="excel-icon" width="20" height="20" alt="" aria-hidden="true"> Exportar a Excel
                                 </button>
                                 <select class="select-filter" aria-label="Filtrar registros por estado" onchange="sgrApp.onFilterChange('delegaciones', this.value)">
                                     <option value="TODOS">Filtrar estado: Todos</option>
@@ -441,7 +441,7 @@
                             </div>
                             <div class="toolbar-actions">
                                 <button type="button" class="btn-export-excel" onclick="sgrApp.exportModuleToExcel('roles')">
-                                    <img src="../assets/municipal/excel.svg" class="excel-icon" width="20" height="20" alt="" aria-hidden="true"> Exportar a Excel
+                                    <img src="/assets/municipal/excel.svg" class="excel-icon" width="20" height="20" alt="" aria-hidden="true"> Exportar a Excel
                                 </button>
                                 <select class="select-filter" aria-label="Filtrar registros por estado" onchange="sgrApp.onFilterChange('roles', this.value)">
                                     <option value="TODOS">Filtrar estado: Todos</option>
@@ -492,7 +492,7 @@
                             </div>
                             <div class="toolbar-actions">
                                 <button type="button" class="btn-export-excel" onclick="sgrApp.exportModuleToExcel('usuarios')">
-                                    <img src="../assets/municipal/excel.svg" class="excel-icon" width="20" height="20" alt="" aria-hidden="true"> Exportar a Excel
+                                    <img src="/assets/municipal/excel.svg" class="excel-icon" width="20" height="20" alt="" aria-hidden="true"> Exportar a Excel
                                 </button>
                                 <select class="select-filter" aria-label="Filtrar registros por estado" onchange="sgrApp.onFilterChange('usuarios', this.value)">
                                     <option value="TODOS">Filtrar estado: Todos</option>
@@ -543,7 +543,7 @@
                             </div>
                             <div class="toolbar-actions">
                                 <button type="button" class="btn-export-excel" onclick="sgrApp.exportModuleToExcel('items_metas')">
-                                    <img src="../assets/municipal/excel.svg" class="excel-icon" width="20" height="20" alt="" aria-hidden="true"> Exportar a Excel
+                                    <img src="/assets/municipal/excel.svg" class="excel-icon" width="20" height="20" alt="" aria-hidden="true"> Exportar a Excel
                                 </button>
                                 <select class="select-filter" aria-label="Filtrar registros por estado" onchange="sgrApp.onFilterChange('items_metas', this.value)">
                                     <option value="TODOS">Filtrar estado: Todos</option>
@@ -594,7 +594,7 @@
                             </div>
                             <div class="toolbar-actions">
                                 <button type="button" class="btn-export-excel" onclick="sgrApp.exportModuleToExcel('tipos_atencion')">
-                                    <img src="../assets/municipal/excel.svg" class="excel-icon" width="20" height="20" alt="" aria-hidden="true"> Exportar a Excel
+                                    <img src="/assets/municipal/excel.svg" class="excel-icon" width="20" height="20" alt="" aria-hidden="true"> Exportar a Excel
                                 </button>
                                 <select class="select-filter" aria-label="Filtrar registros por estado" onchange="sgrApp.onFilterChange('tipos_atencion', this.value)">
                                     <option value="TODOS">Filtrar estado: Todos</option>
@@ -645,7 +645,7 @@
                             </div>
                             <div class="toolbar-actions">
                                 <button type="button" class="btn-export-excel" onclick="sgrApp.exportModuleToExcel('sub_atenciones')">
-                                    <img src="../assets/municipal/excel.svg" class="excel-icon" width="20" height="20" alt="" aria-hidden="true"> Exportar a Excel
+                                    <img src="/assets/municipal/excel.svg" class="excel-icon" width="20" height="20" alt="" aria-hidden="true"> Exportar a Excel
                                 </button>
                                 <select class="select-filter" aria-label="Filtrar registros por estado" onchange="sgrApp.onFilterChange('sub_atenciones', this.value)">
                                     <option value="TODOS">Filtrar estado: Todos</option>
@@ -746,7 +746,7 @@
                                     <input type="search" class="search-input" aria-label="Buscar en el historial de atenciones" placeholder="Buscar por folio, solicitante o tipo..." oninput="sgrApp.onSearchInput('atenciones', this.value)">
                                 </div>
                                 <button type="button" class="btn-export-excel" onclick="sgrApp.exportModuleToExcel('atenciones')">
-                                    <img src="../assets/municipal/excel.svg" class="excel-icon" width="20" height="20" alt="" aria-hidden="true"> Exportar a Excel
+                                    <img src="/assets/municipal/excel.svg" class="excel-icon" width="20" height="20" alt="" aria-hidden="true"> Exportar a Excel
                                 </button>
                             </div>
 
@@ -874,7 +874,7 @@
     </footer>
 
     <!-- Scripts de la Aplicación -->
-    <script src="js/data_eval2.js"></script>
-    <script src="js/app_eval2.js"></script>
+    <script src="/evaluacion2/js/data_eval2.js"></script>
+    <script src="/evaluacion2/js/app_eval2.js"></script>
 </body>
 </html>

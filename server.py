@@ -352,13 +352,38 @@ class SGRRequestHandler(SimpleHTTPRequestHandler):
         path = parsed.path
         qs = parse_qs(parsed.query)
 
-        # Redirigir para que el navegador resuelva los recursos relativos en evaluacion2.
-        if path == "/" or path == "/index.html":
-            eval2_path = os.path.join(os.path.dirname(__file__), "evaluacion2", "index.html")
-            if os.path.exists(eval2_path):
-                self.send_response(302)
-                self.send_header("Location", "/evaluacion2/index.html")
+        # Redirigir accesos antiguos con /evaluacion2 a la raíz limpia /
+        if path in ("/evaluacion2", "/evaluacion2/", "/evaluacion2/index.html"):
+            self.send_response(301)
+            self.send_header("Location", "/")
+            self.end_headers()
+            return
+
+        # Servir directamente la aplicación SGR en la raíz limpia /
+        if path in ("/", "/index.html"):
+            root_index = os.path.join(os.path.dirname(__file__), "index.html")
+            if os.path.exists(root_index):
+                self.send_response(200)
+                self.send_header("Content-Type", "text/html; charset=utf-8")
+                with open(root_index, "rb") as f:
+                    content = f.read()
+                self.send_header("Content-Length", str(len(content)))
                 self.end_headers()
+                self.wfile.write(content)
+                return
+
+        # Mapeo de recursos estáticos de /css y /js hacia evaluacion2 si es necesario
+        if path.startswith("/css/") or path.startswith("/js/"):
+            local_p = os.path.join(os.path.dirname(__file__), "evaluacion2", path.lstrip("/"))
+            if os.path.exists(local_p) and os.path.isfile(local_p):
+                mime, _ = mimetypes.guess_type(local_p)
+                self.send_response(200)
+                self.send_header("Content-Type", mime or "application/octet-stream")
+                with open(local_p, "rb") as f:
+                    content = f.read()
+                self.send_header("Content-Length", str(len(content)))
+                self.end_headers()
+                self.wfile.write(content)
                 return
 
         # Health check

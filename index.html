@@ -3,655 +3,878 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SGR La Serena | Sistema de Gestión de Resultados - Portal Institucional</title>
-    <meta name="description" content="Portal oficial y prototipo del Sistema de Gestión de Resultados (SGR) de la Ilustre Municipalidad de La Serena. Evaluación de Análisis y Diseño de Software INACAP.">
-    <link rel="icon" type="image/svg+xml" href="assets/municipal/logo-la-serena.svg">
-    
-    <!-- Fuentes Tipográficas -->
-    
-    <!-- Iconos Lucide -->
+    <title>SGR La Serena | Sistema de Gestión de Resultados - Segunda Evaluación</title>
+    <meta name="description" content="Sistema de Gestión de Resultados (SGR) para la Ilustre Municipalidad de La Serena. Segunda Evaluación de Proyecto Integrado INACAP.">
+    <link rel="icon" type="image/svg+xml" href="/assets/municipal/logo-la-serena.svg">
+
+    <!-- Fuentes Tipográficas Institucionales -->
+
+    <!-- CSS del Sistema de Diseño -->
+    <link rel="stylesheet" href="/evaluacion2/css/sgr_eval2.css">
+
+    <!-- SweetAlert2 (Requisito Obligatorio A3) -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <!-- SheetJS (Exportar a Excel Requisito A2) -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
-
-    <style>
-        :root {
-            --color-primary: #ad0000;
-            --color-primary-dark: #660000;
-            --color-accent: #ad0000;
-            --color-gold: #b87518;
-            --bg-body: #ffffff;
-            --bg-card: #ffffff;
-            --text-main: #2b2525;
-            --text-secondary: #6e6360;
-            --border-color: #eadfdc;
-            --shadow-sm: 0 4px 12px rgba(93, 14, 25, 0.05);
-            --shadow-lg: 0 16px 40px rgba(93, 14, 25, 0.12);
-            --radius-md: 12px;
-            --radius-lg: 18px;
-        }
-
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
-
-        body {
-            font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
-            background-color: var(--bg-body);
-            color: var(--text-main);
-            line-height: 1.6;
-        }
-
-        h1, h2, h3, h4 {
-            font-family: 'Playfair Display', Georgia, serif;
-            letter-spacing: -0.02em;
-        }
-
-        /* Top Navbar */
-        .navbar {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            border-bottom: 1px solid var(--border-color);
-            position: sticky;
-            top: 0;
-            z-index: 100;
-            padding: 14px 40px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .navbar-brand {
-            display: flex;
-            align-items: center;
-            gap: 14px;
-            text-decoration: none;
-            color: var(--color-primary);
-        }
-
-        .navbar-brand img {
-            width: 44px;
-            height: 44px;
-            border-radius: 50%;
-            border: 2px solid var(--color-accent);
-            object-fit: cover;
-        }
-
-        .navbar-brand div h1 {
-            font-size: 1.15rem;
-            color: var(--color-primary-dark);
-            margin: 0;
-        }
-
-        .navbar-brand div p {
-            font-size: 0.75rem;
-            color: var(--text-secondary);
-            margin: 0;
-            text-transform: uppercase;
-            letter-spacing: 0.08em;
-        }
-
-        .nav-links {
-            display: flex;
-            align-items: center;
-            gap: 24px;
-            list-style: none;
-        }
-
-        .nav-links a {
-            text-decoration: none;
-            color: var(--text-main);
-            font-size: 0.9rem;
-            font-weight: 500;
-            transition: color 0.2s;
-        }
-
-        .nav-links a:hover {
-            color: var(--color-primary);
-        }
-
-        .btn-launch {
-            background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
-            color: #ffffff !important;
-            padding: 10px 20px;
-            border-radius: 8px;
-            font-weight: 600;
-            box-shadow: 0 4px 14px rgba(142, 21, 37, 0.25);
-            transition: transform 0.2s, box-shadow 0.2s;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .btn-launch:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(142, 21, 37, 0.35);
-        }
-
-        /* Hero Section */
-        .hero {
-            padding: 70px 40px 50px;
-            max-width: 1200px;
-            margin: 0 auto;
-            text-align: center;
-        }
-
-        .hero-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            background: #f9dcdc;
-            border: 1px solid #e6e6e6;
-            color: var(--color-primary);
-            padding: 6px 16px;
-            border-radius: 30px;
-            font-size: 0.82rem;
-            font-weight: 600;
-            margin-bottom: 20px;
-        }
-
-        .hero h1 {
-            font-size: clamp(2.2rem, 4.5vw, 3.4rem);
-            color: var(--color-primary-dark);
-            line-height: 1.15;
-            margin-bottom: 18px;
-        }
-
-        .hero p {
-            font-size: 1.12rem;
-            color: var(--text-secondary);
-            max-width: 820px;
-            margin: 0 auto 32px;
-        }
-
-        .hero-actions {
-            display: flex;
-            justify-content: center;
-            gap: 16px;
-            flex-wrap: wrap;
-            margin-bottom: 40px;
-        }
-
-        .btn-secondary {
-            background: #ffffff;
-            color: var(--color-primary-dark);
-            border: 1px solid var(--border-color);
-            padding: 12px 24px;
-            border-radius: 8px;
-            font-weight: 600;
-            text-decoration: none;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            box-shadow: var(--shadow-sm);
-            transition: background 0.2s, border-color 0.2s;
-        }
-
-        .btn-secondary:hover {
-            background: #f9f9f9;
-            border-color: var(--color-accent);
-        }
-
-        /* Stats Grid */
-        .stats-bar {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-            gap: 20px;
-            max-width: 1100px;
-            margin: 0 auto 60px;
-            padding: 0 20px;
-        }
-
-        .stat-card {
-            background: var(--bg-card);
-            border: 1px solid var(--border-color);
-            border-radius: var(--radius-md);
-            padding: 24px 20px;
-            text-align: center;
-            box-shadow: var(--shadow-sm);
-            transition: transform 0.2s;
-        }
-
-        .stat-card:hover {
-            transform: translateY(-3px);
-        }
-
-        .stat-card .number {
-            font-size: 2.2rem;
-            font-weight: 800;
-            color: var(--color-primary);
-            font-family: 'DM Sans', sans-serif;
-        }
-
-        .stat-card .label {
-            font-size: 0.85rem;
-            color: var(--text-secondary);
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-        }
-
-        /* Sections */
-        .section-container {
-            max-width: 1200px;
-            margin: 0 auto 70px;
-            padding: 0 40px;
-        }
-
-        .section-header {
-            text-align: center;
-            margin-bottom: 40px;
-        }
-
-        .section-header h2 {
-            font-size: 2rem;
-            color: var(--color-primary-dark);
-            margin-bottom: 8px;
-        }
-
-        .section-header p {
-            color: var(--text-secondary);
-            font-size: 1rem;
-        }
-
-        /* Features Grid */
-        .features-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-            gap: 24px;
-        }
-
-        .feature-card {
-            background: var(--bg-card);
-            border: 1px solid var(--border-color);
-            border-radius: var(--radius-lg);
-            padding: 30px;
-            box-shadow: var(--shadow-sm);
-            transition: box-shadow 0.2s, border-color 0.2s;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .feature-card:hover {
-            box-shadow: var(--shadow-lg);
-            border-color: #cccccc;
-        }
-
-        .feature-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 4px;
-            background: linear-gradient(90deg, var(--color-primary), var(--color-accent));
-        }
-
-        .feature-icon {
-            width: 48px;
-            height: 48px;
-            background: #fbe9e7;
-            color: var(--color-primary);
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-bottom: 18px;
-        }
-
-        .feature-card h3 {
-            font-size: 1.22rem;
-            margin-bottom: 10px;
-            color: var(--color-primary-dark);
-        }
-
-        .feature-card p {
-            font-size: 0.92rem;
-            color: var(--text-secondary);
-            line-height: 1.55;
-        }
-
-        /* Deliverables Grid (The 8 Criteria) */
-        .deliverables-table {
-            width: 100%;
-            background: var(--bg-card);
-            border-radius: var(--radius-lg);
-            border: 1px solid var(--border-color);
-            overflow: hidden;
-            box-shadow: var(--shadow-sm);
-            border-collapse: collapse;
-        }
-
-        .deliverables-table th {
-            background: var(--color-primary);
-            color: #ffffff;
-            padding: 14px 20px;
-            text-align: left;
-            font-size: 0.88rem;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-        }
-
-        .deliverables-table td {
-            padding: 16px 20px;
-            border-bottom: 1px solid var(--border-color);
-            font-size: 0.92rem;
-        }
-
-        .deliverables-table tr:hover {
-            background: #f9f9f9;
-        }
-
-        .badge-pts {
-            background: #e7f4ed;
-            color: #17603f;
-            font-weight: 700;
-            padding: 4px 10px;
-            border-radius: 6px;
-            font-size: 0.8rem;
-        }
-
-        .btn-view-artifact {
-            background: #ffffff;
-            border: 1px solid var(--border-color);
-            color: var(--color-primary);
-            padding: 6px 14px;
-            border-radius: 6px;
-            text-decoration: none;
-            font-size: 0.82rem;
-            font-weight: 600;
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            transition: all 0.2s;
-        }
-
-        .btn-view-artifact:hover {
-            background: var(--color-primary);
-            color: #ffffff;
-            border-color: var(--color-primary);
-        }
-
-        /* Delegations Showcase */
-        .delegations-chips {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
-            gap: 12px;
-            margin-top: 20px;
-        }
-
-        .del-chip {
-            background: #ffffff;
-            border: 1px solid var(--border-color);
-            padding: 8px 18px;
-            border-radius: 20px;
-            font-size: 0.88rem;
-            font-weight: 600;
-            color: var(--color-primary-dark);
-            box-shadow: var(--shadow-sm);
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        /* Footer */
-        footer {
-            background: #ffffff;
-            border-top: 1px solid var(--border-color);
-            padding: 40px;
-            text-align: center;
-            margin-top: 60px;
-        }
-
-        footer p {
-            font-size: 0.88rem;
-            color: var(--text-secondary);
-            margin-bottom: 8px;
-        }
-
-        footer a {
-            color: var(--color-primary);
-            text-decoration: none;
-            font-weight: 600;
-        }
-
-        @media (max-width: 768px) {
-            .navbar {
-                padding: 12px 20px;
-                flex-direction: column;
-                gap: 14px;
-            }
-            .hero {
-                padding: 40px 20px;
-            }
-            .section-container {
-                padding: 0 20px;
-            }
-        }
-    </style>
-    <link rel="stylesheet" href="assets/municipal/brand.css">
+    <link rel="stylesheet" href="/assets/municipal/brand.css">
 </head>
 <body>
 
-    <!-- Navbar -->
-    <nav class="navbar">
-        <a href="#" class="navbar-brand">
-            <img src="assets/municipal/logo-la-serena.svg" alt="Escudo La Serena">
-            <div>
-                <h1>SGR LA SERENA</h1>
-                <p>Gestión de Resultados</p>
+    <!-- ======================================================================
+         CONTENEDOR DE AUTENTICACIÓN (LOGIN Y RECUPERACIÓN - DISEÑOS C1 Y C2)
+         ====================================================================== -->
+    <div id="sgr-auth-container" class="auth-wrapper" style="display: none;">
+
+        <!-- DISEÑO 1: INICIAR SESIÓN (PDF PÁGINA 5) -->
+        <div id="auth-card-login" class="auth-card">
+            <div class="auth-header">
+                <img src="/assets/municipal/logo-la-serena.svg" alt="Escudo Oficial La Serena">
+                <h2 class="auth-title">Iniciar sesión</h2>
+                <p class="auth-desc">Accede con tu cuenta institucional.</p>
             </div>
-        </a>
 
-        <ul class="nav-links">
-            <li><a href="evaluacion2/index.html" style="color: var(--color-primary); font-weight: 700;">Segunda Evaluación (SGR)</a></li>
-            <li><a href="#caracteristicas">Características</a></li>
-            <li><a href="#rubrica">Entregables</a></li>
-            <li><a href="https://github.com/zoroikami/sgr-municipalidad-laserena" target="_blank">GitHub</a></li>
-            <li>
-                <a href="evaluacion2/index.html" class="btn-launch">
-                    <i data-lucide="shield-check"></i>
-                    <span>Abrir SGR (Eval 2)</span>
-                </a>
-            </li>
-        </ul>
-    </nav>
+            <form onsubmit="sgrApp.submitLogin(event)">
+                <div class="form-group">
+                    <label class="form-label" for="login-username">Usuario o correo</label>
+                    <input type="text" id="login-username" class="form-control" placeholder="usuario@example.test" required autocomplete="username">
+                </div>
 
-    <!-- Hero Section -->
-    <section class="hero">
-        <div class="hero-badge">
-            <i data-lucide="award" style="width: 16px; height: 16px;"></i>
-            <span>INACAP 2026 · Proyecto Integrado · SEGUNDA EVALUACIÓN</span>
+                <div class="form-group">
+                    <label class="form-label" for="login-password">Contraseña</label>
+                    <div class="input-password-wrapper">
+                        <input type="password" id="login-password" class="form-control" placeholder="••••••••••••" required autocomplete="current-password">
+                        <button type="button" class="btn-toggle-password" onclick="
+                            const inp = document.getElementById('login-password');
+                            if (inp.type === 'password') { inp.type = 'text'; this.textContent = 'Ocultar'; }
+                            else { inp.type = 'password'; this.textContent = 'Mostrar'; }
+                        ">Mostrar</button>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-primary" style="width: 100%; justify-content: center; margin-top: 10px;">Ingresar</button>
+
+                <div class="auth-link-row">
+                    <a href="javascript:void(0)" class="auth-link" onclick="sgrApp.showAuthView('recuperar-paso1')">¿Olvidaste tu contraseña?</a>
+                </div>
+            </form>
+
+            <!-- Acceso Rápido de Prueba para Evaluación de Roles -->
+            <div class="auth-quick-roles">
+                <div class="auth-quick-title">Accesos Rápidos de Evaluación (Demostración de Roles)</div>
+                <div class="auth-quick-btns">
+                    <button type="button" class="btn-quick-login" onclick="
+                        document.getElementById('login-username').value = 'harold.concha@laserena.cl';
+                        document.getElementById('login-password').value = 'Admin123*';
+                        sgrApp.submitLogin();
+                    ">👑 Superadmin</button>
+                    <button type="button" class="btn-quick-login" onclick="
+                        document.getElementById('login-username').value = 'keoni.vergara@laserena.cl';
+                        document.getElementById('login-password').value = 'Coord123*';
+                        sgrApp.submitLogin();
+                    ">📊 Coordinador</button>
+                    <button type="button" class="btn-quick-login" onclick="
+                        document.getElementById('login-username').value = 'claudio.romo@laserena.cl';
+                        document.getElementById('login-password').value = 'Deleg123*';
+                        sgrApp.submitLogin();
+                    ">🏛️ Delegado</button>
+                    <button type="button" class="btn-quick-login" onclick="
+                        document.getElementById('login-username').value = 'carlos.miranda@laserena.cl';
+                        document.getElementById('login-password').value = 'Oper123*';
+                        sgrApp.submitLogin();
+                    ">👤 Funcionario</button>
+                </div>
+            </div>
         </div>
 
-        <h1>Sistema de Gestión de Resultados (SGR)</h1>
-        <p>
-            Portal y Plataforma Operativa para la <strong>Ilustre Municipalidad de La Serena</strong>. Segunda Evaluación: Módulos de Acceso, Recuperación de Contraseña, 6 Mantenedores Institucionales, Ingreso de Atención Ciudadana y Demostración Integral de Permisos por Rol en AWS.
-        </p>
+        <!-- DISEÑO 2: RECUPERAR CONTRASEÑA - PASO 1 SOLICITAR CÓDIGO (PDF PÁGINA 5) -->
+        <div id="auth-card-recuperar-paso1" class="auth-card" style="display: none;">
+            <div class="auth-header">
+                <img src="/assets/municipal/logo-la-serena.svg" alt="Escudo Oficial La Serena">
+                <h2 class="auth-title">Recuperar contraseña</h2>
+                <div class="auth-step-pill">Paso 1 de 3 · Solicitar código</div>
+                <p class="auth-desc">Ingresa el correo asociado a tu cuenta.</p>
+            </div>
 
-        <div class="hero-actions">
-            <a href="evaluacion2/index.html" class="btn-launch" style="padding: 16px 32px; font-size: 1.05rem; background: linear-gradient(135deg, #ad0000, #ad0000);">
-                <i data-lucide="arrow-right-circle"></i>
-                <span>INGRESAR A SEGUNDA EVALUACIÓN (SISTEMA COMPLETO)</span>
-            </a>
-            <a href="mockup/index.html" class="btn-secondary">
-                <i data-lucide="layout-dashboard"></i>
-                <span>Ver Prototipo Mockup (Evaluación 1)</span>
-            </a>
-            <a href="https://github.com/zoroikami/sgr-municipalidad-laserena" target="_blank" class="btn-secondary">
-                <i data-lucide="github"></i>
-                <span>Repositorio GitHub</span>
-            </a>
+            <form onsubmit="sgrApp.submitRecuperarPaso1(event)">
+                <div class="form-group">
+                    <label class="form-label" for="rec-email-input">Correo electrónico</label>
+                    <input type="email" id="rec-email-input" class="form-control" placeholder="usuario@example.test" required>
+                </div>
+
+                <button type="submit" class="btn-primary" style="width: 100%; justify-content: center; margin-top: 10px;">Enviar código</button>
+
+                <p style="font-size: 0.8rem; color: var(--text-light); text-align: center; margin-top: 14px;">Si la cuenta existe, recibirás instrucciones.</p>
+
+                <div class="auth-link-row">
+                    <a href="javascript:void(0)" class="auth-link" onclick="sgrApp.showAuthView('login')">Volver al inicio de sesión</a>
+                </div>
+            </form>
         </div>
 
-        <div class="delegations-chips">
-            <div class="del-chip"><i data-lucide="map-pin" style="width: 14px; height: 14px; color: var(--color-primary);"></i> Delegación Centro</div>
-            <div class="del-chip"><i data-lucide="map-pin" style="width: 14px; height: 14px; color: var(--color-primary);"></i> Delegación Las Compañías</div>
-            <div class="del-chip"><i data-lucide="map-pin" style="width: 14px; height: 14px; color: var(--color-primary);"></i> Delegación La Pampa</div>
-            <div class="del-chip"><i data-lucide="map-pin" style="width: 14px; height: 14px; color: var(--color-primary);"></i> Delegación La Antena - La Florida</div>
-            <div class="del-chip"><i data-lucide="map-pin" style="width: 14px; height: 14px; color: var(--color-primary);"></i> Delegación Avenida del Mar</div>
-            <div class="del-chip"><i data-lucide="map-pin" style="width: 14px; height: 14px; color: var(--color-primary);"></i> Delegación Rural</div>
-        </div>
-    </section>
+        <!-- DISEÑO 3: VALIDAR CÓDIGO - PASO 2 VERIFICACIÓN (PDF PÁGINA 6) -->
+        <div id="auth-card-recuperar-paso2" class="auth-card" style="display: none;">
+            <div class="auth-header">
+                <img src="/assets/municipal/logo-la-serena.svg" alt="Escudo Oficial La Serena">
+                <h2 class="auth-title">Validar código</h2>
+                <div class="auth-step-pill">Paso 2 de 3 · Verificación</div>
+                <p class="auth-desc" id="rec-masked-email">Código enviado a u***@example.test</p>
+            </div>
 
-    <!-- Stats Bar -->
-    <div class="stats-bar">
-        <div class="stat-card">
-            <div class="number">100%</div>
-            <div class="label">Rúbrica Cumplida</div>
+            <form onsubmit="sgrApp.submitValidarCodigo(event)">
+                <!-- 6 Casillas de Dígitos -->
+                <div class="digit-code-grid">
+                    <input type="text" class="digit-input" data-idx="0" maxlength="1" pattern="[0-9]" inputmode="numeric" required>
+                    <input type="text" class="digit-input" data-idx="1" maxlength="1" pattern="[0-9]" inputmode="numeric" required>
+                    <input type="text" class="digit-input" data-idx="2" maxlength="1" pattern="[0-9]" inputmode="numeric" required>
+                    <input type="text" class="digit-input" data-idx="3" maxlength="1" pattern="[0-9]" inputmode="numeric" required>
+                    <input type="text" class="digit-input" data-idx="4" maxlength="1" pattern="[0-9]" inputmode="numeric" required>
+                    <input type="text" class="digit-input" data-idx="5" maxlength="1" pattern="[0-9]" inputmode="numeric" required>
+                </div>
+
+                <div class="code-timer-row">
+                    <span id="rec-countdown-timer">Vigencia de referencia: 10 minutos.</span>
+                    <a href="javascript:void(0)" id="btn-rec-resend" class="auth-link" onclick="sgrApp.submitRecuperarPaso1()">Reenviar código en 00:45</a>
+                </div>
+
+                <button type="submit" class="btn-primary" style="width: 100%; justify-content: center;">Verificar código</button>
+
+                <div style="margin-top: 14px; text-align: center;">
+                    <button type="button" class="btn-email-preview" onclick="sgrApp.openEmailSimulatorModal()" style="background: none; border: 1px dashed var(--primary); color: var(--primary); padding: 8px 14px; border-radius: 6px; font-size: 0.82rem; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; font-weight: 500;">
+                        <span>📨 Ver correo institucional recibido (Simulador)</span>
+                    </button>
+                </div>
+
+                <div class="auth-link-row">
+                    <a href="javascript:void(0)" class="auth-link" onclick="sgrApp.showAuthView('login')">Volver al inicio de sesión</a>
+                </div>
+            </form>
         </div>
-        <div class="stat-card">
-            <div class="number">6</div>
-            <div class="label">Delegaciones Oficiales</div>
+
+        <!-- DISEÑO 4: CREAR NUEVA CONTRASEÑA - PASO 3 NUEVA CLAVE (PDF PÁGINA 6) -->
+        <div id="auth-card-recuperar-paso3" class="auth-card" style="display: none;">
+            <div class="auth-header">
+                <img src="/assets/municipal/logo-la-serena.svg" alt="Escudo Oficial La Serena">
+                <h2 class="auth-title">Crear nueva contraseña</h2>
+                <div class="auth-step-pill">Paso 3 de 3 · Nueva clave</div>
+            </div>
+
+            <form onsubmit="sgrApp.submitCrearNuevaPassword(event)">
+                <div class="form-group">
+                    <label class="form-label" for="new-password-input">Nueva contraseña</label>
+                    <div class="input-password-wrapper">
+                        <input type="password" id="new-password-input" class="form-control" placeholder="••••••••••••" required>
+                        <button type="button" class="btn-toggle-password" onclick="
+                            const inp = document.getElementById('new-password-input');
+                            inp.type = inp.type === 'password' ? 'text' : 'password';
+                        ">Mostrar</button>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="confirm-password-input">Confirmar nueva contraseña</label>
+                    <div class="input-password-wrapper">
+                        <input type="password" id="confirm-password-input" class="form-control" placeholder="••••••••••••" required>
+                        <button type="button" class="btn-toggle-password" onclick="
+                            const inp = document.getElementById('confirm-password-input');
+                            inp.type = inp.type === 'password' ? 'text' : 'password';
+                        ">Mostrar</button>
+                    </div>
+                </div>
+
+                <!-- Requisitos visibles interactivos -->
+                <div class="password-requirements">
+                    <div class="req-item" id="req-len"><i data-lucide="circle"></i> Al menos 8 caracteres</div>
+                    <div class="req-item" id="req-may"><i data-lucide="circle"></i> Al menos una letra mayúscula</div>
+                    <div class="req-item" id="req-num"><i data-lucide="circle"></i> Al menos un número</div>
+                    <div class="req-item" id="req-spec"><i data-lucide="circle"></i> Al menos un carácter especial (@, $, !, %, etc.)</div>
+                    <div class="req-item" id="req-match"><i data-lucide="circle"></i> Coincidencia de ambas claves</div>
+                </div>
+
+                <button type="submit" class="btn-primary" style="width: 100%; justify-content: center;">Guardar contraseña</button>
+
+                <p style="font-size: 0.8rem; color: var(--text-light); text-align: center; margin-top: 14px;">Al guardar, podrás ingresar con tu nueva contraseña.</p>
+
+                <div class="auth-link-row">
+                    <a href="javascript:void(0)" class="auth-link" onclick="sgrApp.showAuthView('login')">Volver al inicio de sesión</a>
+                </div>
+            </form>
         </div>
-        <div class="stat-card">
-            <div class="number">12</div>
-            <div class="label">Casos de Uso Modelados</div>
-        </div>
-        <div class="stat-card">
-            <div class="number">10</div>
-            <div class="label">Vistas Web Funcionales</div>
+
+    </div>
+
+    <!-- ======================================================================
+         APLICACIÓN PRINCIPAL: CABECERA, SIDEBAR Y VISTAS SGR
+         ====================================================================== -->
+    <div id="sgr-app-container">
+
+        <!-- CABECERA INSTITUCIONAL PERMANENTE (PDF PÁGINAS 2, 7 A 10) -->
+        <header class="sgr-topbar">
+            <div class="topbar-left">
+                <img src="/assets/municipal/logo-la-serena.svg" alt="Escudo La Serena" class="topbar-logo">
+                <div class="topbar-brand">SISTEMA MUNICIPAL</div>
+            </div>
+
+            <!-- DISTINTIVO PERMANENTE DE DELEGACIÓN ACTIVA -->
+            <div class="topbar-delegacion-pill">
+                <i data-lucide="map-pin" aria-hidden="true"></i>
+                <div class="topbar-delegacion-label" aria-hidden="true">
+                    <span id="header-delegacion-name">Seleccionar delegación</span>
+                    <span id="header-delegacion-code">Delegación activa</span>
+                </div>
+                <i data-lucide="chevron-down" class="topbar-delegacion-chevron" aria-hidden="true"></i>
+                <select id="header-delegacion-select" class="topbar-delegacion-select" aria-label="Delegación activa" onchange="sgrApp.onHeaderDelegacionChange(this.value)">
+                    <!-- Opciones cargadas dinámicamente -->
+                </select>
+            </div>
+
+            <!-- PERFIL DE USUARIO Y CIERRE DE SESIÓN -->
+            <div class="topbar-right">
+                <div class="user-header-info">
+                    <div class="user-header-name" id="header-user-name">Harold Concha</div>
+                    <div class="user-header-role" id="header-user-role">Superadministrador</div>
+                </div>
+                <button type="button" class="btn-header-logout" onclick="sgrApp.logout()">
+                    <i data-lucide="log-out"></i> Salir
+                </button>
+            </div>
+        </header>
+
+        <!-- BARRA RÁPIDA DE CONMUTACIÓN DE ROLES (DEMOSTRACIÓN EVALUATIVA) -->
+        <nav class="role-demo-bar" aria-label="Perfiles de evaluación">
+            <div class="role-demo-heading">
+                <span id="role-demo-label">Perfil de acceso</span>
+                <span class="role-demo-caption">Evaluación INACAP</span>
+            </div>
+            <div class="role-demo-chips" role="group" aria-labelledby="role-demo-label">
+                <button type="button" class="role-chip active" data-rol="ROL01" aria-pressed="true" title="Superadministrador: acceso total" onclick="sgrApp.setCurrentUserByRole('ROL01')">
+                    Superadministrador
+                </button>
+                <button type="button" class="role-chip" data-rol="ROL02" aria-pressed="false" title="Coordinador: supervisión comunal" onclick="sgrApp.setCurrentUserByRole('ROL02')">
+                    Coordinador
+                </button>
+                <button type="button" class="role-chip" data-rol="ROL03" aria-pressed="false" title="Delegado municipal: gestión local" onclick="sgrApp.setCurrentUserByRole('ROL03')">
+                    Delegado municipal
+                </button>
+                <button type="button" class="role-chip" data-rol="ROL04" aria-pressed="false" title="Operador: atención en ventanilla" onclick="sgrApp.setCurrentUserByRole('ROL04')">
+                    Operador
+                </button>
+                <button type="button" class="role-chip" data-rol="ROL05" aria-pressed="false" title="Consultor: solo lectura" onclick="sgrApp.setCurrentUserByRole('ROL05')">
+                    Consultor
+                </button>
+            </div>
+        </nav>
+
+        <!-- LAYOUT: BARRA LATERAL + CONTENIDO -->
+        <div class="sgr-app-layout">
+
+            <!-- SIDEBAR LATERAL DINÁMICO SEGÚN PERFIL -->
+            <aside class="sgr-sidebar">
+                <div class="sidebar-navigation" role="navigation" aria-label="Módulos del sistema" tabindex="0">
+                    <!-- Operación Territorial -->
+                    <div class="sidebar-category">Atención Ciudadana</div>
+                    <ul class="sidebar-nav">
+                        <li data-module="atenciones">
+                            <button type="button" class="nav-link-btn active" data-target="atenciones" aria-current="page" onclick="sgrApp.navigateTo('atenciones')">
+                                <i data-lucide="clipboard-pen-line"></i>
+                                <span>Ingreso de Atención</span>
+                            </button>
+                        </li>
+                    </ul>
+
+                    <!-- Los 6 Mantenedores Exigidos (CRUD) -->
+                    <div class="sidebar-category">Mantenedores del Sistema</div>
+                    <ul class="sidebar-nav">
+                        <li data-module="delegaciones">
+                            <button type="button" class="nav-link-btn" data-target="delegaciones" onclick="sgrApp.navigateTo('delegaciones')">
+                                <i data-lucide="building"></i>
+                                <span>Delegaciones</span>
+                            </button>
+                        </li>
+                        <li data-module="roles">
+                            <button type="button" class="nav-link-btn" data-target="roles" onclick="sgrApp.navigateTo('roles')">
+                                <i data-lucide="shield"></i>
+                                <span>Roles y permisos</span>
+                            </button>
+                        </li>
+                        <li data-module="usuarios">
+                            <button type="button" class="nav-link-btn" data-target="usuarios" onclick="sgrApp.navigateTo('usuarios')">
+                                <i data-lucide="users"></i>
+                                <span>Usuarios del sistema</span>
+                            </button>
+                        </li>
+                        <li data-module="items_metas">
+                            <button type="button" class="nav-link-btn" data-target="items_metas" onclick="sgrApp.navigateTo('items_metas')">
+                                <i data-lucide="target"></i>
+                                <span>Ítems y metas</span>
+                            </button>
+                        </li>
+                        <li data-module="tipos_atencion">
+                            <button type="button" class="nav-link-btn" data-target="tipos_atencion" onclick="sgrApp.navigateTo('tipos_atencion')">
+                                <i data-lucide="layers"></i>
+                                <span>Tipo de Atención</span>
+                            </button>
+                        </li>
+                        <li data-module="sub_atenciones">
+                            <button type="button" class="nav-link-btn" data-target="sub_atenciones" onclick="sgrApp.navigateTo('sub_atenciones')">
+                                <i data-lucide="list-tree"></i>
+                                <span>Sub Atención</span>
+                            </button>
+                        </li>
+                    </ul>
+
+                    <!-- Módulos Demostrativos Complementarios (Requisito PDF Pág 10) -->
+                    <div class="sidebar-category">Módulos en Desarrollo (E3)</div>
+                    <ul class="sidebar-nav">
+                        <li data-module="tablero">
+                            <button type="button" class="nav-link-btn" data-target="tablero" onclick="sgrApp.navigateTo('tablero')">
+                                <i data-lucide="layout-dashboard"></i>
+                                <span>Tablero Delegación</span>
+                                <span class="sidebar-badge">E3</span>
+                            </button>
+                        </li>
+                        <li data-module="evidencias">
+                            <button type="button" class="nav-link-btn" data-target="evidencias" onclick="sgrApp.navigateTo('evidencias')">
+                                <i data-lucide="camera"></i>
+                                <span>Evidencias Terreno</span>
+                                <span class="sidebar-badge">E3</span>
+                            </button>
+                        </li>
+                        <li data-module="agenda">
+                            <button type="button" class="nav-link-btn" data-target="agenda" onclick="sgrApp.navigateTo('agenda')">
+                                <i data-lucide="calendar"></i>
+                                <span>Agenda Colectiva</span>
+                                <span class="sidebar-badge">E3</span>
+                            </button>
+                        </li>
+                        <li data-module="auditoria">
+                            <button type="button" class="nav-link-btn" data-target="auditoria" onclick="sgrApp.navigateTo('auditoria')">
+                                <i data-lucide="file-text"></i>
+                                <span>Auditoría de Cambios</span>
+                                <span class="sidebar-badge">E3</span>
+                            </button>
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="sidebar-footer-note">
+                    <strong>SGR La Serena · V2.0</strong><br>
+                    Evaluación 2: Mantenedores y Acceso<br>
+                    INACAP La Serena 2026
+                </div>
+            </aside>
+
+            <!-- CONTENIDO PRINCIPAL DINÁMICO -->
+            <main class="sgr-main-content">
+
+                <!-- ==========================================================
+                     VISTA 1: MANTENEDOR DELEGACIONES (DISEÑO C3)
+                     ========================================================== -->
+                <section id="view-delegaciones" class="sgr-view-section" style="display: none;">
+                    <div class="module-header">
+                        <div class="module-breadcrumb">Gestión municipal / Delegaciones</div>
+                        <div class="module-title-bar">
+                            <h1>Delegaciones municipales</h1>
+                            <button type="button" class="btn-primary" onclick="sgrApp.openModalNew('delegaciones')">
+                                <i data-lucide="plus"></i> Nuevo registro
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="table-card">
+                        <div class="table-toolbar">
+                            <div class="search-container">
+                                <i data-lucide="search" class="search-icon"></i>
+                                <input type="text" class="search-input" aria-label="Buscar registros" placeholder="Buscar por nombre, código u otro campo..." oninput="sgrApp.onSearchInput('delegaciones', this.value)">
+                            </div>
+                            <div class="toolbar-actions">
+                                <button type="button" class="btn-export-excel" onclick="sgrApp.exportModuleToExcel('delegaciones')">
+                                    <img src="/assets/municipal/excel.svg" class="excel-icon" width="20" height="20" alt="" aria-hidden="true"> Exportar a Excel
+                                </button>
+                                <select class="select-filter" aria-label="Filtrar registros por estado" onchange="sgrApp.onFilterChange('delegaciones', this.value)">
+                                    <option value="TODOS">Filtrar estado: Todos</option>
+                                    <option value="ACTIVA">Filtrar estado: Activa</option>
+                                    <option value="INACTIVA">Filtrar estado: Inactiva</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="table-responsive" tabindex="0" role="region" aria-label="Tabla: Delegaciones municipales">
+                            <table class="sgr-data-table" aria-label="Delegaciones municipales">
+                                <thead>
+                                    <tr>
+                                        <th scope="col">Código</th>
+                                        <th scope="col">Nombre</th>
+                                        <th scope="col">Comuna</th>
+                                        <th scope="col">Estado</th>
+                                        <th scope="col" class="actions-column">Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tbody-delegaciones"></tbody>
+                            </table>
+                        </div>
+
+                        <div class="table-pagination-footer" id="pagination-delegaciones"></div>
+                    </div>
+                </section>
+
+                <!-- ==========================================================
+                     VISTA 2: MANTENEDOR ROLES Y PERMISOS (DISEÑO C3)
+                     ========================================================== -->
+                <section id="view-roles" class="sgr-view-section" style="display: none;">
+                    <div class="module-header">
+                        <div class="module-breadcrumb">Gestión municipal / Roles</div>
+                        <div class="module-title-bar">
+                            <h1>Roles y permisos</h1>
+                            <button type="button" class="btn-primary" onclick="sgrApp.openModalNew('roles')">
+                                <i data-lucide="plus"></i> Nuevo registro
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="table-card">
+                        <div class="table-toolbar">
+                            <div class="search-container">
+                                <i data-lucide="search" class="search-icon"></i>
+                                <input type="text" class="search-input" aria-label="Buscar registros" placeholder="Buscar por nombre, código u otro campo..." oninput="sgrApp.onSearchInput('roles', this.value)">
+                            </div>
+                            <div class="toolbar-actions">
+                                <button type="button" class="btn-export-excel" onclick="sgrApp.exportModuleToExcel('roles')">
+                                    <img src="/assets/municipal/excel.svg" class="excel-icon" width="20" height="20" alt="" aria-hidden="true"> Exportar a Excel
+                                </button>
+                                <select class="select-filter" aria-label="Filtrar registros por estado" onchange="sgrApp.onFilterChange('roles', this.value)">
+                                    <option value="TODOS">Filtrar estado: Todos</option>
+                                    <option value="ACTIVO">Filtrar estado: Activo</option>
+                                    <option value="INACTIVO">Filtrar estado: Inactivo</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="table-responsive" tabindex="0" role="region" aria-label="Tabla: Roles y permisos">
+                            <table class="sgr-data-table" aria-label="Roles y permisos">
+                                <thead>
+                                    <tr>
+                                        <th scope="col">Código</th>
+                                        <th scope="col">Rol</th>
+                                        <th scope="col">Alcance</th>
+                                        <th scope="col">Estado</th>
+                                        <th scope="col" class="actions-column">Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tbody-roles"></tbody>
+                            </table>
+                        </div>
+
+                        <div class="table-pagination-footer" id="pagination-roles"></div>
+                    </div>
+                </section>
+
+                <!-- ==========================================================
+                     VISTA 3: MANTENEDOR USUARIOS DEL SISTEMA (DISEÑO C4)
+                     ========================================================== -->
+                <section id="view-usuarios" class="sgr-view-section" style="display: none;">
+                    <div class="module-header">
+                        <div class="module-breadcrumb">Gestión municipal / Usuarios</div>
+                        <div class="module-title-bar">
+                            <h1>Usuarios del sistema</h1>
+                            <button type="button" class="btn-primary" onclick="sgrApp.openModalNew('usuarios')">
+                                <i data-lucide="plus"></i> Nuevo registro
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="table-card">
+                        <div class="table-toolbar">
+                            <div class="search-container">
+                                <i data-lucide="search" class="search-icon"></i>
+                                <input type="text" class="search-input" aria-label="Buscar registros" placeholder="Buscar por nombre, código u otro campo..." oninput="sgrApp.onSearchInput('usuarios', this.value)">
+                            </div>
+                            <div class="toolbar-actions">
+                                <button type="button" class="btn-export-excel" onclick="sgrApp.exportModuleToExcel('usuarios')">
+                                    <img src="/assets/municipal/excel.svg" class="excel-icon" width="20" height="20" alt="" aria-hidden="true"> Exportar a Excel
+                                </button>
+                                <select class="select-filter" aria-label="Filtrar registros por estado" onchange="sgrApp.onFilterChange('usuarios', this.value)">
+                                    <option value="TODOS">Filtrar estado: Todos</option>
+                                    <option value="ACTIVO">Filtrar estado: Activo</option>
+                                    <option value="INACTIVO">Filtrar estado: Inactivo</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="table-responsive" tabindex="0" role="region" aria-label="Tabla: Usuarios del sistema">
+                            <table class="sgr-data-table" aria-label="Usuarios del sistema">
+                                <thead>
+                                    <tr>
+                                        <th scope="col">Nombre</th>
+                                        <th scope="col">Correo</th>
+                                        <th scope="col">Rol</th>
+                                        <th scope="col">Delegación</th>
+                                        <th scope="col" class="actions-column">Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tbody-usuarios"></tbody>
+                            </table>
+                        </div>
+
+                        <div class="table-pagination-footer" id="pagination-usuarios"></div>
+                    </div>
+                </section>
+
+                <!-- ==========================================================
+                     VISTA 4: MANTENEDOR ÍTEMS Y METAS (DISEÑO C4)
+                     ========================================================== -->
+                <section id="view-items_metas" class="sgr-view-section" style="display: none;">
+                    <div class="module-header">
+                        <div class="module-breadcrumb">Gestión municipal / Ítems y metas</div>
+                        <div class="module-title-bar">
+                            <h1>Ítems y metas</h1>
+                            <button type="button" class="btn-primary" onclick="sgrApp.openModalNew('items_metas')">
+                                <i data-lucide="plus"></i> Nuevo registro
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="table-card">
+                        <div class="table-toolbar">
+                            <div class="search-container">
+                                <i data-lucide="search" class="search-icon"></i>
+                                <input type="text" class="search-input" aria-label="Buscar registros" placeholder="Buscar por nombre, código u otro campo..." oninput="sgrApp.onSearchInput('items_metas', this.value)">
+                            </div>
+                            <div class="toolbar-actions">
+                                <button type="button" class="btn-export-excel" onclick="sgrApp.exportModuleToExcel('items_metas')">
+                                    <img src="/assets/municipal/excel.svg" class="excel-icon" width="20" height="20" alt="" aria-hidden="true"> Exportar a Excel
+                                </button>
+                                <select class="select-filter" aria-label="Filtrar registros por estado" onchange="sgrApp.onFilterChange('items_metas', this.value)">
+                                    <option value="TODOS">Filtrar estado: Todos</option>
+                                    <option value="ACTIVO">Filtrar estado: Activo</option>
+                                    <option value="INACTIVO">Filtrar estado: Inactivo</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="table-responsive" tabindex="0" role="region" aria-label="Tabla: Ítems y metas">
+                            <table class="sgr-data-table" aria-label="Ítems y metas">
+                                <thead>
+                                    <tr>
+                                        <th scope="col">Código</th>
+                                        <th scope="col">Nombre</th>
+                                        <th scope="col">Descripción</th>
+                                        <th scope="col">Estado</th>
+                                        <th scope="col" class="actions-column">Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tbody-items-metas"></tbody>
+                            </table>
+                        </div>
+
+                        <div class="table-pagination-footer" id="pagination-items_metas"></div>
+                    </div>
+                </section>
+
+                <!-- ==========================================================
+                     VISTA 5: MANTENEDOR TIPO DE ATENCIÓN (DISEÑO C5)
+                     ========================================================== -->
+                <section id="view-tipos_atencion" class="sgr-view-section" style="display: none;">
+                    <div class="module-header">
+                        <div class="module-breadcrumb">Gestión municipal / Tipo de Atención</div>
+                        <div class="module-title-bar">
+                            <h1>Tipos de Atención</h1>
+                            <button type="button" class="btn-primary" onclick="sgrApp.openModalNew('tipos_atencion')">
+                                <i data-lucide="plus"></i> Nuevo registro
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="table-card">
+                        <div class="table-toolbar">
+                            <div class="search-container">
+                                <i data-lucide="search" class="search-icon"></i>
+                                <input type="text" class="search-input" aria-label="Buscar registros" placeholder="Buscar por nombre, código u otro campo..." oninput="sgrApp.onSearchInput('tipos_atencion', this.value)">
+                            </div>
+                            <div class="toolbar-actions">
+                                <button type="button" class="btn-export-excel" onclick="sgrApp.exportModuleToExcel('tipos_atencion')">
+                                    <img src="/assets/municipal/excel.svg" class="excel-icon" width="20" height="20" alt="" aria-hidden="true"> Exportar a Excel
+                                </button>
+                                <select class="select-filter" aria-label="Filtrar registros por estado" onchange="sgrApp.onFilterChange('tipos_atencion', this.value)">
+                                    <option value="TODOS">Filtrar estado: Todos</option>
+                                    <option value="ACTIVO">Filtrar estado: Activo</option>
+                                    <option value="INACTIVO">Filtrar estado: Inactivo</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="table-responsive" tabindex="0" role="region" aria-label="Tabla: Tipos de atención">
+                            <table class="sgr-data-table" aria-label="Tipos de atención">
+                                <thead>
+                                    <tr>
+                                        <th scope="col">Código</th>
+                                        <th scope="col">Nombre</th>
+                                        <th scope="col">Descripción</th>
+                                        <th scope="col">Estado</th>
+                                        <th scope="col" class="actions-column">Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tbody-tipos-atencion"></tbody>
+                            </table>
+                        </div>
+
+                        <div class="table-pagination-footer" id="pagination-tipos_atencion"></div>
+                    </div>
+                </section>
+
+                <!-- ==========================================================
+                     VISTA 6: MANTENEDOR SUB ATENCIÓN (DISEÑO C5)
+                     ========================================================== -->
+                <section id="view-sub_atenciones" class="sgr-view-section" style="display: none;">
+                    <div class="module-header">
+                        <div class="module-breadcrumb">Gestión municipal / Sub Atención</div>
+                        <div class="module-title-bar">
+                            <h1>Sub Atención</h1>
+                            <button type="button" class="btn-primary" onclick="sgrApp.openModalNew('sub_atenciones')">
+                                <i data-lucide="plus"></i> Nuevo registro
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="table-card">
+                        <div class="table-toolbar">
+                            <div class="search-container">
+                                <i data-lucide="search" class="search-icon"></i>
+                                <input type="text" class="search-input" aria-label="Buscar registros" placeholder="Buscar por nombre, código u otro campo..." oninput="sgrApp.onSearchInput('sub_atenciones', this.value)">
+                            </div>
+                            <div class="toolbar-actions">
+                                <button type="button" class="btn-export-excel" onclick="sgrApp.exportModuleToExcel('sub_atenciones')">
+                                    <img src="/assets/municipal/excel.svg" class="excel-icon" width="20" height="20" alt="" aria-hidden="true"> Exportar a Excel
+                                </button>
+                                <select class="select-filter" aria-label="Filtrar registros por estado" onchange="sgrApp.onFilterChange('sub_atenciones', this.value)">
+                                    <option value="TODOS">Filtrar estado: Todos</option>
+                                    <option value="ACTIVA">Filtrar estado: Activa</option>
+                                    <option value="INACTIVA">Filtrar estado: Inactiva</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="table-responsive" tabindex="0" role="region" aria-label="Tabla: Subatenciones">
+                            <table class="sgr-data-table" aria-label="Subatenciones">
+                                <thead>
+                                    <tr>
+                                        <th scope="col">Código</th>
+                                        <th scope="col">Nombre</th>
+                                        <th scope="col">Tipo asociado</th>
+                                        <th scope="col">Estado</th>
+                                        <th scope="col" class="actions-column">Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tbody-sub-atenciones"></tbody>
+                            </table>
+                        </div>
+
+                        <div class="table-pagination-footer" id="pagination-sub_atenciones"></div>
+                    </div>
+                </section>
+
+                <!-- ==========================================================
+                     VISTA 7: INGRESO DE ATENCIÓN CIUDADANA (DISEÑO C6)
+                     ========================================================== -->
+                <section id="view-atenciones" class="sgr-view-section">
+                    <div class="module-header">
+                        <div class="module-breadcrumb">Gestión municipal / Atenciones</div>
+                        <div class="module-title-bar">
+                            <h1>Ingreso de atención</h1>
+                        </div>
+                    </div>
+
+                    <!-- Formulario Fiel al Diseño C6 -->
+                    <div class="form-card attention-form-card">
+                        <form onsubmit="sgrApp.submitIngresoAtencion(event)">
+                            <div class="form-grid-2">
+                                <div class="form-group">
+                                    <label class="form-label" for="atn-solicitante">Vecino o solicitante <span class="req">*</span></label>
+                                    <input type="text" id="atn-solicitante" class="form-control" placeholder="Buscar por identificador o nombre..." required>
+                                </div>
+
+                                <div class="form-group">
+                                    <label class="form-label" for="atn-delegacion-display">Delegación de atención</label>
+                                    <input type="text" id="atn-delegacion-display" class="form-control" value="DEL01 - Centro [Asignada por perfil]" readonly>
+                                </div>
+                            </div>
+
+                            <!-- Selección Dependiente: Tipo de Atención -> Sub Atención -->
+                            <div class="form-grid-2">
+                                <div class="form-group">
+                                    <label class="form-label" for="atn-tipo-select">Tipo de Atención <span class="req">*</span></label>
+                                    <select id="atn-tipo-select" class="form-control" onchange="sgrApp.onTipoAtencionChange()" required>
+                                        <option value="">Seleccione Tipo de Atención *</option>
+                                    </select>
+                                </div>
+
+                                <div class="form-group">
+                                    <label class="form-label" for="atn-subtipo-select">Sub Atención <span class="req">*</span></label>
+                                    <select id="atn-subtipo-select" class="form-control" disabled required>
+                                        <option value="">Seleccione Sub Atención *</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label" for="atn-descripcion">Descripción de la atención <span class="req">*</span></label>
+                                <textarea id="atn-descripcion" class="form-control" rows="4" placeholder="Describa la solicitud y los antecedentes necesarios." required></textarea>
+                            </div>
+
+                            <div class="form-meta-note" id="atn-meta-info">
+                                Responsable: usuario de sesión | Fecha y hora: automáticas
+                            </div>
+
+                            <div class="form-footer-buttons">
+                                <button type="button" class="btn-secondary" onclick="sgrApp.cancelarIngresoAtencion()">Cancelar</button>
+                                <button type="submit" class="btn-primary btn-save-attention">Guardar atención</button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Historial Inmediato de Atenciones en esta Delegación -->
+                    <div class="attention-history">
+                        <div class="table-card">
+                            <div class="panel-heading">
+                                <h2>Historial de atenciones ciudadanas</h2>
+                                <p>Consulta los registros de la delegación seleccionada.</p>
+                            </div>
+                            <div class="table-toolbar">
+                                <div class="search-container">
+                                    <i data-lucide="search" class="search-icon"></i>
+                                    <input type="search" class="search-input" aria-label="Buscar en el historial de atenciones" placeholder="Buscar por folio, solicitante o tipo..." oninput="sgrApp.onSearchInput('atenciones', this.value)">
+                                </div>
+                                <button type="button" class="btn-export-excel" onclick="sgrApp.exportModuleToExcel('atenciones')">
+                                    <img src="/assets/municipal/excel.svg" class="excel-icon" width="20" height="20" alt="" aria-hidden="true"> Exportar a Excel
+                                </button>
+                            </div>
+
+                            <div class="table-responsive" tabindex="0" role="region" aria-label="Tabla: Historial de atenciones ciudadanas">
+                                <table class="sgr-data-table" aria-label="Historial de atenciones ciudadanas">
+                                    <thead>
+                                        <tr>
+                                            <th scope="col">Folio</th>
+                                            <th scope="col">Solicitante</th>
+                                            <th scope="col">Delegación</th>
+                                            <th scope="col">Tipo y Subatención</th>
+                                            <th scope="col">Responsable</th>
+                                            <th scope="col">Fecha y Hora</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="tbody-atenciones-historial"></tbody>
+                                </table>
+                            </div>
+
+                            <div class="table-pagination-footer" id="pagination-atenciones"></div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ==========================================================
+                     VISTAS DEMOSTRATIVAS DE ROLES (ENTREGA 3 - REQUISITO PÁGINA 10)
+                     ========================================================== -->
+                <section id="view-tablero" class="sgr-view-section" style="display: none;">
+                    <div class="module-header">
+                        <div class="module-breadcrumb">Supervisión / Control Comunal</div>
+                        <div class="module-title-bar"><h1>Tablero Delegación</h1></div>
+                    </div>
+                    <div class="module-panel">
+                        <div class="panel-heading">
+                            <h2>Visualización por rol</h2>
+                            <p>Consolidación analítica de la gestión comunal.</p>
+                        </div>
+                        <div class="module-overview">
+                            <i data-lucide="layout-dashboard" class="module-overview-icon" aria-hidden="true"></i>
+                            <div class="module-overview-content">
+                                <h3>Tablero de delegación en preparación</h3>
+                                <p>
+                                    Este módulo de consolidación analítica comunal forma parte de la planificación de la Entrega 3. Su visibilidad está restringida a perfiles de nivel central (Superadministrador, Coordinador y Delegado Municipal) conforme a la matriz de permisos.
+                                </p>
+                                <span class="module-demo-label">Plantilla operativa de demostración</span>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <section id="view-evidencias" class="sgr-view-section" style="display: none;">
+                    <div class="module-header">
+                        <div class="module-breadcrumb">Operaciones / Terreno</div>
+                        <div class="module-title-bar"><h1>Evidencias en Terreno</h1></div>
+                    </div>
+                    <div class="module-panel">
+                        <div class="module-overview">
+                            <i data-lucide="camera" class="module-overview-icon" aria-hidden="true"></i>
+                            <div class="module-overview-content">
+                                <h2>Validación de evidencias fotográficas</h2>
+                                <p>Módulo de comprobación y dictamen técnico de actividades en terreno (Algarrobito, Las Compañías). Disponible para el perfil Superadministrador.</p>
+                                <span class="module-demo-label">Plantilla operativa de demostración</span>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <section id="view-agenda" class="sgr-view-section" style="display: none;">
+                    <div class="module-header">
+                        <div class="module-breadcrumb">Planificación / Coordinación</div>
+                        <div class="module-title-bar"><h1>Agenda Colectiva</h1></div>
+                    </div>
+                    <div class="module-panel">
+                        <div class="module-overview">
+                            <i data-lucide="calendar" class="module-overview-icon" aria-hidden="true"></i>
+                            <div class="module-overview-content">
+                                <h2>Compromisos y agenda colectiva</h2>
+                                <p>Planificación coordinada con juntas de vecinos y organizaciones comunitarias de La Serena.</p>
+                                <span class="module-demo-label">Plantilla operativa de demostración</span>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <section id="view-auditoria" class="sgr-view-section" style="display: none;">
+                    <div class="module-header">
+                        <div class="module-breadcrumb">Seguridad / Trazabilidad</div>
+                        <div class="module-title-bar"><h1>Auditoría de Cambios</h1></div>
+                    </div>
+                    <div class="module-panel">
+                        <div class="module-overview">
+                            <i data-lucide="file-text" class="module-overview-icon" aria-hidden="true"></i>
+                            <div class="module-overview-content">
+                                <h2>Registro y trazabilidad de operaciones</h2>
+                                <p>Bitácora inmutable de accesos, creación de registros y cambios de clave. Exclusivo para Superadministrador.</p>
+                                <span class="module-demo-label">Plantilla operativa de demostración</span>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+            </main>
         </div>
     </div>
 
-    <!-- Features Section -->
-    <section class="section-container" id="caracteristicas">
-        <div class="section-header">
-            <h2>Pilares Arquitectónicos del Sistema</h2>
-            <p>Módulos operativos implementados y modelados conforme a las necesidades reales de La Serena</p>
-        </div>
-
-        <div class="features-grid">
-            <div class="feature-card">
-                <div class="feature-icon"><i data-lucide="camera"></i></div>
-                <h3>Código Único y Evidencias</h3>
-                <p>Generación de correlativo alfanumérico inmutable <code>EVI-2026-XXXX</code> al guardar cada actividad, con georreferenciación y respaldo fotográfico obligatorio.</p>
+    <!-- ======================================================================
+         MODAL GENÉRICO PARA OPERACIONES CRUD (CREAR, EDITAR, VER)
+         ====================================================================== -->
+    <div id="sgr-crud-modal" class="sgr-modal-overlay">
+        <div class="sgr-modal-dialog">
+            <div class="modal-header-institucional">
+                <h3 id="modal-crud-title">Operación de Registro</h3>
+                <button type="button" class="btn-modal-close" aria-label="Cerrar ventana" onclick="sgrApp.closeCrudModal()">&times;</button>
             </div>
-
-            <div class="feature-card">
-                <div class="feature-icon"><i data-lucide="shield-check"></i></div>
-                <h3>Bandeja de Validación Técnica</h3>
-                <p>Segregación estricta de funciones: el Verificador Municipal actúa de ministro de fe, inspeccionando la foto con zoom y dictaminando su aprobación o rechazo fundamentado.</p>
-            </div>
-
-            <div class="feature-card">
-                <div class="feature-icon"><i data-lucide="activity"></i></div>
-                <h3>Semáforo Diario Proporcional</h3>
-                <p>Algoritmo matemático que evalúa el avance real ponderado al 100% frente al día del trimestre (Día 76/91 = 83.5% ideal), clasificando en Verde, Ámbar o Rojo.</p>
-            </div>
-
-            <div class="feature-card">
-                <div class="feature-icon"><i data-lucide="kanban"></i></div>
-                <h3>Tubo de Trabajo y Agenda Colectiva</h3>
-                <p>Tablero Kanban territorial con 4 estados (Ingresado, Pendiente, En Proceso, Realizado) con alertas operativas para compromisos vecinales vencidos.</p>
-            </div>
-
-            <div class="feature-card">
-                <div class="feature-icon"><i data-lucide="heart-handshake"></i></div>
-                <h3>Atención Social Multietapa</h3>
-                <p>Ficha ciudadana única por RUT para vecinos vulnerables con registro concatenado de hasta 3 gestiones y bloqueo de la 4ta etapa según la regla municipal RN-10.</p>
-            </div>
-
-            <div class="feature-card">
-                <div class="feature-icon"><i data-lucide="database"></i></div>
-                <h3>Modelo Relacional MySQL en 3FN</h3>
-                <p>Estructura relacional de 14 tablas normalizadas en 3FN con integridad estricta (<code>ON DELETE RESTRICT</code>), índices de rendimiento y script SQL ejecutable.</p>
+            <div class="modal-body" id="modal-crud-body"></div>
+            <div class="modal-footer">
+                <button type="button" class="btn-secondary" onclick="sgrApp.closeCrudModal()">Cerrar</button>
+                <button type="button" class="btn-primary" id="btn-modal-save">Guardar Cambios</button>
             </div>
         </div>
-    </section>
-
-    <!-- Deliverables Section -->
-    <section class="section-container" id="rubrica">
-        <div class="section-header">
-            <h2>Entregables Oficiales de la Evaluación (100 Puntos)</h2>
-            <p>Acceso directo a todos los archivos y modelos exigidos por la rúbrica del profesor Jorge Cortés</p>
-        </div>
-
-        <table class="deliverables-table">
-            <thead>
-                <tr>
-                    <th>Criterio Rúbrica</th>
-                    <th>Puntaje</th>
-                    <th>Entregable Planificado</th>
-                    <th>Acceso Directo</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td><strong>1. Planner</strong></td>
-                    <td><span class="badge-pts">15 Pts</span></td>
-                    <td>Planificación en Microsoft Planner: 8 depósitos, 22 tareas con DoD y flujo Kanban.</td>
-                    <td><a href="gestion_agil/backlog_planner_sgr.md" class="btn-view-artifact"><i data-lucide="file-text"></i> Ver Backlog</a></td>
-                </tr>
-                <tr>
-                    <td><strong>2. Requerimientos</strong></td>
-                    <td><span class="badge-pts">10 Pts</span></td>
-                    <td>Diagrama jerárquico SysML (Visual Paradigm) y Matriz de Trazabilidad multidimensional.</td>
-                    <td>
-                        <a href="diagramas/diagrama_requerimientos.svg" target="_blank" class="btn-view-artifact"><i data-lucide="image"></i> Ver SVG</a>
-                        <a href="diagramas/matriz_trazabilidad.md" class="btn-view-artifact"><i data-lucide="table"></i> Matriz</a>
-                    </td>
-                </tr>
-                <tr>
-                    <td><strong>3. Caso de Uso General</strong></td>
-                    <td><span class="badge-pts">10 Pts</span></td>
-                    <td>Diagrama UML 2.5 de alto nivel con límite del sistema y 7 actores del dominio.</td>
-                    <td><a href="diagramas/caso_uso_general.svg" target="_blank" class="btn-view-artifact"><i data-lucide="image"></i> Ver SVG</a></td>
-                </tr>
-                <tr>
-                    <td><strong>4. Casos Específicos</strong></td>
-                    <td><span class="badge-pts">20 Pts</span></td>
-                    <td>12 Casos de uso detallados individuales en PlantUML + Fichas textuales completas y de extensión.</td>
-                    <td>
-                        <a href="especificaciones/fichas_casos_uso.md" class="btn-view-artifact"><i data-lucide="file-text"></i> Ver Fichas</a>
-                    </td>
-                </tr>
-                <tr>
-                    <td><strong>5. Diagrama de Clases</strong></td>
-                    <td><span class="badge-pts">15 Pts</span></td>
-                    <td>Modelo formal UML 2.5: 14 clases del dominio con visibilidad, métodos y multiplicidades.</td>
-                    <td><a href="diagramas/diagrama_clases_sgr.svg" target="_blank" class="btn-view-artifact"><i data-lucide="image"></i> Ver SVG</a></td>
-                </tr>
-                <tr>
-                    <td><strong>6. DER MySQL</strong></td>
-                    <td><span class="badge-pts">10 Pts</span></td>
-                    <td>Modelo Entidad-Relación normalizado en 3FN para MySQL 8.0 con PKs y FKs.</td>
-                    <td><a href="diagramas/der_mysql_sgr.svg" target="_blank" class="btn-view-artifact"><i data-lucide="image"></i> Ver SVG</a></td>
-                </tr>
-                <tr>
-                    <td><strong>7. Script SQL</strong></td>
-                    <td><span class="badge-pts">10 Pts</span></td>
-                    <td>Script ejecutable <code>database_sgr.sql</code> con 17 tablas y 18 bloques de seed data comunal.</td>
-                    <td><a href="base_datos/database_sgr.sql" class="btn-view-artifact"><i data-lucide="code"></i> Ver SQL</a></td>
-                </tr>
-                <tr>
-                    <td><strong>8. Mockup + Git</strong></td>
-                    <td><span class="badge-pts">10 Pts</span></td>
-                    <td>Prototipo web responsivo interactivo de alta fidelidad alojado en GitHub Pages.</td>
-                    <td><a href="mockup/index.html" class="btn-view-artifact" style="background: var(--color-primary); color: #fff;"><i data-lucide="play"></i> Abrir Mockup</a></td>
-                </tr>
-            </tbody>
-        </table>
-    </section>
-
-    <!-- Footer -->
-    <footer>
-        <p><strong>Sistema de Gestión de Resultados (SGR)</strong> · Ilustre Municipalidad de La Serena (2026)</p>
-        <p>Proyecto Integrado · INACAP La Serena · Profesor Guía: <strong>Jorge Cortés</strong></p>
-        <p style="margin-top: 12px; font-size: 0.8rem;">
-            Repositorio Oficial: <a href="https://github.com/zoroikami/sgr-municipalidad-laserena" target="_blank">github.com/zoroikami/sgr-municipalidad-laserena</a>
-        </p>
-    </footer>
+    </div>
 
     <footer class="municipal-copyright">
         <small>© 2026 Ilustre Municipalidad de La Serena. Todos los derechos reservados.</small>
     </footer>
 
-    <script>
-        document.addEventListener("DOMContentLoaded", () => {
-            lucide.createIcons();
-        });
-    </script>
+    <!-- Scripts de la Aplicación -->
+    <script src="/evaluacion2/js/data_eval2.js"></script>
+    <script src="/evaluacion2/js/app_eval2.js"></script>
 </body>
 </html>
