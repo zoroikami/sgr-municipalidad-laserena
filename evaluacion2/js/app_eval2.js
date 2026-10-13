@@ -670,6 +670,12 @@ class SGRApplication {
             fecha_registro: new Date().toISOString().replace("T", " ").slice(0, 19)
         };
 
+        const submitBtn = document.querySelector(".btn-save-attention");
+        if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.textContent = "Guardando...";
+        }
+
         try {
             const result = await sgrDb.createItem("atenciones", nuevaAtencion);
             const folioGenerado = result.folio || `ATN-2026-${String(sgrDb.data.atenciones.length).padStart(4, "0")}`;
@@ -704,6 +710,11 @@ class SGRApplication {
                 icon: "error",
                 confirmButtonColor: "var(--primary)"
             });
+        } finally {
+            if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.textContent = "Guardar atención";
+            }
         }
     }
 
@@ -824,7 +835,33 @@ class SGRApplication {
     }
 
     exportModuleToExcel(moduleName) {
-        const list = sgrDb.data[moduleName] || [];
+        let list = sgrDb.data[moduleName] || [];
+        const conf = this.pagination[moduleName];
+
+        if (conf) {
+            // Si el usuario es delegado municipal, restringir usuarios a su delegación
+            if (moduleName === "usuarios" && this.currentUser?.rol_codigo === "ROL03") {
+                list = list.filter(u => u.delegacion_codigo === this.currentUser.delegacion_codigo);
+            }
+            // En atenciones, filtrar por delegación activa si está definida
+            if (moduleName === "atenciones" && this.activeDelegacion) {
+                list = list.filter(a => a.delegacion_codigo === this.activeDelegacion);
+            }
+            // Filtro por estado
+            if (conf.filter && conf.filter !== "TODOS") {
+                list = list.filter(item => (item.estado || "").toUpperCase() === conf.filter);
+            }
+            // Filtro de búsqueda por texto
+            if (conf.search && conf.search.trim()) {
+                const q = conf.search.toLowerCase().trim();
+                list = list.filter(item => {
+                    return Object.values(item).some(val => 
+                        val && String(val).toLowerCase().includes(q)
+                    );
+                });
+            }
+        }
+
         const titles = {
             "delegaciones": "SGR_Delegaciones_LaSerena",
             "roles": "SGR_Roles_Permisos_LaSerena",

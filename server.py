@@ -701,6 +701,16 @@ class SGRRequestHandler(SimpleHTTPRequestHandler):
 
                 if resource in table_map:
                     table = table_map[resource]
+                    if resource == "tipos-atencion":
+                        c.execute("SELECT codigo FROM tipos_atencion WHERE id=?", (rec_id,))
+                        row = c.fetchone()
+                        if row:
+                            c.execute("SELECT COUNT(*) FROM sub_atenciones WHERE tipo_codigo=?", (row[0],))
+                            if c.fetchone()[0] > 0:
+                                return self.send_json(400, {
+                                    "success": False,
+                                    "message": "No se puede eliminar el Tipo de Atención porque posee Subatenciones asociadas activas."
+                                })
                     c.execute(f"DELETE FROM {table} WHERE id=?", (rec_id,))
                     conn.commit()
                     return self.send_json(200, {"success": True, "message": f"Registro eliminado de {resource}"})
