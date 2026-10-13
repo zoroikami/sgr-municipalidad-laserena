@@ -5,7 +5,6 @@
 ![Estado](https://img.shields.io/badge/Estado-100%25%20Pauta%20Verificada-brightgreen?style=for-the-badge)
 ![Institución](https://img.shields.io/badge/INACAP-Proyecto%20Integrado-blue?style=for-the-badge)
 ![Backend](https://img.shields.io/badge/Backend-Python%20%7C%20REST%20API%20%7C%20SQLite-orange?style=for-the-badge)
-![Correo](https://img.shields.io/badge/SMTP%20Real-Gmail%20Institucional%20Activo-red?style=for-the-badge)
 ![Despliegue](https://img.shields.io/badge/Despliegue-AWS%20EC2%20%7C%20Systemd%20Port%2080-232f3e?style=for-the-badge)
 
 ---
