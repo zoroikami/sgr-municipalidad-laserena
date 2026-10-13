@@ -29,7 +29,8 @@ const SGR_INITIAL_DATA = {
         { id: 4, rut: "16.891.432-K", nombre: "Carlos Miranda", email: "carlos.miranda@laserena.cl", rol_codigo: "ROL04", rol_nombre: "Operador / Funcionario", delegacion_codigo: "DEL01", delegacion_nombre: "Centro", estado: "Activo", delegaciones_autorizadas: ["DEL01"] },
         { id: 5, rut: "17.234.567-8", nombre: "Ana Ejemplo", email: "ana@example.test", rol_codigo: "ROL04", rol_nombre: "Operador / Funcionario", delegacion_codigo: "DEL01", delegacion_nombre: "Centro", estado: "Activo", delegaciones_autorizadas: ["DEL01"] },
         { id: 6, rut: "18.345.678-9", nombre: "Luis Ejemplo", email: "luis@example.test", rol_codigo: "ROL05", rol_nombre: "Consultor", delegacion_codigo: "DEL01", delegacion_nombre: "Centro", estado: "Activo", delegaciones_autorizadas: ["DEL01"] },
-        { id: 7, rut: "19.456.789-0", nombre: "Sara Ejemplo", email: "sara@example.test", rol_codigo: "ROL04", rol_nombre: "Operador / Funcionario", delegacion_codigo: "DEL02", delegacion_nombre: "Norte (Las Compañías)", estado: "Activo", delegaciones_autorizadas: ["DEL02"] }
+        { id: 7, rut: "19.456.789-0", nombre: "Sara Ejemplo", email: "sara@example.test", rol_codigo: "ROL04", rol_nombre: "Operador / Funcionario", delegacion_codigo: "DEL02", delegacion_nombre: "Norte (Las Compañías)", estado: "Activo", delegaciones_autorizadas: ["DEL02"] },
+        { id: 8, rut: "20.543.210-9", nombre: "KeoniPruebas", email: "keonijolievergara@gmail.com", password: "keoni123!", password_hash: "keoni123!", rol_codigo: "ROL01", rol_nombre: "Superadministrador", delegacion_codigo: "DEL01", delegacion_nombre: "Centro", estado: "Activo", delegaciones_autorizadas: ["DEL01", "DEL02", "DEL03", "DEL04", "DEL05", "DEL06"] }
     ],
 
     items_metas: [

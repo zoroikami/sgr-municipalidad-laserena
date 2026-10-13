@@ -239,7 +239,8 @@ def init_db():
             ("16.891.432-K", "Carlos Miranda", "carlos.miranda@laserena.cl", "Oper123*", "ROL04", "DEL01", "Activo"),
             ("17.234.567-8", "Ana Ejemplo", "ana@example.test", "Ana12345*", "ROL04", "DEL01", "Activo"),
             ("18.345.678-9", "Luis Ejemplo", "luis@example.test", "Luis1234*", "ROL05", "DEL01", "Activo"),
-            ("19.456.789-0", "Sara Ejemplo", "sara@example.test", "Sara1234*", "ROL04", "DEL02", "Activo")
+            ("19.456.789-0", "Sara Ejemplo", "sara@example.test", "Sara1234*", "ROL04", "DEL02", "Activo"),
+            ("20.543.210-9", "KeoniPruebas", "keonijolievergara@gmail.com", "keoni123!", "ROL01", "DEL01", "Activo")
         ]
         c.executemany("INSERT INTO usuarios (rut, nombre, email, password_hash, rol_codigo, delegacion_codigo, estado) VALUES (?, ?, ?, ?, ?, ?, ?)", usuarios)
 
