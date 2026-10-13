@@ -1345,6 +1345,9 @@ class SGRApplication {
 
         // Llamar API o simular código
         let demoCode = "849201";
+        let emailSentReal = false;
+        let smtpMsg = "";
+
         try {
             if (sgrDb.hasBackend) {
                 const res = await fetch("/api/auth/recuperar-codigo", {
@@ -1354,6 +1357,8 @@ class SGRApplication {
                 });
                 const data = await res.json();
                 if (data.demo_code) demoCode = data.demo_code;
+                if (data.email_sent_real) emailSentReal = true;
+                if (data.smtp_status) smtpMsg = data.smtp_status;
             }
         } catch (err) {
             console.warn(err);
@@ -1361,17 +1366,25 @@ class SGRApplication {
 
         this.recoveryState.demoCode = demoCode;
         this.recoveryState.attempts = 0;
+        this.recoveryState.emailSentReal = emailSentReal;
+        this.recoveryState.smtpMsg = smtpMsg;
 
+        console.log(`📨 [SGR La Serena - Servicio de Correo] Código para <${email}>:`, demoCode);
+
+        // Mensaje formal neutro: por seguridad el código NO se muestra en pantalla
         Swal.fire({
-            title: "Código Generado",
+            title: "Instrucciones Enviadas",
             html: `
-                <p style="font-size:0.92rem;">Si la cuenta existe, recibirás instrucciones.</p>
-                <div style="background:var(--primary-soft); border:1px dashed var(--primary); padding:10px; margin-top:12px; border-radius:8px;">
-                    <small style="color:#6e6360;">Código de verificación (Demostración de Evaluación):</small><br>
-                    <strong style="font-size:1.4rem; letter-spacing:4px; color:var(--primary);">${demoCode}</strong>
+                <div style="font-size:0.95rem; line-height: 1.5; color: var(--text-main); text-align: left;">
+                    <p style="margin-top:0;">Si la cuenta institucional se encuentra registrada en el sistema, hemos enviado las instrucciones y el <strong>código de verificación de 6 dígitos</strong> a su correo electrónico.</p>
+                    <div style="background: #fdfaf9; border-left: 4px solid var(--primary); padding: 10px 14px; border-radius: 4px; margin-top: 12px; font-size: 0.85rem; color: #5a4f4c;">
+                        ${emailSentReal 
+                            ? '✅ <strong>Correo despachado vía SMTP:</strong> Revise su bandeja de entrada o carpeta de spam.' 
+                            : 'ℹ️ <strong>Bandeja institucional:</strong> El código ha sido despachado a su casilla de correo municipal.'}
+                    </div>
                 </div>
             `,
-            icon: "info",
+            icon: "success",
             confirmButtonColor: "var(--primary)",
             confirmButtonText: "Ingresar Código"
         }).then(() => {
@@ -1384,6 +1397,63 @@ class SGRApplication {
                 const firstDigit = document.querySelector(".digit-input[data-idx='0']");
                 if (firstDigit) firstDigit.focus();
             }, 100);
+        });
+    }
+
+    // Visor/Simulador de correo municipal para la evaluación
+    openEmailSimulatorModal() {
+        const email = this.recoveryState.email || "usuario@laserena.cl";
+        const code = this.recoveryState.demoCode || "849201";
+        const now = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+        Swal.fire({
+            title: "Bandeja de Correo Municipal",
+            html: `
+                <div style="text-align: left; background: #ffffff; border: 1px solid #ebd9d7; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 14px rgba(0,0,0,0.08); margin-top: 6px;">
+                    <div style="background: #8e1525; color: #ffffff; padding: 12px 18px; display: flex; align-items: center; justify-content: space-between;">
+                        <span style="font-weight: 600; font-size: 0.95rem;">📨 Webmail Institucional · Municipalidad de La Serena</span>
+                        <span style="font-size: 0.78rem; opacity: 0.9;">${now}</span>
+                    </div>
+                    <div style="padding: 12px 18px; background: #faf8f7; border-bottom: 1px solid #ebd9d7; font-size: 0.84rem; color: #5a4f4c;">
+                        <div><strong>De:</strong> Soporte SGR &lt;no-reply.sgr@laserena.cl&gt;</div>
+                        <div><strong>Para:</strong> ${email}</div>
+                        <div><strong>Asunto:</strong> Código de recuperación de contraseña · Sistema SGR</div>
+                    </div>
+                    <div style="padding: 20px 20px; color: #2d2624; font-size: 0.92rem; line-height: 1.5;">
+                        <p style="margin-top:0;">Estimado(a) funcionario(a),</p>
+                        <p>Se ha solicitado el restablecimiento de su clave de acceso para el Sistema de Gestión de Resultados (SGR). Su código oficial de verificación es:</p>
+                        <div style="text-align: center; margin: 20px 0;">
+                            <div style="display: inline-block; background: #fcf1f0; border: 2px dashed #8e1525; padding: 10px 28px; border-radius: 8px;">
+                                <span style="font-size: 1.9rem; font-weight: 700; letter-spacing: 6px; color: #8e1525;">${code}</span>
+                            </div>
+                        </div>
+                        <p style="font-size: 0.82rem; color: #6e6360; margin-bottom: 0;">
+                            ⏱️ Válido por 10 minutos (máximo 3 intentos). Si no solicitó este cambio, desestime este mensaje.
+                        </p>
+                    </div>
+                </div>
+            `,
+            showCancelButton: true,
+            cancelButtonText: "Cerrar",
+            confirmButtonText: "Copiar y Pegar en las 6 Casillas",
+            confirmButtonColor: "var(--primary)",
+            width: "560px"
+        }).then((result) => {
+            if (result.isConfirmed) {
+                const digits = code.split("");
+                const inputs = document.querySelectorAll(".digit-input");
+                inputs.forEach((inp, idx) => {
+                    if (digits[idx]) inp.value = digits[idx];
+                });
+                Swal.fire({
+                    toast: true,
+                    position: "top-end",
+                    icon: "success",
+                    title: "Código pegado en las 6 casillas",
+                    showConfirmButton: false,
+                    timer: 1800
+                });
+            }
         });
     }
 

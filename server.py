@@ -14,8 +14,78 @@ import random
 import string
 import datetime
 import mimetypes
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 from http.server import HTTPServer, SimpleHTTPRequestHandler
 from urllib.parse import urlparse, parse_qs
+
+def send_recovery_email(email_destinatario, codigo):
+    """Envía correo de recuperación real mediante SMTP si está configurado en variables de entorno."""
+    smtp_host = os.environ.get("SMTP_HOST")
+    smtp_port = int(os.environ.get("SMTP_PORT", 587))
+    smtp_user = os.environ.get("SMTP_USER")
+    smtp_pass = os.environ.get("SMTP_PASS")
+    smtp_from = os.environ.get("SMTP_FROM", smtp_user or "soporte.sgr@laserena.cl")
+
+    if not smtp_host or not smtp_user or not smtp_pass:
+        print(f"[SERVICIO CORREO SGR] SMTP no configurado. Código generado para <{email_destinatario}>: {codigo}")
+        return False, "SMTP no configurado en servidor (use SMTP_HOST, SMTP_USER, SMTP_PASS)"
+
+    try:
+        msg = MIMEMultipart("alternative")
+        msg["Subject"] = "Código de recuperación de contraseña · SGR Ilustre Municipalidad de La Serena"
+        msg["From"] = f"Sistema SGR La Serena <{smtp_from}>"
+        msg["To"] = email_destinatario
+
+        html_content = f"""
+        <!DOCTYPE html>
+        <html>
+        <head><meta charset="utf-8"></head>
+        <body style="font-family: 'Segoe UI', Arial, sans-serif; background-color: #f7f5f4; margin: 0; padding: 24px;">
+            <div style="max-width: 540px; margin: 0 auto; background: #ffffff; border-radius: 12px; border: 1px solid #ebd9d7; overflow: hidden; box-shadow: 0 4px 14px rgba(0,0,0,0.06);">
+                <div style="background-color: #8e1525; padding: 22px 24px; text-align: center; color: #ffffff;">
+                    <h2 style="margin: 0; font-size: 1.3rem; letter-spacing: 0.5px;">Ilustre Municipalidad de La Serena</h2>
+                    <p style="margin: 4px 0 0; font-size: 0.85rem; opacity: 0.9;">Sistema de Gestión de Resultados (SGR)</p>
+                </div>
+                <div style="padding: 28px 26px; color: #2d2624;">
+                    <h3 style="margin-top: 0; color: #8e1525; font-size: 1.15rem;">Recuperación de Contraseña</h3>
+                    <p style="font-size: 0.95rem; line-height: 1.5; color: #4a403d;">
+                        Se ha solicitado el restablecimiento de contraseña para la cuenta institucional asociada a este correo electrónico.
+                    </p>
+                    <p style="font-size: 0.92rem; color: #4a403d;">
+                        Su código de verificación oficial de 6 dígitos es:
+                    </p>
+                    <div style="text-align: center; margin: 24px 0;">
+                        <div style="display: inline-block; background-color: #fcf1f0; border: 2px dashed #8e1525; border-radius: 8px; padding: 12px 30px;">
+                            <span style="font-size: 2rem; font-weight: 700; letter-spacing: 6px; color: #8e1525;">{codigo}</span>
+                        </div>
+                    </div>
+                    <p style="font-size: 0.85rem; color: #6e6360; line-height: 1.4;">
+                        ⏱️ Este código tiene una vigencia de <strong>10 minutos</strong> y permite hasta 3 intentos fallidos.<br>
+                        Si usted no solicitó este cambio, ignore este mensaje. Su cuenta permanecerá segura.
+                    </p>
+                </div>
+                <div style="background-color: #fdfaf9; padding: 14px 24px; border-top: 1px solid #f0e6e5; text-align: center; font-size: 0.78rem; color: #8c7e7a;">
+                    Gestión y Modernización Territorial · Ilustre Municipalidad de La Serena 2026
+                </div>
+            </div>
+        </body>
+        </html>
+        """
+        msg.attach(MIMEText(html_content, "html"))
+
+        with smtplib.SMTP(smtp_host, smtp_port, timeout=10) as server:
+            server.ehlo()
+            server.starttls()
+            server.ehlo()
+            server.login(smtp_user, smtp_pass)
+            server.send_message(msg)
+        print(f"[SERVICIO CORREO SGR] ✅ Correo real enviado exitosamente a: {email_destinatario}")
+        return True, "Correo despachado exitosamente vía SMTP institucional"
+    except Exception as e:
+        print(f"[SERVICIO CORREO SGR] ❌ Error enviando correo vía SMTP: {e}")
+        return False, f"Fallo al enviar correo: {e}"
 
 PORT = int(os.environ.get("PORT", 8000))
 if "--port" in sys.argv:
@@ -403,11 +473,16 @@ class SGRRequestHandler(SimpleHTTPRequestHandler):
                 c.execute("INSERT INTO codigos_recuperacion (email, codigo, expiracion) VALUES (?, ?, ?)", (email, codigo, expiracion))
                 conn.commit()
 
+                # Intentar despacho por correo real (SMTP)
+                real_sent, smtp_msg = send_recovery_email(email, codigo)
+
                 # Por seguridad (PDF): respuesta neutra sin revelar si existe la cuenta
                 return self.send_json(200, {
                     "success": True,
                     "message": "Si la cuenta existe, recibirás instrucciones con el código de 6 dígitos.",
-                    "demo_code": codigo,  # visible para demostración de evaluación
+                    "email_sent_real": real_sent,
+                    "smtp_status": smtp_msg,
+                    "demo_code": codigo,  # Disponible para el visor simulado de bandeja municipal en evaluación
                     "expires_in_minutes": 10
                 })
 
