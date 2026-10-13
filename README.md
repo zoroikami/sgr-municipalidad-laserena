@@ -1,11 +1,12 @@
 # Sistema de Gestión de Resultados (SGR)
 ## Ilustre Municipalidad de La Serena - Dirección de Servicios Comunitarios (DISERCO)
 
-![Estado](https://img.shields.io/badge/Evaluaci%C3%B3n-Primera%20Entrega%20(100%20pts)-brightgreen?style=for-the-badge)
+![Evaluación](https://img.shields.io/badge/Evaluaci%C3%B3n-Segunda%20Entrega%20(Mantenedores%20y%20Acceso)-8e1525?style=for-the-badge)
+![Estado](https://img.shields.io/badge/Estado-100%25%20Pauta%20Verificada-brightgreen?style=for-the-badge)
 ![Institución](https://img.shields.io/badge/INACAP-Proyecto%20Integrado-blue?style=for-the-badge)
-![MySQL](https://img.shields.io/badge/MySQL-8.0%20(3FN)-orange?style=for-the-badge)
-![HTML5/CSS3/JS](https://img.shields.io/badge/Mockup-HTML5%20%2F%20CSS3%20%2F%20JS-yellow?style=for-the-badge)
-![Planner](https://img.shields.io/badge/Gesti%C3%B3n-%C3%81gil%20Microsoft%20Planner-blueviolet?style=for-the-badge)
+![Backend](https://img.shields.io/badge/Backend-Python%20%7C%20REST%20API%20%7C%20SQLite-orange?style=for-the-badge)
+![Correo](https://img.shields.io/badge/SMTP%20Real-Gmail%20Institucional%20Activo-red?style=for-the-badge)
+![Despliegue](https://img.shields.io/badge/Despliegue-AWS%20EC2%20%7C%20Systemd%20Port%2080-232f3e?style=for-the-badge)
 
 ---
 
@@ -175,10 +176,46 @@ Para la **Segunda Evaluación**, se incorporó la solución operativa integral q
 | Perfil | Nombre | Correo Electrónico | Contraseña | Alcance Autorizado |
 | :--- | :--- | :--- | :--- | :--- |
 | **Superadministrador** | Harold Concha | `harold.concha@laserena.cl` | `Admin123*` | Todas las delegaciones y todos los mantenedores |
+| **Superadministrador (Gmail)** | KeoniPruebas | `keonijolievergara@gmail.com` | `keoni123!` | Todas las delegaciones y verificación de correo real |
 | **Coordinador** | Keoni Vergara | `keoni.vergara@laserena.cl` | `Coord123*` | Supervisión comunal, metas y atenciones |
 | **Delegado Municipal** | Claudio Romo | `claudio.romo@laserena.cl` | `Deleg123*` | Delegación Las Compañías (`DEL02`) |
 | **Operador / Ventanilla** | Carlos Miranda | `carlos.miranda@laserena.cl` | `Oper123*` | Ingreso de atención en Delegación Centro (`DEL01`) |
 | **Consultor** | Luis Ejemplo | `luis@example.test` | `Luis1234*` | Sólo lectura y auditoría |
+
+> [!TIP]
+> **Servicio de Correo Real (SMTP Oficial):**  
+> El sistema cuenta con despacho real de correos electrónicos institucionales vía Gmail SMTP (`smtp.gmail.com:587` STARTTLS).  
+> * **Cuenta Emisora Oficial:** `sgrmunicipalidadelaserena@gmail.com`
+> * **Diseño:** Plantilla HTML oficial de la Ilustre Municipalidad de La Serena con código correlativo de 6 dígitos y expiración de 10 minutos.
+> * Al solicitar la recuperación con `keonijolievergara@gmail.com`, el código de verificación llega en segundos a la bandeja de entrada real.
+
+---
+
+### Matriz de Cumplimiento de Pauta y Rúbrica Oficial (100% Verificado):
+
+| Ítem Rúbrica / Pauta | Requisito Técnico Exigido | Implementación SGR La Serena | Estado |
+| :--- | :--- | :--- | :---: |
+| **1. Autenticación y Acceso** | Login validado, mensajes de error, estados de cuenta y roles diferenciados | Validación en BD SQLite y cliente, SweetAlert2 y sesión por token | **100% CUMPLIDO** |
+| **2. Recuperación Paso 1** | Solicitud de código con respuesta neutra (no revelar existencia) | Mensaje genérico de ciberseguridad + envío de correo real vía SMTP institucional | **100% CUMPLIDO** |
+| **3. Recuperación Paso 2** | 6 casillas individuales, auto-avance, soporte de pegar (paste), max 3 intentos | Inputs individuales con evento paste, decremento de intentos y bloqueo formal | **100% CUMPLIDO** |
+| **4. Recuperación Paso 3** | Creación de contraseña con reglas de complejidad en vivo | Validador interactivo de mayúscula, número, símbolo y longitud mínima (8) | **100% CUMPLIDO** |
+| **5. Los 6 Mantenedores (CRUD)** | Delegaciones, Roles, Usuarios, Metas, Tipo y Sub Atención con filtros | 6 CRUDs completos con persistencia relacional en SQLite y backend REST API | **100% CUMPLIDO** |
+| **6. Funcionalidades de Tablas** | Búsqueda reactiva, filtros de estado, paginación y modales CRUD | Tablas dinámicas con buscador en tiempo real, selector de páginas y modales | **100% CUMPLIDO** |
+| **7. Exportación a Excel** | Descarga de datos filtrados en formato `.xlsx` estructurado | Exportación mediante SheetJS (`xlsx.full.min.js`) sanitizada sin contraseñas | **100% CUMPLIDO** |
+| **8. Ingreso de Atención** | Cascada dependiente Tipo $\rightarrow$ Subatención, delegación fijada y folio | Cascada reactiva en tiempo real, campo readonly contextual y folio `ATN-2026-XXXX` | **100% CUMPLIDO** |
+| **9. Estándares Visuales** | Colores institucionales de La Serena (`#8e1525`) y SweetAlert2 | Paleta granate oficial, tipografía DM Sans, logo municipal y SweetAlert2 | **100% CUMPLIDO** |
+| **10. Pruebas de Estrés** | Concurrencia (10, 25, 50 hilos), RPS, latencia media, P95 y tasa error | Suite automatizada `tests/stress_test.py` con informe consolidado | **100% CUMPLIDO** |
+
+---
+
+### Resumen de Resultados de Pruebas de Estrés (A3):
+
+Pruebas ejecutadas contra el backend SGR en entorno concurrente progresivo:
+* **Concurrencia estándar (10 - 25 hilos):** Latencia media entre **30.8 ms y 96.5 ms**, rendimiento de hasta **454 RPS** y **0.0% tasa de errores**.
+* **Carga intensiva (50 hilos concurrentes):** Rendimiento máximo sostenido de **468 RPS**, con degradación controlada y latencia promedio bajo 170 ms.
+* El informe completo y la matriz de casos de prueba funcional (PF-01 a PF-18) se encuentra en: [`docs/PLAN_DE_PRUEBAS_EVAL2.md`](docs/PLAN_DE_PRUEBAS_EVAL2.md).
+
+---
 
 ### Instrucciones de Ejecución Local:
 
@@ -204,10 +241,6 @@ El repositorio incluye el script automatizado [`deploy_ec2.sh`](deploy_ec2.sh) q
 chmod +x deploy_ec2.sh
 ./deploy_ec2.sh
 ```
-
-### Plan y Evidencias de Pruebas:
-El informe formal y registro de pruebas de estrés (RPS, percentil 95 y matriz de casos de prueba) se encuentra en:
-* [`docs/PLAN_DE_PRUEBAS_EVAL2.md`](docs/PLAN_DE_PRUEBAS_EVAL2.md)
 
 ---
 
