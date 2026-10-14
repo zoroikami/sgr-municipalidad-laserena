@@ -4,6 +4,23 @@
  * Autores: Harold Concha, Keoni Vergara, Claudio Romo | INACAP
  */
 
+if (window.Swal) {
+    window.Swal = window.Swal.mixin({
+        target: document.body,
+        heightAuto: false,
+        keydownListenerCapture: true,
+        confirmButtonText: "Aceptar",
+        cancelButtonText: "Cancelar",
+        confirmButtonColor: "var(--primary)",
+        customClass: {
+            container: "sgr-alert-layer",
+            popup: "sgr-swal",
+            confirmButton: "sgr-swal-confirm",
+            cancelButton: "sgr-swal-cancel"
+        }
+    });
+}
+
 const SGR_INITIAL_DATA = {
     delegaciones: [
         { id: 1, codigo: "DEL01", nombre: "Centro", direccion: "Los Carrera 301, Casco Histórico", comuna: "La Serena", estado: "Activa" },
@@ -85,13 +102,11 @@ class SGRDataManager {
             if (resp.ok) {
                 this.hasBackend = true;
                 console.log("[SGR Data] Backend REST API activo en AWS/Localhost.");
-                await this.syncFromBackend();
-                return;
             }
         } catch (e) {
             console.log("[SGR Data] Modo Local / GitHub Pages activo (persistencia localStorage).");
         }
-        this.hasBackend = false;
+        if (this.hasBackend) await this.syncFromBackend();
     }
 
     loadLocalData() {
@@ -116,13 +131,13 @@ class SGRDataManager {
         if (!this.hasBackend) return;
         try {
             const [del, rol, usr, itm, tip, sub, atn] = await Promise.all([
-                fetch("/api/delegaciones").then(r => r.json()),
-                fetch("/api/roles").then(r => r.json()),
-                fetch("/api/usuarios").then(r => r.json()),
-                fetch("/api/items-metas").then(r => r.json()),
-                fetch("/api/tipos-atencion").then(r => r.json()),
-                fetch("/api/sub-atenciones").then(r => r.json()),
-                fetch("/api/atenciones").then(r => r.json())
+                this.fetchCollection("/api/delegaciones"),
+                this.fetchCollection("/api/roles"),
+                this.fetchCollection("/api/usuarios"),
+                this.fetchCollection("/api/items-metas"),
+                this.fetchCollection("/api/tipos-atencion"),
+                this.fetchCollection("/api/sub-atenciones"),
+                this.fetchCollection("/api/atenciones")
             ]);
             this.data.delegaciones = del;
             this.data.roles = rol;
@@ -134,7 +149,28 @@ class SGRDataManager {
             this.saveLocalData();
         } catch (err) {
             console.warn("[SGR Data] Error sincronizando con backend:", err);
+            throw new Error("No se pudieron actualizar los listados del servidor. Recargue la página para comprobar los datos antes de repetir la operación.");
         }
+    }
+
+    async fetchCollection(endpoint) {
+        const response = await fetch(endpoint);
+        if (!response.ok) throw new Error("No se pudo consultar el servidor.");
+        const records = await response.json();
+        if (!Array.isArray(records)) throw new Error("El servidor devolvió un listado inválido.");
+        return records;
+    }
+
+    generateCode(collection) {
+        const formats = { delegaciones: { prefix: "DEL", width: 2 }, items_metas: { prefix: "IT", width: 3 } };
+        const format = formats[collection];
+        const numbers = this.data[collection].map(record => {
+            const code = record.codigo || "";
+            const suffix = code.slice(format.prefix.length);
+            return code.startsWith(format.prefix) && /^\d+$/.test(suffix) ? Number(suffix) : 0;
+        });
+        const next = numbers.reduce((highest, number) => Math.max(highest, number), 0) + 1;
+        return `${format.prefix}${String(next).padStart(format.width, "0")}`;
     }
 
     // CRUD Genérico (soporta backend y localStorage transparente)
@@ -173,10 +209,13 @@ class SGRDataManager {
 
         // Fallback LocalStorage
         const list = this.data[collection];
+        if (["delegaciones", "items_metas"].includes(collection)) {
+            item = { ...item, codigo: this.generateCode(collection) };
+        }
         item.id = list.length ? Math.max(...list.map(x => x.id || 0)) + 1 : 1;
         list.push(item);
         this.saveLocalData();
-        return { success: true, message: "Registro creado exitosamente", id: item.id };
+        return { success: true, message: "Registro creado exitosamente", id: item.id, codigo: item.codigo };
     }
 
     async updateItem(collection, id, updatedData) {
@@ -256,7 +295,7 @@ function exportToExcel(records, filename, sheetTitle = "Datos") {
             title: "Librería no disponible",
             text: "Cargando motor de exportación a Excel...",
             icon: "info",
-            confirmButtonColor: "#8e1525"
+            confirmButtonColor: "var(--primary)"
         });
         return;
     }
@@ -266,7 +305,7 @@ function exportToExcel(records, filename, sheetTitle = "Datos") {
             title: "Sin datos para exportar",
             text: "El filtro actual no contiene registros para generar el archivo Excel.",
             icon: "warning",
-            confirmButtonColor: "#8e1525"
+            confirmButtonColor: "var(--primary)"
         });
         return;
     }
@@ -292,7 +331,7 @@ function exportToExcel(records, filename, sheetTitle = "Datos") {
         title: "¡Exportación Exitosa!",
         text: `Se ha descargado el archivo ${filename}.xlsx con ${cleanRecords.length} registros.`,
         icon: "success",
-        confirmButtonColor: "#8e1525",
+        confirmButtonColor: "var(--primary)",
         timer: 3000
     });
 }
