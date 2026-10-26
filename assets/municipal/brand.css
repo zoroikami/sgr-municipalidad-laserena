@@ -160,9 +160,15 @@ button, a, select { touch-action: manipulation; }
     object-fit: contain;
     filter: brightness(0) saturate(100%) invert(10%) sepia(32%) saturate(2369%) hue-rotate(326deg) brightness(95%) contrast(99%);
 }
-.sgr-topbar .topbar-logo { width: clamp(10rem, 19vw, 15rem); height: 3.5rem; flex-shrink: 0; }
+.sgr-topbar .topbar-logo { width: 61.2%; height: 61.2%; max-height: 100%; object-position: left center; flex-shrink: 0; }
 .navbar-brand img, .sidebar-logo { width: 5rem; height: 4rem; }
 .auth-header img { width: 15rem; max-width: 100%; height: auto; aspect-ratio: 716 / 199; }
+#auth-card-login .auth-header img {
+    width: 20rem;
+    max-width: 100%;
+    height: auto;
+    aspect-ratio: auto;
+}
 .navbar, .sgr-sidebar, .sidebar { background: var(--brand-surface); }
 .app-container { background: var(--brand-page); }
 .hero-badge, .feature-icon, .badge-pts, .del-chip, .content-area::before {

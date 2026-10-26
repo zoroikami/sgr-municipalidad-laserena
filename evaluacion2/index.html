@@ -10,7 +10,7 @@
     <!-- Fuentes Tipográficas Institucionales -->
 
     <!-- CSS del Sistema de Diseño -->
-    <link rel="stylesheet" href="/evaluacion2/css/sgr_eval2.css">
+    <link rel="stylesheet" href="/evaluacion2/css/sgr_eval2.css?v=424b070b2e11">
 
     <!-- SweetAlert2 (Requisito Obligatorio A3) -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -18,7 +18,7 @@
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
-    <link rel="stylesheet" href="/assets/municipal/brand.css">
+    <link rel="stylesheet" href="/assets/municipal/brand.css?v=95cd853b471d">
 </head>
 <body>
 
@@ -30,7 +30,7 @@
         <!-- DISEÑO 1: INICIAR SESIÓN (PDF PÁGINA 5) -->
         <div id="auth-card-login" class="auth-card">
             <div class="auth-header">
-                <img src="/assets/municipal/logo-la-serena.svg" alt="La Serena · Ilustre Municipalidad">
+                <img src="/assets/municipal/logo-la-serena-horizontal.svg" alt="La Serena · Ilustre Municipalidad">
                 <h2 class="auth-title">Iniciar sesión</h2>
                 <p class="auth-desc">Accede con tu cuenta institucional.</p>
             </div>
@@ -65,7 +65,7 @@
         <!-- DISEÑO 2: RECUPERAR CONTRASEÑA - PASO 1 SOLICITAR CÓDIGO (PDF PÁGINA 5) -->
         <div id="auth-card-recuperar-paso1" class="auth-card" style="display: none;">
             <div class="auth-header">
-                <img src="/assets/municipal/logo-la-serena.svg" alt="La Serena · Ilustre Municipalidad">
+                <img src="/assets/municipal/logo-la-serena-horizontal.svg" alt="La Serena · Ilustre Municipalidad">
                 <h2 class="auth-title">Recuperar contraseña</h2>
                 <div class="auth-step-pill">Paso 1 de 3 · Solicitar código</div>
                 <p class="auth-desc">Ingresa el correo asociado a tu cuenta.</p>
@@ -90,7 +90,7 @@
         <!-- DISEÑO 3: VALIDAR CÓDIGO - PASO 2 VERIFICACIÓN (PDF PÁGINA 6) -->
         <div id="auth-card-recuperar-paso2" class="auth-card" style="display: none;">
             <div class="auth-header">
-                <img src="/assets/municipal/logo-la-serena.svg" alt="La Serena · Ilustre Municipalidad">
+                <img src="/assets/municipal/logo-la-serena-horizontal.svg" alt="La Serena · Ilustre Municipalidad">
                 <h2 class="auth-title">Validar código</h2>
                 <div class="auth-step-pill">Paso 2 de 3 · Verificación</div>
                 <p class="auth-desc" id="rec-masked-email">Código enviado a u***@example.test</p>
@@ -129,7 +129,7 @@
         <!-- DISEÑO 4: CREAR NUEVA CONTRASEÑA - PASO 3 NUEVA CLAVE (PDF PÁGINA 6) -->
         <div id="auth-card-recuperar-paso3" class="auth-card" style="display: none;">
             <div class="auth-header">
-                <img src="/assets/municipal/logo-la-serena.svg" alt="La Serena · Ilustre Municipalidad">
+                <img src="/assets/municipal/logo-la-serena-horizontal.svg" alt="La Serena · Ilustre Municipalidad">
                 <h2 class="auth-title">Crear nueva contraseña</h2>
                 <div class="auth-step-pill">Paso 3 de 3 · Nueva clave</div>
             </div>
@@ -186,7 +186,7 @@
         <!-- CABECERA INSTITUCIONAL PERMANENTE (PDF PÁGINAS 2, 7 A 10) -->
         <header class="sgr-topbar">
             <div class="topbar-left">
-                <img src="/assets/municipal/logo-la-serena.svg" alt="La Serena · Ilustre Municipalidad" class="topbar-logo">
+                <img src="/assets/municipal/logo-la-serena-horizontal.svg" alt="La Serena · Ilustre Municipalidad" class="topbar-logo">
             </div>
 
             <!-- DISTINTIVO PERMANENTE DE DELEGACIÓN ACTIVA -->
@@ -204,10 +204,13 @@
 
             <!-- PERFIL DE USUARIO Y CIERRE DE SESIÓN -->
             <div class="topbar-right">
-                <div class="user-header-info">
-                    <div class="user-header-name" id="header-user-name"></div>
-                    <div class="user-header-role" id="header-user-role"></div>
-                </div>
+                <button type="button" class="header-profile-button" aria-label="Abrir mi perfil" title="Mi perfil" onclick="sgrApp.openProfile()">
+                    <img id="header-user-avatar" class="header-user-avatar" src="/assets/municipal/avatar-default.svg" alt="" width="44" height="44">
+                    <span class="user-header-info">
+                        <span class="user-header-name" id="header-user-name"></span>
+                        <span class="user-header-role" id="header-user-role"></span>
+                    </span>
+                </button>
                 <button type="button" class="btn-header-logout" onclick="sgrApp.logout()">
                     <i data-lucide="log-out"></i> Salir
                 </button>
@@ -639,14 +642,19 @@
                         <form onsubmit="sgrApp.submitIngresoAtencion(event)">
                             <div class="form-grid-2">
                                 <div class="form-group">
-                                    <label class="form-label" for="atn-solicitante">Vecino o solicitante <span class="req">*</span></label>
-                                    <input type="text" id="atn-solicitante" class="form-control" placeholder="Buscar por identificador o nombre..." required>
+                                    <label class="form-label" for="atn-solicitante-rut">RUT del solicitante <span class="req">*</span></label>
+                                    <input type="text" id="atn-solicitante-rut" class="form-control" placeholder="12.345.678-5" data-rut required maxlength="12" aria-describedby="atn-rut-help atn-rut-format">
+                                    <p id="atn-rut-format" class="rut-hint">* Ejemplo: 12.345.678-5. Incluye siempre el dígito verificador (número o K).</p>
+                                    <p id="atn-rut-help" class="rut-feedback" aria-live="polite"></p>
                                 </div>
-
                                 <div class="form-group">
-                                    <label class="form-label" for="atn-delegacion-display">Delegación de atención</label>
-                                    <input type="text" id="atn-delegacion-display" class="form-control" value="DEL01 - Centro [Asignada por perfil]" readonly>
+                                    <label class="form-label" for="atn-solicitante">Nombre del solicitante <span class="req">*</span></label>
+                                    <input type="text" id="atn-solicitante" class="form-control" placeholder="Nombre y apellidos" required>
                                 </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" for="atn-delegacion-display">Delegación de atención</label>
+                                <input type="text" id="atn-delegacion-display" class="form-control" value="DEL01 - Centro [Asignada por perfil]" readonly>
                             </div>
 
                             <!-- Selección Dependiente: Tipo de Atención -> Sub Atención -->
@@ -818,12 +826,73 @@
         </div>
     </div>
 
+    <!-- Perfil personal: disponible para todos los usuarios autenticados. -->
+    <div id="sgr-profile-modal" class="sgr-modal-overlay profile-overlay" hidden>
+        <section class="sgr-modal-dialog profile-dialog" role="dialog" aria-modal="true" aria-labelledby="profile-title" aria-describedby="profile-description">
+            <div class="modal-header-institucional">
+                <h3 id="profile-title">Mi perfil</h3>
+                <button type="button" id="profile-close" class="btn-modal-close" aria-label="Cerrar mi perfil" onclick="sgrApp.profileController.close()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p id="profile-description" class="profile-description">Administra tu foto de perfil.</p>
+                <div class="profile-photo-editor">
+                    <img id="profile-photo-preview" class="profile-avatar profile-avatar-large" src="/assets/municipal/avatar-default.svg" alt="Vista previa de tu foto de perfil">
+                    <div class="profile-photo-controls">
+                        <button type="button" id="profile-choose-photo" class="btn-secondary" onclick="sgrApp.profileController.choosePhoto()">Cambiar foto</button>
+                        <button type="button" id="profile-remove-photo" class="profile-remove-button" onclick="sgrApp.profileController.removePhoto()">Quitar foto</button>
+                        <input type="file" id="profile-photo-file" accept="image/jpeg,image/png,image/webp" hidden onchange="sgrApp.profileController.selectPhoto(this)">
+                        <p class="profile-help">JPG, PNG o WebP, hasta 5 MB.<br>Podrás moverla y elegir el recorte.</p>
+                    </div>
+                </div>
+                <p id="profile-status" class="profile-status" role="status" aria-live="polite"></p>
+                <dl class="profile-details">
+                    <div><dt>Nombre</dt><dd id="profile-user-name"></dd></div>
+                    <div><dt>Correo institucional</dt><dd id="profile-user-email"></dd></div>
+                    <div><dt>Rol</dt><dd id="profile-user-role"></dd></div>
+                    <div><dt>Delegación</dt><dd id="profile-user-delegation"></dd></div>
+                </dl>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn-secondary" onclick="sgrApp.profileController.close()">Cerrar</button>
+                <button type="button" id="profile-save-photo" class="btn-primary" onclick="sgrApp.profileController.save()" disabled>Guardar foto</button>
+            </div>
+        </section>
+    </div>
+
+    <!-- Recorte compartido por Mi perfil y la creación de usuarios. -->
+    <div id="sgr-photo-crop-modal" class="sgr-modal-overlay photo-crop-overlay" hidden>
+        <section class="sgr-modal-dialog photo-crop-dialog" role="dialog" aria-modal="true" aria-labelledby="photo-crop-title" aria-describedby="photo-crop-description">
+            <div class="modal-header-institucional">
+                <h3 id="photo-crop-title">Ajustar foto de perfil</h3>
+                <button type="button" id="photo-crop-close" class="btn-modal-close" aria-label="Cancelar recorte">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p id="photo-crop-description" class="profile-description">Mueve la imagen y ajusta el zoom. El círculo muestra cómo se verá tu foto.</p>
+                <div class="photo-crop-viewport">
+                    <canvas id="photo-crop-canvas" width="512" height="512" tabindex="0" aria-label="Mover foto" aria-describedby="photo-crop-keyboard"></canvas>
+                    <span class="photo-crop-circle" aria-hidden="true"></span>
+                </div>
+                <p id="photo-crop-keyboard" class="profile-help">Arrastra la foto o usa las flechas del teclado para moverla.</p>
+                <div class="photo-crop-zoom-label"><label for="photo-crop-zoom">Zoom</label><output id="photo-crop-zoom-value" for="photo-crop-zoom">100 %</output></div>
+                <input type="range" id="photo-crop-zoom" min="1" max="4" step="0.01" value="1">
+                <button type="button" id="photo-crop-reset" class="profile-remove-button">Restablecer recorte</button>
+            </div>
+            <div class="modal-footer">
+                <button type="button" id="photo-crop-cancel" class="btn-secondary">Cancelar</button>
+                <button type="button" id="photo-crop-use" class="btn-primary">Usar recorte</button>
+            </div>
+        </section>
+    </div>
+
     <footer class="municipal-copyright">
         <small>© 2026 Ilustre Municipalidad de La Serena. Todos los derechos reservados.</small>
     </footer>
 
     <!-- Scripts de la Aplicación -->
-    <script src="/evaluacion2/js/data_eval2.js"></script>
-    <script src="/evaluacion2/js/app_eval2.js"></script>
+    <script src="/assets/municipal/rut.js?v=c6a1e95efae2"></script>
+    <script src="/evaluacion2/js/photo-cropper.js?v=1bc7c40144cb"></script>
+    <script src="/evaluacion2/js/profile.js?v=a7c90cbccce2"></script>
+    <script src="/evaluacion2/js/data_eval2.js?v=f086ca22e88e"></script>
+    <script src="/evaluacion2/js/app_eval2.js?v=d4f2e22df6dc"></script>
 </body>
 </html>
