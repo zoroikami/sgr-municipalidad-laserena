@@ -48,6 +48,7 @@ class SGRDataManager {
         // No recuperar registros ni sesiones del prototipo anterior.
         localStorage.removeItem("SGR_LA_SERENA_EVAL2_DATA");
         localStorage.removeItem("SGR_AUTH_SESSION_USER");
+        localStorage.removeItem("SGR_AUTH_SESSION_TOKEN");
     }
 
     async init() {
@@ -68,6 +69,24 @@ class SGRDataManager {
     }
 
     async getAll(collection) { return this.data[collection] || []; }
+
+    async profileRequest(method, body) {
+        const response = await fetch("/api/profile", {
+            method,
+            headers: { "Content-Type": "application/json" },
+            ...(body === undefined ? {} : { body: JSON.stringify(body) })
+        });
+        const result = await response.json();
+        if (!response.ok || !result.success) {
+            const error = new Error(result.message || "No se pudo consultar el perfil.");
+            error.status = response.status;
+            throw error;
+        }
+        return result.user;
+    }
+
+    async getProfile() { return this.profileRequest("GET"); }
+    async saveProfilePhoto(photo) { return this.profileRequest("PUT", { photo }); }
 
     generateCode(collection) {
         const formats = {delegaciones:["DEL",2], roles:["ROL",2], items_metas:["IT",3], tipos_atencion:["TA",3], sub_atenciones:["SA",3]};
@@ -122,6 +141,7 @@ function exportToExcel(records, filename, sheetTitle = "Datos") {
         delete copy.password_hash;
         delete copy.password;
         delete copy.token;
+        delete copy.foto_perfil;
         delete copy.id;
         return copy;
     });

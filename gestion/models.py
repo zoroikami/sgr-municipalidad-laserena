@@ -26,6 +26,7 @@ class Rol(Catalogo):
 
 class Usuario(AbstractUser):
     nombre = models.CharField(max_length=200)
+    foto_perfil = models.TextField(default='/assets/municipal/avatar-default.svg')
     rut = models.CharField(max_length=20, unique=True, null=True, blank=True)
     email = models.EmailField(unique=True)
     rol = models.ForeignKey(Rol, to_field='codigo', db_column='rol_codigo', on_delete=models.PROTECT, null=True, blank=True)

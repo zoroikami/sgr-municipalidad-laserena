@@ -86,6 +86,7 @@ No se generan cuentas automáticamente. La interfaz conserva la clave inicial `L
 - `GET /api/health`: estado público y cookie CSRF.
 - `POST /api/auth/login`: acceso por `usuario` (correo, nombre, username o RUT) y `password`.
 - `GET /api/profile`: sesión actual. `DELETE /api/profile`: salir.
+- `PUT /api/profile`: guardar o quitar la foto del usuario autenticado, con sesión y CSRF de Django. La foto se conserva en el modelo `Usuario`; `migrate` agrega el campo también en instalaciones existentes.
 - `POST /api/auth/recuperar-codigo`, `validar-codigo`, `cambiar-password`: recuperación en tres pasos, código de diez minutos y tres intentos. La validación concede permiso de cambio únicamente a esa sesión.
 - `/api/delegaciones`, `/roles`, `/usuarios`, `/items-metas`, `/tipos-atencion`, `/sub-atenciones`: GET, POST, PUT y DELETE (estas últimas con `/{id}`). Todas bajo prefijo `/api`.
 - `/api/atenciones`: listado y registro; `/api/stats`: conteos.
@@ -114,9 +115,10 @@ python manage.py test gestion
 python manage.py check
 python manage.py makemigrations --check --dry-run
 python manage.py collectstatic --noinput
+node --test tests/test_django_profile_data.cjs tests/test_rut.cjs tests/test_profile_ui.cjs tests/test_photo_cropper.cjs
 ```
 
-Los antiguos tests de `tests/` documentan el servidor HTTP reemplazado; la suite vigente es `gestion/tests.py` y corre aislada de las bases locales.
+Los antiguos tests HTTP de `tests/` documentan el servidor reemplazado. La suite Django vigente está en `gestion/` y corre aislada de las bases locales; las pruebas JavaScript del comando anterior cubren perfil, recorte, RUT y la conexión del perfil con Django.
 
 ## Producción
 

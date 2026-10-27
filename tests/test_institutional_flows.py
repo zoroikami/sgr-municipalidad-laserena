@@ -28,12 +28,17 @@ class InstitutionalFlowTests(unittest.TestCase):
                 CREATE TABLE items_metas (id INTEGER PRIMARY KEY AUTOINCREMENT,
                     codigo TEXT UNIQUE, nombre TEXT, descripcion TEXT,
                     unidad_medida TEXT, meta_cantidad INTEGER, estado TEXT);
-                CREATE TABLE roles (codigo TEXT, nombre TEXT, alcance TEXT);
+                CREATE TABLE roles (id INTEGER PRIMARY KEY AUTOINCREMENT, codigo TEXT UNIQUE,
+                    nombre TEXT, descripcion TEXT, permisos TEXT, alcance TEXT, estado TEXT);
+                CREATE TABLE tipos_atencion (id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    codigo TEXT UNIQUE, nombre TEXT, descripcion TEXT, estado TEXT);
+                CREATE TABLE sub_atenciones (id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    codigo TEXT UNIQUE, nombre TEXT, tipo_codigo TEXT, tipo_nombre TEXT, estado TEXT);
                 CREATE TABLE usuarios (id INTEGER PRIMARY KEY, rut TEXT, nombre TEXT,
                     email TEXT, password_hash TEXT, rol_codigo TEXT,
                     delegacion_codigo TEXT, estado TEXT);
                 INSERT INTO delegaciones VALUES (1, 'DEL01', 'Centro', 'Dirección', 'La Serena', 'Activa');
-                INSERT INTO roles VALUES ('ROL01', 'Superadministrador', 'Comunal');
+                INSERT INTO roles (codigo, nombre, alcance) VALUES ('ROL01', 'Superadministrador', 'Comunal');
                 INSERT INTO usuarios VALUES (1, '12345678-5', 'Usuario', 'usuario@example.test',
                     'ClaveReal123*', 'ROL01', 'DEL01', 'Activo');
             ''')
@@ -49,9 +54,9 @@ class InstitutionalFlowTests(unittest.TestCase):
         self.database_patch.stop()
         self.directory.cleanup()
 
-    def post(self, path, payload):
+    def post(self, path, payload, method='POST'):
         request = Request(self.base_url + path, data=json.dumps(payload).encode(),
-                          headers={'Content-Type': 'application/json'}, method='POST')
+                          headers={'Content-Type': 'application/json'}, method=method)
         try:
             response = urlopen(request, timeout=5)
         except HTTPError as error:
@@ -77,6 +82,36 @@ class InstitutionalFlowTests(unittest.TestCase):
         status, result = self.post('/api/items-metas', {'nombre': 'Nueva meta', 'codigo': 'MANUAL'})
         self.assertEqual(status, 201, result)
         self.assertEqual(result['codigo'], 'IT010')
+
+    def test_meta_quantity_is_automatic_and_cannot_be_changed_by_client(self):
+        payload = {'nombre': 'Meta automática', 'descripcion': '', 'unidad_medida': 'Atenciones',
+                   'estado': 'Activo', 'meta_cantidad': 999}
+        status, result = self.post('/api/items-metas', payload)
+        self.assertEqual(status, 201, result)
+        item_id = result['id']
+        with sqlite3.connect(self.database_path) as connection:
+            self.assertEqual(connection.execute('SELECT meta_cantidad FROM items_metas WHERE id=?',
+                                               (item_id,)).fetchone()[0], 100)
+            connection.execute('UPDATE items_metas SET meta_cantidad=150 WHERE id=?', (item_id,))
+        status, result = self.post(f'/api/items-metas/{item_id}', {**payload, 'meta_cantidad': 1}, method='PUT')
+        self.assertEqual(status, 200, result)
+        with sqlite3.connect(self.database_path) as connection:
+            self.assertEqual(connection.execute('SELECT meta_cantidad FROM items_metas WHERE id=?',
+                                               (item_id,)).fetchone()[0], 150)
+
+    def test_catalog_codes_are_generated_even_when_client_sends_a_code(self):
+        for endpoint, prefix, first, second, extra in [
+            ('roles', 'ROL', 'ROL02', 'ROL03', {}),
+            ('tipos-atencion', 'TA', 'TA001', 'TA002', {}),
+            ('sub-atenciones', 'SA', 'SA001', 'SA002', {'tipo_codigo': 'TA001', 'tipo_nombre': 'Social'}),
+        ]:
+            with self.subTest(endpoint=endpoint):
+                status, _ = self.post('/api/' + endpoint, extra)
+                self.assertEqual(status, 400)
+                for expected, supplied in [(first, {}), (second, {'codigo': 'MANUAL'})]:
+                    status, result = self.post('/api/' + endpoint, {'nombre': 'Nuevo', **extra, **supplied})
+                    self.assertEqual(status, 201, result)
+                    self.assertEqual(result['codigo'], expected)
 
     def test_invalid_creation_does_not_consume_a_code(self):
         status, _ = self.post('/api/delegaciones', {'direccion': 'Dirección'})

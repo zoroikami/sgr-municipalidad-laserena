@@ -22,6 +22,8 @@ from django.shortcuts import render
 from django.utils import timezone
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.contrib.staticfiles import finders
+from profile_service import ProfileError, validate_photo
+from rut import RutError, normalize_rut
 from .models import Delegacion, Rol, Usuario, ItemMeta, TipoAtencion, SubAtencion, Atencion, Recuperacion, Secuencia
 
 RESOURCES = {
@@ -50,6 +52,10 @@ def api(view):
             return error('El código, RUT o correo ya está registrado, o la referencia es inválida.', 409)
         except ValidationError as exc:
             return error(' '.join(exc.messages))
+        except ProfileError as exc:
+            return error(str(exc), exc.status)
+        except RutError as exc:
+            return error(str(exc))
         except (ValueError, TypeError):
             return error('Los datos enviados no son válidos.')
     return wrapped
@@ -66,7 +72,8 @@ def serialize(obj):
                 'rol_codigo':'ROL01' if obj.is_superuser else obj.rol_id,
                 'rol_nombre':obj.rol.nombre if obj.rol else ('Superadministrador' if obj.is_superuser else ''),
                 'alcance':obj.rol.alcance if obj.rol else '', 'delegacion_codigo':obj.delegacion_id,
-                'delegacion_nombre':obj.delegacion.nombre if obj.delegacion else '', 'estado':obj.estado}
+                'delegacion_nombre':obj.delegacion.nombre if obj.delegacion else '', 'estado':obj.estado,
+                'foto_perfil':obj.foto_perfil}
     result = model_to_dict(obj)
     for field in ('delegacion', 'tipo', 'subtipo'):
         if hasattr(obj, field):
@@ -106,7 +113,12 @@ def profile(request):
     if request.method == 'DELETE':
         logout(request)
         return JsonResponse({'success':True})
-    if request.method != 'GET':
+    if request.method == 'PUT':
+        if set(request.data) != {'photo'}:
+            return error('Envíe únicamente la foto del perfil.')
+        request.user.foto_perfil = validate_photo(request.data['photo'])
+        request.user.save(update_fields=['foto_perfil'])
+    elif request.method != 'GET':
         return error('Método no permitido.', 405)
     return JsonResponse({'success':True, 'user':serialize(request.user)})
 
@@ -117,7 +129,10 @@ def auth(request, action):
     body = request.data
     if action == 'login':
         identifier = str(body.get('usuario', '')).strip()
-        rut = identifier.replace('.', '').upper()
+        try:
+            rut = normalize_rut(identifier)
+        except RutError:
+            rut = identifier.replace('.', '').upper()
         user = Usuario.objects.filter(Q(email__iexact=identifier) | Q(username__iexact=identifier) | Q(nombre__iexact=identifier) | Q(rut__iexact=rut)).first()
         if not user or not user.check_password(body.get('password', '')):
             return error('Credenciales inválidas.', 401)
@@ -232,6 +247,8 @@ def collection(request, resource, pk=None):
             fields = {'rut', 'nombre', 'email', 'estado'}
         else:
             fields = {field.name for field in model._meta.fields if not field.is_relation} - excluded
+        if model == ItemMeta:
+            fields.discard('meta_cantidad')
         for field in fields:
             if field in body:
                 value = body[field]
@@ -243,9 +260,12 @@ def collection(request, resource, pk=None):
             if not all((obj.rut, obj.nombre, obj.email, obj.rol_id, obj.delegacion_id)):
                 return error('RUT, nombre, correo, rol y delegación son obligatorios.')
             obj.email = obj.email.lower()
-            obj.rut = obj.rut.replace('.', '').upper() if obj.rut else None
+            obj.rut = normalize_rut(obj.rut)
+            if Usuario.objects.filter(rut=obj.rut).exclude(pk=obj.pk).exists():
+                return error('El RUT ya está registrado en el sistema.', 409)
             if not pk:
                 obj.username = obj.email
+                obj.foto_perfil = validate_photo(body.get('foto_perfil'))
             if not communal(request.user):
                 if obj.rol_id not in ('ROL04', 'ROL05'):
                     return error('Solo puede administrar operadores y consultores.', 403)
@@ -256,6 +276,7 @@ def collection(request, resource, pk=None):
                 obj.set_password(password)
         if not pk and model != Usuario:
             if model == Atencion:
+                obj.solicitante_rut = normalize_rut(obj.solicitante_rut)
                 year = timezone.localdate().year
                 obj.folio = next_code(f'atenciones-{year}', f'ATN-{year}-', 4)
                 obj.responsable_nombre = request.user.nombre or request.user.username
