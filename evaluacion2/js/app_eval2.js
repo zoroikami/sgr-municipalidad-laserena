@@ -12,7 +12,10 @@ class SGRApplication {
         this.newUserPhoto = null;
         this.newUserPhotoPending = null;
         this.activeDelegacion = "DEL01";
-        this.currentView = "atenciones";
+        this.nativeCrud = document.body?.dataset?.nativeCrud || null;
+        const requestedView = new URL(window.location.href).searchParams.get("view");
+        this.currentView = this.nativeCrud ? this.nativeCrud.replaceAll("-", "_") :
+            (["atenciones", "tablero", "evidencias", "agenda", "auditoria"].includes(requestedView) ? requestedView : "atenciones");
         this.pagination = {
             delegaciones: { page: 1, limit: 5, search: "", filter: "TODOS" },
             roles: { page: 1, limit: 5, search: "", filter: "TODOS" },
@@ -37,7 +40,7 @@ class SGRApplication {
 
     async init() {
         this.setupEventListeners();
-        this.showAuthView("login");
+        if (!this.nativeCrud) this.showAuthView("login");
         try {
             await sgrDb.init();
         } catch (err) {
@@ -51,7 +54,12 @@ class SGRApplication {
             const { user } = await response.json();
             this.currentUser = user;
             this.activeDelegacion = user.delegacion_codigo || "ALL";
-            await sgrDb.syncFromBackend();
+            if (this.redirectAfterLogin()) return;
+            if (this.nativeCrud) {
+                sgrDb.data.delegaciones = await sgrDb.fetchCollection("/api/delegaciones");
+            } else {
+                await sgrDb.syncFromBackend();
+            }
             this.showAppView();
         }
 
@@ -77,7 +85,12 @@ class SGRApplication {
             "ROL05": ["inicio", "delegaciones", "items_metas", "tipos_atencion", "sub_atenciones", "atenciones", "tablero"]
         };
 
-        const allowed = menuPermissions[rol] || ["atenciones"];
+        let allowed = menuPermissions[rol] || ["atenciones"];
+        if (this.nativeCrud) {
+            const catalogs = JSON.parse(document.getElementById("sgr-native-navigation").textContent);
+            const operational = allowed.filter(name => ["inicio", "atenciones", "tablero", "evidencias", "agenda", "auditoria"].includes(name));
+            allowed = [...operational, ...catalogs.map(([slug]) => slug.replaceAll("-", "_"))];
+        }
 
         // Actualizar visibilidad de elementos del menú lateral
         document.querySelectorAll("[data-module]").forEach(el => {
@@ -90,7 +103,7 @@ class SGRApplication {
         });
 
         // Si la vista actual no está permitida, redirigir a una válida
-        if (!allowed.includes(this.currentView)) {
+        if (!this.nativeCrud && !allowed.includes(this.currentView)) {
             this.navigateTo(allowed.includes("atenciones") ? "atenciones" : allowed[0]);
         }
     }
@@ -198,6 +211,19 @@ class SGRApplication {
     // NAVEGACIÓN Y ENRUTAMIENTO DE VISTAS
     // =========================================================================
     navigateTo(viewName) {
+        const crudRoutes = {
+            delegaciones: "delegaciones", roles: "roles", usuarios: "usuarios",
+            items_metas: "items-metas", tipos_atencion: "tipos-atencion",
+            sub_atenciones: "sub-atenciones"
+        };
+        if (crudRoutes[viewName]) {
+            window.location.assign(`/gestion/${crudRoutes[viewName]}/`);
+            return;
+        }
+        if (this.nativeCrud) {
+            window.location.assign(`/?view=${encodeURIComponent(viewName)}`);
+            return;
+        }
         this.currentView = viewName;
 
         // Actualizar clase activa en sidebar
@@ -229,6 +255,7 @@ class SGRApplication {
     }
 
     renderCurrentView() {
+        if (this.nativeCrud) return; // Django ya entregó el listado y su formulario.
         switch (this.currentView) {
             case "delegaciones":
                 this.renderDelegaciones();
@@ -1139,6 +1166,15 @@ class SGRApplication {
     }
 
     openModalView(moduleName, id) {
+        if (this.nativeCrud) {
+            const detail = document.getElementById(`record-detail-${id}`);
+            if (!detail) return;
+            document.getElementById("modal-crud-title").textContent = `Detalle de registro (${detail.dataset.recordName})`;
+            document.getElementById("modal-crud-body").replaceChildren(detail.content.cloneNode(true));
+            document.getElementById("btn-modal-save").style.display = "none";
+            document.getElementById("sgr-crud-modal").classList.add("active");
+            return;
+        }
         const item = sgrDb.data[moduleName].find(x => x.id == id);
         if (!item) return;
 
@@ -1352,6 +1388,14 @@ class SGRApplication {
         this.updateHeaderUserInfo();
         this.setupHeaderDelegacion();
         this.applyRolePermissions();
+        if (this.nativeCrud) {
+            document.querySelectorAll(".nav-link-btn").forEach(button => {
+                const active = button.getAttribute("data-target") === this.currentView;
+                button.classList.toggle("active", active);
+                if (active) button.setAttribute("aria-current", "page");
+                else button.removeAttribute("aria-current");
+            });
+        }
         this.renderCurrentView();
     }
 
@@ -1618,11 +1662,24 @@ class SGRApplication {
         }
     }
 
+    redirectAfterLogin() {
+        const next = document.getElementById("login-next")?.value;
+        if (!next) return false;
+        try {
+            const destination = new URL(next, window.location.origin);
+            if (destination.origin === window.location.origin && destination.pathname !== "/acceso/") {
+                window.location.assign(destination.pathname + destination.search + destination.hash);
+                return true;
+            }
+        } catch (_) { /* Un destino inválido mantiene la pantalla original. */ }
+        return false;
+    }
+
     // Login Tradicional
     async submitLogin(e) {
         if (e) e.preventDefault();
         const usrInput = document.getElementById("login-username").value.trim();
-        const passInput = document.getElementById("login-password").value.trim();
+        const passInput = document.getElementById("login-password").value;
 
         if (!usrInput || !passInput) {
             Swal.fire({
@@ -1686,6 +1743,7 @@ class SGRApplication {
 
         this.currentUser = { ...user };
         this.activeDelegacion = user.delegacion_codigo || "DEL01";
+        if (this.redirectAfterLogin()) return;
         await sgrDb.syncFromBackend();
 
         Swal.fire({

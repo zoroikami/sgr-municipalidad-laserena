@@ -1,0 +1,10 @@
+{% extends 'gestion/base.html' %}
+{% block title %}Confirmar eliminación{% endblock %}
+{% block content %}
+<section class="sgr-login mx-auto">
+    <h1 class="h3">Eliminar {{ singular }}</h1>
+    <p>Confirma la eliminación de <strong>{{ object.nombre }}</strong>.</p>
+    <p class="text-body-secondary">Los registros con relaciones protegidas no se pueden eliminar.</p>
+    <form method="post" data-confirm-delete data-record-name="{{ object.nombre }}">{% csrf_token %}<a href="{{ list_url }}" class="btn btn-outline-secondary">Cancelar</a> <button class="btn btn-danger" type="submit">Eliminar</button></form>
+</section>
+{% endblock %}

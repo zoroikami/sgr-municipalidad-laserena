@@ -1,0 +1,21 @@
+{% extends 'index.html' %}
+{% load static %}
+{% block title %}{{ catalog_title }} · SGR La Serena{% endblock %}
+{% block framework_styles %}
+<link rel="stylesheet" href="{% static 'gestion/vendor/bootstrap.min.css' %}">
+{% endblock %}
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'gestion/crud.css' %}?v=lima-20261027">
+{% endblock %}
+{% block main_content %}
+    {% if messages %}
+    <div id="sgr-messages">
+        {% for message in messages %}<div class="alert {% if message.tags == 'error' %}alert-danger{% else %}alert-success{% endif %}" role="status" data-sgr-message data-icon="{% if message.tags == 'error' %}error{% else %}success{% endif %}">{{ message }}</div>{% endfor %}
+    </div>
+    {% endif %}
+    {% block content %}{% endblock %}
+{% endblock %}
+{% block extra_scripts %}
+<script src="{% static 'gestion/vendor/bootstrap.bundle.min.js' %}"></script>
+<script src="{% static 'gestion/crud.js' %}"></script>
+{% endblock %}

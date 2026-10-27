@@ -60,6 +60,15 @@ class MainCompatibilityTests(TestCase):
         self.assertEqual(get_user_model().objects.get(email='nuevo@example.test').rut, '11111111-1')
         self.assertEqual(self.post_user(rut='111111111', email='duplicado@example.test').status_code, 409)
 
+    def test_role_api_assigns_code_instead_of_accepting_a_manual_value(self):
+        response = self.client.post('/api/roles', {'nombre':'Consulta comunal', 'permisos':'lectura', 'codigo':'ROL99'}, content_type='application/json')
+        self.assertEqual(response.status_code, 201)
+        role = Rol.objects.get(nombre='Consulta comunal')
+        self.assertEqual(role.codigo, 'ROL02')
+        self.assertEqual(self.client.put(f'/api/roles/{role.pk}', {'codigo':'ROL88', 'nombre':'Consulta editada'}, content_type='application/json').status_code, 200)
+        role.refresh_from_db()
+        self.assertEqual(role.codigo, 'ROL02')
+
     def test_attention_requires_valid_rut_and_stores_normalized_value(self):
         tipo = TipoAtencion.objects.create(codigo='TA001', nombre='Social')
         sub = SubAtencion.objects.create(codigo='SA001', nombre='Ayuda', tipo=tipo)
