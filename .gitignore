@@ -46,5 +46,11 @@ scratch/
 .tempmediaStorage/
 *.db
 *.sqlite3
+# Configuración privada y variantes locales; solo se publica la plantilla.
 .env
-.env.local
+.env.*
+!.env.example
+
+# Django
+staticfiles/
+media/
