@@ -15,6 +15,8 @@ import string
 import datetime
 import mimetypes
 import smtplib
+from profile_service import ProfileStore, ProfileError, MAX_PROFILE_REQUEST, validate_photo
+from rut import normalize_rut, RutError
 
 if hasattr(sys.stdout, 'reconfigure'):
     try:
@@ -121,7 +123,7 @@ def get_db():
     return conn
 
 def next_record_code(cursor, table, prefix, width):
-    if table not in ("delegaciones", "items_metas"):
+    if table not in ("delegaciones", "items_metas", "roles", "tipos_atencion", "sub_atenciones"):
         raise ValueError("Colección sin códigos automáticos")
     cursor.execute(f"SELECT codigo FROM {table}")
     numbers = [int(row[0][len(prefix):]) for row in cursor.fetchall()
@@ -170,6 +172,8 @@ def init_db():
         estado TEXT NOT NULL DEFAULT 'Activo',
         creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )""")
+
+    ProfileStore(conn)
 
     # 4. Ítems y metas
     c.execute("""
@@ -355,10 +359,43 @@ class SGRRequestHandler(SimpleHTTPRequestHandler):
         except Exception:
             return {}
 
+    def handle_profile_request(self):
+        conn = get_db()
+        try:
+            profiles = ProfileStore(conn)
+            authorization = self.headers.get("Authorization", "")
+            user_id = profiles.authenticate(authorization)
+            if self.command == "PUT":
+                try:
+                    size = int(self.headers.get("Content-Length", "0"))
+                except ValueError:
+                    raise ProfileError(400, "No se pudo leer la solicitud.") from None
+                if size < 0 or size > MAX_PROFILE_REQUEST:
+                    raise ProfileError(413, "La foto supera el tamaño permitido.")
+                try:
+                    body = json.loads(self.rfile.read(size))
+                except (ValueError, UnicodeDecodeError):
+                    raise ProfileError(400, "No se pudo leer la solicitud.") from None
+                if not isinstance(body, dict) or set(body) != {"photo"}:
+                    raise ProfileError(400, "Desde tu perfil solo puedes cambiar tu propia foto.")
+                profiles.set_photo(user_id, body["photo"])
+                conn.commit()
+            elif self.command == "DELETE":
+                profiles.revoke(authorization)
+                return self.send_json(200, {"success": True})
+            return self.send_json(200, {"success": True, "user": profiles.profile(user_id)})
+        except ProfileError as error:
+            return self.send_json(error.status, {"success": False, "message": str(error)})
+        finally:
+            conn.close()
+
     def do_GET(self):
         parsed = urlparse(self.path)
         path = parsed.path
         qs = parse_qs(parsed.query)
+
+        if path == "/api/profile":
+            return self.handle_profile_request()
 
         # Redirigir accesos antiguos con /evaluacion2 a la raíz limpia /
         if path in ("/evaluacion2", "/evaluacion2/", "/evaluacion2/index.html"):
@@ -486,14 +523,19 @@ class SGRRequestHandler(SimpleHTTPRequestHandler):
                 if not usuario_o_email or not password:
                     return self.send_json(400, {"success": False, "message": "Debe ingresar usuario o correo y contraseña."})
 
+                try:
+                    login_rut = normalize_rut(usuario_o_email).replace("-", "")
+                except RutError:
+                    login_rut = usuario_o_email.upper().replace(".", "").replace("-", "")
+
                 c.execute("""
                 SELECT u.id, u.rut, u.nombre, u.email, u.password_hash, u.rol_codigo, r.nombre as rol_nombre, r.alcance,
                        u.delegacion_codigo, d.nombre as delegacion_nombre, u.estado
                 FROM usuarios u
                 LEFT JOIN roles r ON u.rol_codigo = r.codigo
                 LEFT JOIN delegaciones d ON u.delegacion_codigo = d.codigo
-                WHERE LOWER(u.email) = ? OR LOWER(u.nombre) = ? OR u.rut = ?
-                """, (usuario_o_email, usuario_o_email, usuario_o_email))
+                WHERE LOWER(u.email) = ? OR LOWER(u.nombre) = ? OR REPLACE(REPLACE(UPPER(u.rut), '.', ''), '-', '') = ?
+                """, (usuario_o_email, usuario_o_email, login_rut))
                 user = c.fetchone()
 
                 if not user:
@@ -508,11 +550,14 @@ class SGRRequestHandler(SimpleHTTPRequestHandler):
                     return self.send_json(401, {"success": False, "message": "Contraseña incorrecta."})
 
                 del user_dict["password_hash"]
+                profiles = ProfileStore(conn)
+                user_dict["foto_perfil"] = profiles.photo(user_dict["id"])
+                token = profiles.issue_session(user_dict["id"])
                 return self.send_json(200, {
                     "success": True,
                     "message": "Autenticación exitosa",
                     "user": user_dict,
-                    "token": "sgr-token-" + "".join(random.choices(string.ascii_letters + string.digits, k=32))
+                    "token": token
                 })
 
             # Recuperar contraseña (Paso 1: Solicitar código)
@@ -643,27 +688,31 @@ class SGRRequestHandler(SimpleHTTPRequestHandler):
 
             # CRUD Roles - Crear
             elif path == "/api/roles":
-                codigo = body.get("codigo", "").strip().upper()
                 nombre = body.get("nombre", "").strip()
                 descripcion = body.get("descripcion", "").strip()
                 permisos = body.get("permisos", "estandar")
                 alcance = body.get("alcance", "Delegación")
                 estado = body.get("estado", "Activo")
 
-                if not codigo or not nombre:
-                    return self.send_json(400, {"success": False, "message": "Código y Nombre de rol son obligatorios."})
+                if not nombre:
+                    return self.send_json(400, {"success": False, "message": "El Nombre de rol es obligatorio."})
 
                 try:
+                    c.execute("BEGIN IMMEDIATE")
+                    codigo = next_record_code(c, "roles", "ROL", 2)
                     c.execute("INSERT INTO roles (codigo, nombre, descripcion, permisos, alcance, estado) VALUES (?, ?, ?, ?, ?, ?)",
                               (codigo, nombre, descripcion, permisos, alcance, estado))
                     conn.commit()
-                    return self.send_json(201, {"success": True, "message": "Rol creado exitosamente", "id": c.lastrowid})
+                    return self.send_json(201, {"success": True, "message": "Rol creado exitosamente", "id": c.lastrowid, "codigo": codigo})
                 except sqlite3.IntegrityError:
                     return self.send_json(409, {"success": False, "message": f"El código '{codigo}' ya existe."})
 
             # CRUD Usuarios - Crear
             elif path == "/api/usuarios":
-                rut = body.get("rut", "").strip()
+                try:
+                    rut = normalize_rut(body.get("rut"))
+                except RutError as error:
+                    return self.send_json(400, {"success": False, "message": str(error)})
                 nombre = body.get("nombre", "").strip()
                 email = body.get("email", "").strip().lower()
                 password = body.get("password", "LaSerena2026*")
@@ -674,13 +723,23 @@ class SGRRequestHandler(SimpleHTTPRequestHandler):
                 if not rut or not nombre or not email:
                     return self.send_json(400, {"success": False, "message": "RUT, Nombre y Correo son obligatorios."})
 
+                c.execute("SELECT id FROM usuarios WHERE REPLACE(REPLACE(UPPER(rut), '.', ''), '-', '') = ?", (rut.replace("-", ""),))
+                if c.fetchone():
+                    return self.send_json(409, {"success": False, "message": "El RUT ya está registrado en el sistema."})
+
                 try:
+                    photo = validate_photo(body.get("foto_perfil"))
+                    profiles = ProfileStore(conn)
                     c.execute("""
                     INSERT INTO usuarios (rut, nombre, email, password_hash, rol_codigo, delegacion_codigo, estado)
                     VALUES (?, ?, ?, ?, ?, ?, ?)
                     """, (rut, nombre, email, password, rol_codigo, delegacion_codigo, estado))
+                    user_id = c.lastrowid
+                    profiles.set_photo(user_id, photo)
                     conn.commit()
-                    return self.send_json(201, {"success": True, "message": "Usuario creado exitosamente", "id": c.lastrowid})
+                    return self.send_json(201, {"success": True, "message": "Usuario creado exitosamente", "id": user_id})
+                except ProfileError as error:
+                    return self.send_json(error.status, {"success": False, "message": str(error)})
                 except sqlite3.IntegrityError:
                     return self.send_json(409, {"success": False, "message": "El RUT o el Correo ya están registrados."})
 
@@ -689,7 +748,7 @@ class SGRRequestHandler(SimpleHTTPRequestHandler):
                 nombre = body.get("nombre", "").strip()
                 descripcion = body.get("descripcion", "").strip()
                 unidad = body.get("unidad_medida", "Atenciones")
-                meta = int(body.get("meta_cantidad", 100))
+                meta = 100  # Cantidad automática para nuevas metas; no se acepta ajuste manual.
                 estado = body.get("estado", "Activo")
 
                 if not nombre:
@@ -707,44 +766,49 @@ class SGRRequestHandler(SimpleHTTPRequestHandler):
 
             # CRUD Tipo de Atención - Crear
             elif path == "/api/tipos-atencion":
-                codigo = body.get("codigo", "").strip().upper()
                 nombre = body.get("nombre", "").strip()
                 descripcion = body.get("descripcion", "").strip()
                 estado = body.get("estado", "Activo")
 
-                if not codigo or not nombre:
-                    return self.send_json(400, {"success": False, "message": "Código y Nombre son obligatorios."})
+                if not nombre:
+                    return self.send_json(400, {"success": False, "message": "El Nombre es obligatorio."})
 
                 try:
+                    c.execute("BEGIN IMMEDIATE")
+                    codigo = next_record_code(c, "tipos_atencion", "TA", 3)
                     c.execute("INSERT INTO tipos_atencion (codigo, nombre, descripcion, estado) VALUES (?, ?, ?, ?)",
                               (codigo, nombre, descripcion, estado))
                     conn.commit()
-                    return self.send_json(201, {"success": True, "message": "Tipo de Atención creado exitosamente", "id": c.lastrowid})
+                    return self.send_json(201, {"success": True, "message": "Tipo de Atención creado exitosamente", "id": c.lastrowid, "codigo": codigo})
                 except sqlite3.IntegrityError:
                     return self.send_json(409, {"success": False, "message": f"El código '{codigo}' ya existe."})
 
             # CRUD Sub Atención - Crear
             elif path == "/api/sub-atenciones":
-                codigo = body.get("codigo", "").strip().upper()
                 nombre = body.get("nombre", "").strip()
                 tipo_codigo = body.get("tipo_codigo", "").strip()
                 tipo_nombre = body.get("tipo_nombre", "").strip()
                 estado = body.get("estado", "Activa")
 
-                if not codigo or not nombre or not tipo_codigo:
-                    return self.send_json(400, {"success": False, "message": "Código, Nombre y Tipo asociado son obligatorios."})
+                if not nombre or not tipo_codigo:
+                    return self.send_json(400, {"success": False, "message": "Nombre y Tipo asociado son obligatorios."})
 
                 try:
+                    c.execute("BEGIN IMMEDIATE")
+                    codigo = next_record_code(c, "sub_atenciones", "SA", 3)
                     c.execute("INSERT INTO sub_atenciones (codigo, nombre, tipo_codigo, tipo_nombre, estado) VALUES (?, ?, ?, ?, ?)",
                               (codigo, nombre, tipo_codigo, tipo_nombre, estado))
                     conn.commit()
-                    return self.send_json(201, {"success": True, "message": "Sub Atención creada exitosamente", "id": c.lastrowid})
+                    return self.send_json(201, {"success": True, "message": "Sub Atención creada exitosamente", "id": c.lastrowid, "codigo": codigo})
                 except sqlite3.IntegrityError:
                     return self.send_json(409, {"success": False, "message": f"El código '{codigo}' ya existe."})
 
             # Ingreso de Atención - Crear
             elif path == "/api/atenciones":
-                solicitante_rut = body.get("solicitante_rut", "").strip()
+                try:
+                    solicitante_rut = normalize_rut(body.get("solicitante_rut"))
+                except RutError as error:
+                    return self.send_json(400, {"success": False, "message": str(error)})
                 solicitante_nombre = body.get("solicitante_nombre", "").strip()
                 delegacion_codigo = body.get("delegacion_codigo", "DEL01")
                 delegacion_nombre = body.get("delegacion_nombre", "Delegación Centro")
@@ -784,6 +848,8 @@ class SGRRequestHandler(SimpleHTTPRequestHandler):
     def do_PUT(self):
         parsed = urlparse(self.path)
         path = parsed.path
+        if path == "/api/profile":
+            return self.handle_profile_request()
         body = self.get_body_json()
         conn = get_db()
         c = conn.cursor()
@@ -813,8 +879,8 @@ class SGRRequestHandler(SimpleHTTPRequestHandler):
                     return self.send_json(200, {"success": True, "message": "Usuario actualizado"})
 
                 elif resource == "items-metas":
-                    c.execute("UPDATE items_metas SET nombre=?, descripcion=?, unidad_medida=?, meta_cantidad=?, estado=? WHERE id=?",
-                              (body.get("nombre"), body.get("descripcion"), body.get("unidad_medida"), body.get("meta_cantidad"), body.get("estado"), rec_id))
+                    c.execute("UPDATE items_metas SET nombre=?, descripcion=?, unidad_medida=?, estado=? WHERE id=?",
+                              (body.get("nombre"), body.get("descripcion"), body.get("unidad_medida"), body.get("estado"), rec_id))
                     conn.commit()
                     return self.send_json(200, {"success": True, "message": "Ítem y meta actualizados"})
 
@@ -838,6 +904,8 @@ class SGRRequestHandler(SimpleHTTPRequestHandler):
     def do_DELETE(self):
         parsed = urlparse(self.path)
         path = parsed.path
+        if path == "/api/profile/session":
+            return self.handle_profile_request()
         conn = get_db()
         c = conn.cursor()
 

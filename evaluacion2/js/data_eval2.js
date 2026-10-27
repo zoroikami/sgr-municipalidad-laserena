@@ -162,7 +162,13 @@ class SGRDataManager {
     }
 
     generateCode(collection) {
-        const formats = { delegaciones: { prefix: "DEL", width: 2 }, items_metas: { prefix: "IT", width: 3 } };
+        const formats = {
+            delegaciones: { prefix: "DEL", width: 2 },
+            items_metas: { prefix: "IT", width: 3 },
+            roles: { prefix: "ROL", width: 2 },
+            tipos_atencion: { prefix: "TA", width: 3 },
+            sub_atenciones: { prefix: "SA", width: 3 }
+        };
         const format = formats[collection];
         const numbers = this.data[collection].map(record => {
             const code = record.codigo || "";
@@ -173,12 +179,58 @@ class SGRDataManager {
         return `${format.prefix}${String(next).padStart(format.width, "0")}`;
     }
 
+    async profileRequest(method, body) {
+        if (!this.hasBackend) throw new Error("Necesitas conexión con el servidor para guardar tu foto en la base de datos.");
+        const token = localStorage.getItem("SGR_AUTH_SESSION_TOKEN");
+        if (!token) {
+            const error = new Error("Vuelve a iniciar sesión para acceder a tu perfil.");
+            error.status = 401;
+            throw error;
+        }
+        const response = await fetch("/api/profile", {
+            method,
+            headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+            ...(body === undefined ? {} : { body: JSON.stringify(body) })
+        });
+        const result = await response.json();
+        if (!response.ok || !result.success) {
+            const error = new Error(result.message || "No se pudo guardar tu foto. Intenta nuevamente.");
+            error.status = response.status;
+            throw error;
+        }
+        return result.user;
+    }
+
+    async getProfile() {
+        return this.profileRequest("GET");
+    }
+
+    async saveProfilePhoto(photo) {
+        return this.profileRequest("PUT", { photo });
+    }
+
+    async endProfileSession() {
+        const token = localStorage.getItem("SGR_AUTH_SESSION_TOKEN");
+        localStorage.removeItem("SGR_AUTH_SESSION_TOKEN");
+        if (this.hasBackend && token) {
+            await fetch("/api/profile/session", { method: "DELETE", headers: { Authorization: `Bearer ${token}` } });
+        }
+    }
+
     // CRUD Genérico (soporta backend y localStorage transparente)
     async getAll(collection) {
         return this.data[collection] || [];
     }
 
     async createItem(collection, item) {
+        if (collection === "items_metas") item = { ...item, meta_cantidad: 100 };
+        if (collection === "usuarios") {
+            item = { ...item, rut: window.ChileanRut.normalize(item.rut) };
+            if (this.data.usuarios.some(user => window.ChileanRut.isValid(user.rut) && window.ChileanRut.normalize(user.rut) === item.rut)) {
+                throw new Error("El RUT ya está registrado en el sistema.");
+            }
+        }
+        if (collection === "atenciones") item = { ...item, solicitante_rut: window.ChileanRut.normalize(item.solicitante_rut) };
         if (this.hasBackend) {
             const endpointMap = {
                 "delegaciones": "/api/delegaciones",
@@ -208,8 +260,9 @@ class SGRDataManager {
         }
 
         // Fallback LocalStorage
+        if (collection === "usuarios" && item.foto_perfil) throw new Error("Conéctate al servidor para guardar la foto en la base de datos.");
         const list = this.data[collection];
-        if (["delegaciones", "items_metas"].includes(collection)) {
+        if (["delegaciones", "items_metas", "roles", "tipos_atencion", "sub_atenciones"].includes(collection)) {
             item = { ...item, codigo: this.generateCode(collection) };
         }
         item.id = list.length ? Math.max(...list.map(x => x.id || 0)) + 1 : 1;
@@ -219,6 +272,10 @@ class SGRDataManager {
     }
 
     async updateItem(collection, id, updatedData) {
+        if (collection === "items_metas") {
+            updatedData = { ...updatedData };
+            delete updatedData.meta_cantidad;
+        }
         if (this.hasBackend) {
             const endpointMap = {
                 "delegaciones": `/api/delegaciones/${id}`,
@@ -316,6 +373,7 @@ function exportToExcel(records, filename, sheetTitle = "Datos") {
         delete copy.password_hash;
         delete copy.password;
         delete copy.token;
+        delete copy.foto_perfil;
         delete copy.id;
         return copy;
     });

@@ -24,6 +24,7 @@ function createContext() {
         Swal: { fire: options => { alerts.push(options); return Promise.resolve({}); } },
         fetch: async () => { throw new Error('Sin conexión'); }
     });
+    vm.runInContext(fs.readFileSync(path.join(__dirname, '../assets/municipal/rut.js'), 'utf8'), context);
     for (const file of ['data_eval2.js', 'app_eval2.js']) {
         vm.runInContext(fs.readFileSync(path.join(__dirname, '../evaluacion2/js', file), 'utf8'), context);
     }
@@ -93,10 +94,104 @@ test('la identidad incluye la paleta institucional y un logo vectorial sin mapa 
 
 test('el modo local genera códigos e ignora códigos enviados manualmente', async () => {
     const { database } = createContext();
-    for (const [collection, expected] of [['delegaciones', 'DEL07'], ['items_metas', 'IT006']]) {
+    for (const [collection, expected] of [['delegaciones', 'DEL07'], ['items_metas', 'IT006'], ['roles', 'ROL06'], ['tipos_atencion', 'TA006'], ['sub_atenciones', 'SA011']]) {
         await database.createItem(collection, { nombre: 'Nuevo', codigo: 'MANUAL' });
         assert.equal(database.data[collection].at(-1).codigo, expected);
     }
+});
+
+test('los cinco formularios con correlativo no solicitan un código manual', () => {
+    const { app, elements } = createContext();
+    elements.set('sgr-crud-modal', { classList: { add() {} } });
+    elements.set('modal-crud-title', {});
+    elements.set('modal-crud-body', {});
+    elements.set('btn-modal-save', { style: {} });
+    for (const module of ['delegaciones', 'items_metas', 'roles', 'tipos_atencion', 'sub_atenciones']) {
+        app.openModalNew(module);
+        const html = elements.get('modal-crud-body').innerHTML;
+        assert.doesNotMatch(html, /id="m-\w+-codigo"/, module);
+        assert.match(html, /automáticamente/, module);
+    }
+});
+
+test('guardar la foto usa la sesión autenticada sin enviar identificadores de usuario', async () => {
+    const { database, context, storage } = createContext();
+    database.hasBackend = true;
+    storage.set('SGR_AUTH_SESSION_TOKEN', 'sesion-propia');
+    let request;
+    context.fetch = async (url, options) => {
+        request = { url, ...options };
+        return { ok: true, json: async () => ({ success: true, user: { id: 4, foto_perfil: 'foto-guardada' } }) };
+    };
+    const user = await database.saveProfilePhoto('foto-preparada');
+    assert.equal(request.url, '/api/profile');
+    assert.equal(request.method, 'PUT');
+    assert.equal(request.headers.Authorization, 'Bearer sesion-propia');
+    assert.deepEqual(JSON.parse(request.body), { photo: 'foto-preparada' });
+    assert.equal(user.foto_perfil, 'foto-guardada');
+});
+
+test('una foto no se guarda en modo local cuando falta conexión a la base de datos', async () => {
+    const { database, storage } = createContext();
+    database.hasBackend = false;
+    const before = JSON.stringify([...storage]);
+    await assert.rejects(database.saveProfilePhoto('foto'), /conexión|servidor/i);
+    assert.equal(JSON.stringify([...storage]), before);
+});
+
+test('los errores del servidor al guardar foto se propagan sin simular éxito', async () => {
+    const { database, context, storage } = createContext();
+    database.hasBackend = true;
+    storage.set('SGR_AUTH_SESSION_TOKEN', 'sesion');
+    context.fetch = async () => ({ ok: false, status: 401, json: async () => ({ message: 'Sesión expirada' }) });
+    await assert.rejects(database.saveProfilePhoto(null), /Sesión expirada/);
+});
+
+test('la última foto seleccionada para un usuario prevalece aunque la anterior termine después', async () => {
+    const { app, context, elements } = createContext();
+    const pending = [];
+    context.window.SGRProfileController = { preparePhoto: () => new Promise(resolve => pending.push(resolve)) };
+    const input = { files: [{ type: 'image/png' }], value: '' };
+    elements.set('m-usr-foto', input);
+    elements.set('m-usr-foto-preview', {});
+    elements.set('btn-modal-save', {});
+    const first = app.selectNewUserPhoto(input);
+    const second = app.selectNewUserPhoto(input);
+    pending[1]('foto-ultima');
+    await second;
+    pending[0]('foto-anterior');
+    await first;
+    assert.equal(app.newUserPhoto, 'foto-ultima');
+    assert.equal(elements.get('m-usr-foto-preview').src, 'foto-ultima');
+});
+
+test('crear usuarios en modo local rechaza un RUT inválido sin alterar los registros', async () => {
+    const { database } = createContext();
+    const count = database.data.usuarios.length;
+    await assert.rejects(database.createItem('usuarios', { rut: '12.345.678-9', nombre: 'Inválido' }), /RUT/);
+    assert.equal(database.data.usuarios.length, count);
+    await assert.rejects(database.createItem('usuarios', { rut: '123456785', nombre: 'Duplicado' }), /registrado/);
+    assert.equal(database.data.usuarios.length, count);
+});
+
+test('el ingreso de atención guarda el RUT validado y bloquea dígitos incorrectos', async () => {
+    const { app, database, context, elements, alerts } = createContext();
+    context.document.querySelector = () => null;
+    for (const [id, value] of Object.entries({
+        'atn-solicitante': 'Persona de prueba', 'atn-solicitante-rut': '11.111.111-2',
+        'atn-tipo-select': 'TA001', 'atn-subtipo-select': 'SA001', 'atn-descripcion': 'Consulta'
+    })) elements.set(id, { value, focus() {} });
+    const saved = [];
+    database.createItem = async (module, payload) => { saved.push(payload); return { folio: 'ATN-PRUEBA' }; };
+    app.renderAtencionesTable = () => {};
+    await app.submitIngresoAtencion();
+    assert.equal(saved.length, 0);
+    assert.equal(alerts.at(-1).icon, 'warning');
+    elements.get('atn-solicitante-rut').value = '11.111.111-1';
+    await app.submitIngresoAtencion();
+    assert.equal(saved[0].solicitante_rut, '11111111-1');
+    assert.equal(saved[0].solicitante_nombre, 'Persona de prueba');
+    assert.equal(elements.get('atn-solicitante-rut').value, '');
 });
 
 test('una falla de autenticación del servidor no permite acceso local', async () => {
@@ -238,4 +333,69 @@ test('la búsqueda recorre los registros del módulo y vuelve a la primera pági
     assert.equal(app.pagination.delegaciones.page, 1);
     assert.match(tbody.innerHTML, /Delegación 12/);
     assert.doesNotMatch(tbody.innerHTML, /Delegación 6/);
+});
+
+
+test('las cantidades de meta son automáticas y la edición local conserva la cantidad asignada', async () => {
+    const { database } = createContext();
+    await database.createItem('items_metas', { nombre: 'Nueva meta', meta_cantidad: 999 });
+    const item = database.data.items_metas.at(-1);
+    assert.equal(item.meta_cantidad, 100);
+    item.meta_cantidad = 150;
+    await database.updateItem('items_metas', item.id, { nombre: 'Nombre actualizado', meta_cantidad: 1 });
+    assert.equal(item.meta_cantidad, 150);
+    assert.equal(database.data.items_metas.at(-1).meta_cantidad, 150);
+    assert.equal(database.data.items_metas.at(-1).nombre, 'Nombre actualizado');
+});
+
+test('cancelar el recorte al crear usuario permite volver a seleccionar el mismo archivo', async () => {
+    const { app, context, elements } = createContext();
+    context.window.SGRProfileController = { preparePhoto: async () => null };
+    const input = { files: [{ type: 'image/png' }], value: 'misma-foto.png' };
+    elements.set('m-usr-foto', input);
+    elements.set('m-usr-foto-preview', { src: 'foto-previa' });
+    elements.set('btn-modal-save', {});
+    app.newUserPhoto = 'foto-previa';
+    await app.selectNewUserPhoto(input);
+    assert.equal(input.value, '');
+    assert.equal(app.newUserPhoto, 'foto-previa');
+    assert.equal(elements.get('m-usr-foto-preview').src, 'foto-previa');
+});
+
+test('cerrar alta de usuario invalida la foto que todavía se está leyendo', async () => {
+    const { app, context, elements } = createContext();
+    let resolvePhoto, isCurrent;
+    context.window.SGRProfileController = { preparePhoto: (file, check) => {
+        isCurrent = check;
+        return new Promise(resolve => { resolvePhoto = resolve; });
+    } };
+    const input = { files: [{ type: 'image/png' }], value: 'foto.png' };
+    elements.set('m-usr-foto', input);
+    elements.set('m-usr-foto-preview', { src: 'foto-previa' });
+    elements.set('btn-modal-save', { style: {} });
+    elements.set('sgr-crud-modal', { classList: { remove() {}, add() {} } });
+    elements.set('modal-crud-title', {});
+    elements.set('modal-crud-body', {});
+    const pending = app.selectNewUserPhoto(input);
+    app.closeCrudModal();
+    assert.equal(isCurrent(), false);
+    app.openModalEdit('items_metas', 1);
+    assert.equal(elements.get('btn-modal-save').disabled, false);
+    resolvePhoto('foto-tardía');
+    await pending;
+    assert.equal(elements.get('m-usr-foto-preview').src, 'foto-previa');
+});
+
+test('la cantidad de meta aparece de solo lectura tanto al crear como al editar', () => {
+    const { app, elements } = createContext();
+    elements.set('sgr-crud-modal', { classList: { add() {} } });
+    elements.set('modal-crud-title', {});
+    elements.set('modal-crud-body', {});
+    elements.set('btn-modal-save', { style: {} });
+    for (const open of [() => app.openModalNew('items_metas'), () => app.openModalEdit('items_metas', 1)]) {
+        open();
+        const html = elements.get('modal-crud-body').innerHTML;
+        assert.match(html, /<input type="text" id="m-itm-meta"[^>]* readonly/);
+        assert.doesNotMatch(html, /type="number" id="m-itm-meta"/);
+    }
 });

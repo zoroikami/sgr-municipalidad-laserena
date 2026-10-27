@@ -8,6 +8,9 @@
 class SGRApplication {
     constructor() {
         this.currentUser = null;
+        this.profileController = null;
+        this.newUserPhoto = null;
+        this.newUserPhotoPending = null;
         this.activeDelegacion = "DEL01";
         this.currentView = "atenciones";
         this.pagination = {
@@ -54,6 +57,17 @@ class SGRApplication {
                 }
             } catch (e) {
                 this.currentUser = null;
+            }
+        }
+
+        if (this.currentUser && sgrDb.hasBackend && localStorage.getItem("SGR_AUTH_SESSION_TOKEN")) {
+            try {
+                const profile = await sgrDb.getProfile();
+                if (profile.id !== this.currentUser.id) throw new Error("La sesión no corresponde a este usuario.");
+                this.currentUser = { ...this.currentUser, ...profile };
+            } catch (error) {
+                this.currentUser = null;
+                localStorage.removeItem("SGR_AUTH_SESSION_TOKEN");
             }
         }
 
@@ -162,6 +176,44 @@ class SGRApplication {
         const roleEl = document.getElementById("header-user-role");
         if (nameEl && this.currentUser) nameEl.textContent = this.currentUser.nombre;
         if (roleEl && this.currentUser) roleEl.textContent = this.currentUser.rol_nombre || "Funcionario";
+        if (window.SGRProfileController && this.currentUser) {
+            this.profileController ||= new window.SGRProfileController(this);
+            this.profileController.renderHeader();
+        }
+    }
+
+    openProfile() {
+        if (!this.currentUser || !window.SGRProfileController) return;
+        this.profileController ||= new window.SGRProfileController(this);
+        return this.profileController.open();
+    }
+
+    async selectNewUserPhoto(input) {
+        const file = input.files?.[0];
+        if (!file) return;
+        const button = document.getElementById("btn-modal-save");
+        button.disabled = true;
+        const pending = window.SGRProfileController.preparePhoto(file,
+            () => this.newUserPhotoPending === pending && document.getElementById("m-usr-foto") === input);
+        this.newUserPhotoPending = pending;
+        try {
+            const photo = await pending;
+            if (photo !== null && this.newUserPhotoPending === pending && document.getElementById("m-usr-foto") === input) {
+                this.newUserPhoto = photo;
+                document.getElementById("m-usr-foto-preview").src = photo;
+            }
+        } catch (error) {
+            if (this.newUserPhotoPending === pending && document.getElementById("m-usr-foto") === input) {
+                input.value = "";
+                Swal.fire({ title: "No se pudo usar la foto", text: error.message, icon: "error" });
+            }
+        } finally {
+            if (this.newUserPhotoPending === pending) {
+                input.value = "";
+                this.newUserPhotoPending = null;
+                button.disabled = false;
+            }
+        }
     }
 
     // =========================================================================
@@ -618,12 +670,21 @@ class SGRApplication {
             return;
         }
 
+        let solicitanteRut;
+        try {
+            solicitanteRut = window.ChileanRut.require(document.getElementById("atn-solicitante-rut"));
+        } catch (error) {
+            document.getElementById("atn-solicitante-rut")?.focus();
+            Swal.fire({ title: "Revisa el RUT", text: error.message, icon: "warning" });
+            return;
+        }
+
         const tipoObj = sgrDb.data.tipos_atencion.find(t => t.codigo === tipoCodigo);
         const subObj = sgrDb.data.sub_atenciones.find(s => s.codigo === subCodigo);
         const delObj = sgrDb.data.delegaciones.find(d => d.codigo === this.activeDelegacion);
 
         const nuevaAtencion = {
-            solicitante_rut: solicitante.includes("-") ? solicitante.split(" ")[0] : "15.482.910-3",
+            solicitante_rut: solicitanteRut,
             solicitante_nombre: solicitante,
             delegacion_codigo: this.activeDelegacion,
             delegacion_nombre: delObj ? delObj.nombre : "Centro",
@@ -663,6 +724,7 @@ class SGRApplication {
 
             // Limpiar formulario
             solicitanteInput.value = "";
+            this.resetAttentionRut();
             tipoSelect.value = "";
             subSelect.innerHTML = `<option value="">Seleccione Sub Atención *</option>`;
             subSelect.disabled = true;
@@ -696,6 +758,7 @@ class SGRApplication {
         }).then(res => {
             if (res.isConfirmed) {
                 document.getElementById("atn-solicitante").value = "";
+                this.resetAttentionRut();
                 document.getElementById("atn-tipo-select").value = "";
                 const sub = document.getElementById("atn-subtipo-select");
                 sub.innerHTML = `<option value="">Seleccione Sub Atención *</option>`;
@@ -703,6 +766,17 @@ class SGRApplication {
                 document.getElementById("atn-descripcion").value = "";
             }
         });
+    }
+
+    resetAttentionRut() {
+        const input = document.getElementById("atn-solicitante-rut");
+        if (!input) return;
+        input.value = "";
+        input.setCustomValidity?.("");
+        input.removeAttribute?.("aria-invalid");
+        if (input.dataset) delete input.dataset.rutTouched;
+        const feedback = document.getElementById("atn-rut-help");
+        if (feedback) feedback.textContent = "";
     }
 
     renderAtencionesTable() {
@@ -838,12 +912,15 @@ class SGRApplication {
     // MODALES GENÉRICOS (CREAR, EDITAR, VER DETALLE)
     // =========================================================================
     openModalNew(moduleName) {
+        this.newUserPhoto = null;
+        this.newUserPhotoPending = null;
         const modal = document.getElementById("sgr-crud-modal");
         const titleEl = document.getElementById("modal-crud-title");
         const bodyEl = document.getElementById("modal-crud-body");
         const saveBtn = document.getElementById("btn-modal-save");
 
         saveBtn.style.display = "";
+        saveBtn.disabled = false;
         saveBtn.onclick = () => this.handleSaveModal(moduleName, null);
 
         switch (moduleName) {
@@ -865,7 +942,7 @@ class SGRApplication {
             case "roles":
                 titleEl.textContent = "Nuevo Rol del Sistema";
                 bodyEl.innerHTML = `
-                    <div class="form-group"><label class="form-label">Código *</label><input type="text" id="m-rol-codigo" class="form-control" placeholder="Ej: ROL06"></div>
+                    <p class="form-meta-note">El código del rol se genera automáticamente al guardar.</p>
                     <div class="form-group"><label class="form-label">Nombre de Rol *</label><input type="text" id="m-rol-nombre" class="form-control" placeholder="Ej: Inspector Territorial"></div>
                     <div class="form-group"><label class="form-label">Descripción</label><input type="text" id="m-rol-desc" class="form-control" placeholder="Alcance operativo"></div>
                     <div class="form-group"><label class="form-label">Alcance</label><input type="text" id="m-rol-alcance" class="form-control" value="Delegación"></div>
@@ -880,7 +957,15 @@ class SGRApplication {
             case "usuarios":
                 titleEl.textContent = "Nuevo Usuario";
                 bodyEl.innerHTML = `
-                    <div class="form-group"><label class="form-label">RUT *</label><input type="text" id="m-usr-rut" class="form-control" placeholder="12.345.678-9"></div>
+                    <div class="new-user-photo">
+                        <img id="m-usr-foto-preview" class="profile-avatar" src="/assets/municipal/avatar-default.svg" alt="Foto de perfil del nuevo usuario">
+                        <div>
+                            <label class="form-label" for="m-usr-foto">Foto de perfil</label>
+                            <input type="file" id="m-usr-foto" class="profile-file-input" accept="image/jpeg,image/png,image/webp" aria-describedby="m-usr-foto-help" onchange="sgrApp.selectNewUserPhoto(this)">
+                            <p id="m-usr-foto-help" class="profile-help">Opcional. JPG, PNG o WebP, hasta 5 MB. Si no eliges una foto, se asignará el avatar predeterminado.</p>
+                        </div>
+                    </div>
+                    <div class="form-group"><label class="form-label" for="m-usr-rut">RUT *</label><input type="text" id="m-usr-rut" class="form-control" placeholder="12.345.678-5" data-rut required maxlength="12" aria-describedby="m-usr-rut-help m-usr-rut-format"><p id="m-usr-rut-format" class="rut-hint">* Ejemplo: 12.345.678-5. Incluye siempre el dígito verificador (número o K).</p><p id="m-usr-rut-help" class="rut-feedback" aria-live="polite"></p></div>
                     <div class="form-group"><label class="form-label">Nombre Completo *</label><input type="text" id="m-usr-nombre" class="form-control" placeholder="Nombre y apellidos"></div>
                     <div class="form-group"><label class="form-label">Correo Institucional *</label><input type="email" id="m-usr-email" class="form-control" placeholder="usuario@laserena.cl"></div>
                     <div class="form-group"><label class="form-label">Rol *</label>
@@ -908,7 +993,7 @@ class SGRApplication {
                     <div class="form-group"><label class="form-label">Nombre *</label><input type="text" id="m-itm-nombre" class="form-control" placeholder="Nombre del ítem"></div>
                     <div class="form-group"><label class="form-label">Descripción</label><input type="text" id="m-itm-desc" class="form-control" placeholder="Descripción de la meta"></div>
                     <div class="form-group"><label class="form-label">Unidad de Medida</label><input type="text" id="m-itm-unidad" class="form-control" value="Atenciones"></div>
-                    <div class="form-group"><label class="form-label">Meta Cantidad</label><input type="number" id="m-itm-meta" class="form-control" value="100"></div>
+                    <div class="form-group"><label class="form-label">Meta Cantidad</label><input type="text" id="m-itm-meta" class="form-control" value="100" readonly aria-describedby="m-itm-meta-help"><small id="m-itm-meta-help" class="profile-help">Cantidad asignada automáticamente por el sistema.</small></div>
                     <div class="form-group"><label class="form-label">Estado</label>
                         <select id="m-itm-estado" class="form-control">
                             <option value="Activo">Activo</option>
@@ -920,7 +1005,7 @@ class SGRApplication {
             case "tipos_atencion":
                 titleEl.textContent = "Nuevo Tipo de Atención";
                 bodyEl.innerHTML = `
-                    <div class="form-group"><label class="form-label">Código *</label><input type="text" id="m-ta-codigo" class="form-control" placeholder="Ej: TA006"></div>
+                    <p class="form-meta-note">El código del tipo de atención se genera automáticamente al guardar.</p>
                     <div class="form-group"><label class="form-label">Nombre *</label><input type="text" id="m-ta-nombre" class="form-control" placeholder="Ej: Medio Ambiente"></div>
                     <div class="form-group"><label class="form-label">Descripción</label><input type="text" id="m-ta-desc" class="form-control" placeholder="Descripción general"></div>
                     <div class="form-group"><label class="form-label">Estado</label>
@@ -934,7 +1019,7 @@ class SGRApplication {
             case "sub_atenciones":
                 titleEl.textContent = "Nueva Sub Atención";
                 bodyEl.innerHTML = `
-                    <div class="form-group"><label class="form-label">Código *</label><input type="text" id="m-sa-codigo" class="form-control" placeholder="Ej: SA011"></div>
+                    <p class="form-meta-note">El código de la subatención se genera automáticamente al guardar.</p>
                     <div class="form-group"><label class="form-label">Nombre *</label><input type="text" id="m-sa-nombre" class="form-control" placeholder="Nombre de la subatención"></div>
                     <div class="form-group"><label class="form-label">Tipo Asociado *</label>
                         <select id="m-sa-tipo" class="form-control">
@@ -964,6 +1049,7 @@ class SGRApplication {
         const saveBtn = document.getElementById("btn-modal-save");
 
         saveBtn.style.display = "";
+        saveBtn.disabled = false;
         saveBtn.onclick = () => this.handleSaveModal(moduleName, id);
 
         switch (moduleName) {
@@ -1028,7 +1114,7 @@ class SGRApplication {
                     <div class="form-group"><label class="form-label">Nombre *</label><input type="text" id="m-itm-nombre" class="form-control" value="${item.nombre}"></div>
                     <div class="form-group"><label class="form-label">Descripción</label><input type="text" id="m-itm-desc" class="form-control" value="${item.descripcion}"></div>
                     <div class="form-group"><label class="form-label">Unidad de Medida</label><input type="text" id="m-itm-unidad" class="form-control" value="${item.unidad_medida}"></div>
-                    <div class="form-group"><label class="form-label">Meta Cantidad</label><input type="number" id="m-itm-meta" class="form-control" value="${item.meta_cantidad}"></div>
+                    <div class="form-group"><label class="form-label">Meta Cantidad</label><input type="text" id="m-itm-meta" class="form-control" value="${item.meta_cantidad}" readonly aria-describedby="m-itm-meta-help"><small id="m-itm-meta-help" class="profile-help">Cantidad asignada automáticamente por el sistema.</small></div>
                     <div class="form-group"><label class="form-label">Estado</label>
                         <select id="m-itm-estado" class="form-control">
                             <option value="Activo" ${item.estado === "Activo" ? 'selected' : ''}>Activo</option>
@@ -1102,6 +1188,11 @@ class SGRApplication {
     }
 
     closeCrudModal() {
+        if (this.newUserPhotoPending) {
+            this.newUserPhotoPending = null;
+            window.SGRPhotoCropper?.instance?.finish(null);
+            document.getElementById("btn-modal-save").disabled = false;
+        }
         const modal = document.getElementById("sgr-crud-modal");
         if (modal) modal.classList.remove("active");
     }
@@ -1128,7 +1219,6 @@ class SGRApplication {
                 const estado = document.getElementById("m-rol-estado").value;
                 if (!nombre) throw new Error("El nombre de rol es requerido.");
                 payload = { nombre, descripcion, alcance, estado, permisos: "estandar" };
-                if (!id) payload.codigo = document.getElementById("m-rol-codigo").value.trim().toUpperCase();
 
             } else if (moduleName === "usuarios") {
                 const nombre = document.getElementById("m-usr-nombre").value.trim();
@@ -1147,18 +1237,19 @@ class SGRApplication {
                     estado
                 };
                 if (!id) {
-                    payload.rut = document.getElementById("m-usr-rut").value.trim();
+                    payload.rut = window.ChileanRut.require(document.getElementById("m-usr-rut"));
                     payload.password_hash = "LaSerena2026*";
+                    if (this.newUserPhotoPending) await this.newUserPhotoPending;
+                    if (this.newUserPhoto) payload.foto_perfil = this.newUserPhoto;
                 }
 
             } else if (moduleName === "items_metas") {
                 const nombre = document.getElementById("m-itm-nombre").value.trim();
                 const descripcion = document.getElementById("m-itm-desc").value.trim();
                 const unidad = document.getElementById("m-itm-unidad").value.trim();
-                const meta = parseInt(document.getElementById("m-itm-meta").value, 10);
                 const estado = document.getElementById("m-itm-estado").value;
                 if (!nombre) throw new Error("El nombre es requerido.");
-                payload = { nombre, descripcion, unidad_medida: unidad, meta_cantidad: meta, estado };
+                payload = { nombre, descripcion, unidad_medida: unidad, estado };
 
             } else if (moduleName === "tipos_atencion") {
                 const nombre = document.getElementById("m-ta-nombre").value.trim();
@@ -1166,7 +1257,6 @@ class SGRApplication {
                 const estado = document.getElementById("m-ta-estado").value;
                 if (!nombre) throw new Error("El nombre es requerido.");
                 payload = { nombre, descripcion, estado };
-                if (!id) payload.codigo = document.getElementById("m-ta-codigo").value.trim().toUpperCase();
 
             } else if (moduleName === "sub_atenciones") {
                 const nombre = document.getElementById("m-sa-nombre").value.trim();
@@ -1179,7 +1269,6 @@ class SGRApplication {
                     tipo_nombre: tipoObj ? tipoObj.nombre : tipoCodigo,
                     estado
                 };
-                if (!id) payload.codigo = document.getElementById("m-sa-codigo").value.trim().toUpperCase();
             }
 
             if (id) {
@@ -1715,6 +1804,7 @@ class SGRApplication {
                 const data = await res.json();
                 if (res.ok && data.success && data.user) {
                     user = data.user;
+                    if (data.token) localStorage.setItem("SGR_AUTH_SESSION_TOKEN", data.token);
                 } else {
                     Swal.fire({
                         title: res.status >= 500 ? "Error del servidor" : "Error de autenticación",
@@ -1733,6 +1823,7 @@ class SGRApplication {
 
         // Si no hay backend disponible, autenticar en memoria local
         if (!sgrDb.hasBackend) {
+            localStorage.removeItem("SGR_AUTH_SESSION_TOKEN");
             user = sgrDb.data.usuarios.find(u =>
                 (u.email.toLowerCase() === usrInput.toLowerCase() || 
                  u.nombre.toLowerCase() === usrInput.toLowerCase() ||
@@ -1785,8 +1876,10 @@ class SGRApplication {
             confirmButtonText: "Sí, salir",
             cancelButtonText: "Cancelar",
             confirmButtonColor: "var(--primary)"
-        }).then(res => {
+        }).then(async res => {
             if (res.isConfirmed) {
+                try { await sgrDb.endProfileSession(); } catch (error) { console.warn("No se pudo revocar la sesión remota."); }
+                this.profileController?.dismiss();
                 this.currentUser = null;
                 localStorage.removeItem("SGR_SESSION_USER");
                 localStorage.removeItem("SGR_AUTH_SESSION_USER");

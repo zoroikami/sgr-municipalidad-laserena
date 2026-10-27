@@ -50,14 +50,14 @@ class StaticRoutingTests(unittest.TestCase):
                     document_url = response.url
                     parser = AssetParser()
                     parser.feed(response.read().decode("utf-8"))
-                self.assertIn("css/sgr_eval2.css", parser.urls)
-                self.assertIn("../assets/municipal/logo-la-serena.svg", parser.urls)
+                self.assertIn("/evaluacion2/css/sgr_eval2.css", {urlparse(asset).path for asset in parser.urls})
+                self.assertIn("/assets/municipal/logo-la-serena.svg", parser.urls)
                 for asset in sorted(parser.urls):
                     try:
                         with urlopen(urljoin(document_url, asset), timeout=5) as response:
                             self.assertEqual(response.status, 200, asset)
                             self.assertTrue(response.read(), asset)
-                            if asset.endswith(".css"):
+                            if urlparse(asset).path.endswith(".css"):
                                 self.assertEqual(response.headers.get_content_type(), "text/css")
                     except HTTPError as error:
                         error.close()
