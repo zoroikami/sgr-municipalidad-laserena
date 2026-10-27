@@ -60,6 +60,15 @@ class MainCompatibilityTests(TestCase):
         self.assertEqual(get_user_model().objects.get(email='nuevo@example.test').rut, '11111111-1')
         self.assertEqual(self.post_user(rut='111111111', email='duplicado@example.test').status_code, 409)
 
+    def test_role_api_assigns_code_instead_of_accepting_a_manual_value(self):
+        response = self.client.post('/api/roles', {'nombre':'Consulta comunal', 'permisos':'lectura', 'codigo':'ROL99'}, content_type='application/json')
+        self.assertEqual(response.status_code, 201)
+        role = Rol.objects.get(nombre='Consulta comunal')
+        self.assertEqual(role.codigo, 'ROL02')
+        self.assertEqual(self.client.put(f'/api/roles/{role.pk}', {'codigo':'ROL88', 'nombre':'Consulta editada'}, content_type='application/json').status_code, 200)
+        role.refresh_from_db()
+        self.assertEqual(role.codigo, 'ROL02')
+
     def test_attention_requires_valid_rut_and_stores_normalized_value(self):
         tipo = TipoAtencion.objects.create(codigo='TA001', nombre='Social')
         sub = SubAtencion.objects.create(codigo='SA001', nombre='Ayuda', tipo=tipo)
@@ -73,6 +82,21 @@ class MainCompatibilityTests(TestCase):
         response = self.client.post('/api/atenciones', dict(payload, solicitante_rut='11.111.111-1'), content_type='application/json')
         self.assertEqual(response.status_code, 201, response.content)
         self.assertEqual(Atencion.objects.get().solicitante_rut, '11111111-1')
+
+    def test_attention_modelform_normalizes_rut_and_rejects_bad_check_digit(self):
+        from .forms import AtencionForm
+        tipo = TipoAtencion.objects.create(codigo='TA001', nombre='Social')
+        sub = SubAtencion.objects.create(codigo='SA001', nombre='Ayuda', tipo=tipo)
+        payload = dict(folio='ATN-2026-0001', solicitante_rut='11.111.111-1',
+                       solicitante_nombre='Vecina', delegacion=self.delegacion.codigo,
+                       tipo=tipo.codigo, subtipo=sub.codigo, descripcion='Consulta',
+                       responsable_nombre='Administrador')
+        form = AtencionForm(data=payload)
+        self.assertTrue(form.is_valid(), form.errors)
+        self.assertEqual(form.cleaned_data['solicitante_rut'], '11111111-1')
+        invalid = AtencionForm(data=dict(payload, solicitante_rut='11.111.111-2'))
+        self.assertFalse(invalid.is_valid())
+        self.assertIn('solicitante_rut', invalid.errors)
 
     def test_meta_quantity_remains_automatic_on_create_and_edit(self):
         response = self.client.post('/api/items-metas', {'nombre': 'Cobertura', 'meta_cantidad': 999}, content_type='application/json')

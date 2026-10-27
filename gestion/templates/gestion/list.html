@@ -1,0 +1,47 @@
+{% extends 'gestion/base.html' %}
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-4">
+    <div><h1 class="h2 mb-2">{{ catalog_title }}</h1><p class="text-body-secondary mb-0">Administra los registros y su estado.</p></div>
+    {% if can_add %}<a class="btn btn-primary" href="{{ create_url }}{% querystring query_params %}">Crear {{ singular }}</a>{% endif %}
+</div>
+<form method="get" action="{{ base_list_url }}" class="sgr-filters row g-3 align-items-end mb-4" role="search">
+    <div class="col-12 col-lg-4"><label for="search" class="form-label">Buscar</label><input type="search" class="form-control" name="q" id="search" value="{{ request.GET.q }}" placeholder="{% if catalog_slug == 'usuarios' %}Nombre, correo o RUT{% else %}Nombre, código u otro dato{% endif %}" maxlength="200"></div>
+    <div class="col-6 col-lg-2"><label for="estado" class="form-label">Estado</label><select name="estado" id="estado" class="form-select"><option value="">Todos</option>{% for estado in estados %}<option value="{{ estado }}" {% if estado == request.GET.estado %}selected{% endif %}>{{ estado }}</option>{% endfor %}</select></div>
+    {% if delegaciones %}<div class="col-6 col-md-2"><label for="delegacion" class="form-label">Delegación</label><select name="delegacion" id="delegacion" class="form-select"><option value="">Todas</option>{% for del in delegaciones %}<option value="{{ del.codigo }}" {% if del.codigo == request.GET.delegacion %}selected{% endif %}>{{ del.nombre }}</option>{% endfor %}</select></div>{% endif %}
+    {% if tipos %}<div class="col-6 col-md-2"><label for="tipo" class="form-label">Tipo de atención</label><select name="tipo" id="tipo" class="form-select"><option value="">Todos</option>{% for tipo in tipos %}<option value="{{ tipo.codigo }}" {% if tipo.codigo == request.GET.tipo %}selected{% endif %}>{{ tipo.nombre }}</option>{% endfor %}</select></div>{% endif %}
+    <div class="col-6 col-lg-3"><label for="order" class="form-label">Ordenar por</label><select name="order" id="order" class="form-select">{% for value, label in ordering_options %}<option value="{{ value }}" {% if value == ordering %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></div>
+    <div class="col-6 col-lg-3"><label for="page_size" class="form-label">Registros por página</label><select name="page_size" id="page_size" class="form-select">{% for size in page_sizes %}<option value="{{ size }}" {% if size == page_size %}selected{% endif %}>{{ size }}</option>{% endfor %}</select></div>
+    <div class="col-12 d-flex gap-2"><button type="submit" class="btn btn-primary">Aplicar</button><a class="btn btn-outline-secondary" href="{{ base_list_url }}">Limpiar filtros</a></div>
+</form>
+<div class="table-responsive sgr-records">
+    <table class="table align-middle mb-0">
+        <caption class="visually-hidden">Registros de {{ catalog_title }}</caption>
+        <thead><tr><th scope="col">{% if catalog_slug == 'usuarios' %}RUT{% else %}Código{% endif %}</th><th scope="col">Nombre</th><th scope="col">{% if catalog_slug == 'usuarios' %}Correo / delegación{% elif catalog_slug == 'delegaciones' %}Dirección{% elif catalog_slug == 'sub-atenciones' %}Tipo de atención{% elif catalog_slug == 'items-metas' %}Meta{% else %}Descripción{% endif %}</th><th scope="col">Estado</th><th scope="col" class="text-end">Acciones</th></tr></thead>
+        <tbody>
+            {% for record in records %}
+            <tr>
+                <td class="text-nowrap sgr-code">{% if catalog_slug == 'usuarios' %}{{ record.rut|default:'Sin RUT' }}{% else %}{{ record.codigo }}{% endif %}</td>
+                <td>{% if record.nombre %}{{ record.nombre }}{% elif catalog_slug == 'usuarios' %}{{ record.username }}{% endif %}</td>
+                <td>{% if catalog_slug == 'usuarios' %}{{ record.email }}<small class="d-block text-body-secondary">{{ record.delegacion.nombre }} · {{ record.rol.nombre }}</small>{% elif catalog_slug == 'delegaciones' %}{{ record.direccion }}<small class="d-block text-body-secondary">{{ record.comuna }}</small>{% elif catalog_slug == 'sub-atenciones' %}{{ record.tipo.nombre }}{% elif catalog_slug == 'items-metas' %}{{ record.meta_cantidad }} {{ record.unidad_medida }}{% else %}{{ record.descripcion|default:'Sin descripción'|truncatechars:90 }}{% endif %}</td>
+                <td><span class="sgr-status {% if record.estado == 'Activo' or record.estado == 'Activa' %}is-active{% endif %}">{{ record.estado }}</span></td>
+                <td><div class="table-actions" role="group" aria-label="Acciones de {{ record.nombre }}">
+                    <button type="button" class="action-link view" onclick="sgrApp.openModalView('{{ catalog_slug }}', {{ record.pk }})" aria-label="Ver {{ record.nombre }}"><svg class="action-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg><span>Ver</span></button>
+                    {% if can_change %}<a class="action-link edit" href="{% url 'gestion:'|add:catalog_slug|add:'-update' record.pk %}{% querystring query_params %}" aria-label="Editar {{ record.nombre }}">Editar</a>{% endif %}
+                    {% if can_delete %}<form method="post" action="{% url 'gestion:'|add:catalog_slug|add:'-delete' record.pk %}{% querystring query_params %}" data-confirm-delete data-record-name="{{ record.nombre }}">{% csrf_token %}<button class="action-link delete" type="submit" aria-label="Eliminar {{ record.nombre }}">Eliminar</button></form>{% endif %}
+                </div></td>
+            </tr>
+            {% empty %}<tr><td colspan="5" class="text-center py-5"><p class="mb-1">No hay registros que mostrar.</p><small class="text-body-secondary">Crea un registro o ajusta los filtros de búsqueda.</small></td></tr>{% endfor %}
+        </tbody>
+    </table>
+</div>
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mt-4">
+    <p class="text-body-secondary small mb-0">{{ paginator.count }} registro{{ paginator.count|pluralize }} · Página {{ page_obj.number }} de {{ paginator.num_pages }}</p>
+    <nav aria-label="Páginas de resultados"><ul class="pagination mb-0 flex-wrap">
+        {% if page_obj.has_previous %}<li class="page-item"><a class="page-link" href="{{ base_list_url }}{% querystring query_params page=page_obj.previous_page_number %}" aria-label="Página anterior">Anterior</a></li>{% endif %}
+        {% for number in page_range %}{% if number == paginator.ELLIPSIS %}<li class="page-item disabled"><span class="page-link">{{ number }}</span></li>{% else %}<li class="page-item {% if number == page_obj.number %}active{% endif %}"><a class="page-link" href="{{ base_list_url }}{% querystring query_params page=number %}" {% if number == page_obj.number %}aria-current="page"{% endif %}>{{ number }}</a></li>{% endif %}{% endfor %}
+        {% if page_obj.has_next %}<li class="page-item"><a class="page-link" href="{{ base_list_url }}{% querystring query_params page=page_obj.next_page_number %}" aria-label="Página siguiente">Siguiente</a></li>{% endif %}
+    </ul></nav>
+</div>
+{% for record in records %}{% include 'gestion/_record_detail.html' %}{% endfor %}
+{% if form %}{% include 'gestion/_form_modal.html' %}{% endif %}
+{% endblock %}

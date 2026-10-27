@@ -1,31 +1,35 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SGR La Serena | Sistema de Gestión de Resultados - Segunda Evaluación</title>
+    <title>{% block title %}SGR La Serena | Sistema de Gestión de Resultados{% endblock %}</title>
     <meta name="description" content="Sistema de Gestión de Resultados (SGR) para la Ilustre Municipalidad de La Serena. Segunda Evaluación de Proyecto Integrado INACAP.">
     <link rel="icon" type="image/svg+xml" href="/assets/municipal/logo-la-serena.svg">
 
     <!-- Fuentes Tipográficas Institucionales -->
 
+    {% block framework_styles %}{% endblock %}
     <!-- CSS del Sistema de Diseño -->
-    <link rel="stylesheet" href="/evaluacion2/css/sgr_eval2.css?v=424b070b2e11">
+    <link rel="stylesheet" href="/evaluacion2/css/sgr_eval2.css?v=sidebar-estable-20261027">
 
     <!-- SweetAlert2 (Requisito Obligatorio A3) -->
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="{% static 'gestion/vendor/sweetalert2.all.min.js' %}"></script>
     <!-- SheetJS (Exportar a Excel Requisito A2) -->
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <!-- Lucide Icons -->
-    <script src="https://unpkg.com/lucide@latest"></script>
-    <link rel="stylesheet" href="/assets/municipal/brand.css?v=95cd853b471d">
+    <script src="{% static 'gestion/vendor/lucide.min.js' %}"></script>
+    <link rel="stylesheet" href="/assets/municipal/brand.css?v=lima-rojo-20261027">
+    {% block extra_head %}{% endblock %}
 </head>
-<body>
+<body{% if native_crud %} data-native-crud="{{ catalog_slug }}"{% endif %}>
+    {% if native_crud %}{{ navigation|json_script:"sgr-native-navigation" }}{% endif %}
 
     <!-- ======================================================================
          CONTENEDOR DE AUTENTICACIÓN (LOGIN Y RECUPERACIÓN - DISEÑOS C1 Y C2)
          ====================================================================== -->
-    <div id="sgr-auth-container" class="auth-wrapper">
+    <div id="sgr-auth-container" class="auth-wrapper"{% if native_crud %} style="display: none;"{% endif %}>
 
         <!-- DISEÑO 1: INICIAR SESIÓN (PDF PÁGINA 5) -->
         <div id="auth-card-login" class="auth-card">
@@ -35,16 +39,19 @@
                 <p class="auth-desc">Accede con tu cuenta institucional.</p>
             </div>
 
-            <form onsubmit="sgrApp.submitLogin(event)">
+            <form method="post" action="{% url 'login' %}" onsubmit="sgrApp.submitLogin(event)">
+                {% csrf_token %}
+                <input type="hidden" name="next" id="login-next" value="{{ next|default:'' }}">
+                {% if form.errors %}<div class="auth-login-errors" role="alert">{{ form.non_field_errors }}{% for field in form %}{{ field.errors }}{% endfor %}</div>{% endif %}
                 <div class="form-group">
                     <label class="form-label" for="login-username">Usuario o correo</label>
-                    <input type="text" id="login-username" class="form-control" placeholder="usuario@example.test" required autocomplete="username">
+                    <input type="text" id="login-username" name="username" class="form-control" placeholder="usuario@example.test" required autocomplete="username">
                 </div>
 
                 <div class="form-group">
                     <label class="form-label" for="login-password">Contraseña</label>
                     <div class="input-password-wrapper">
-                        <input type="password" id="login-password" class="form-control" placeholder="••••••••••••" required autocomplete="current-password">
+                        <input type="password" id="login-password" name="password" class="form-control" placeholder="••••••••••••" required autocomplete="current-password">
                         <button type="button" class="btn-toggle-password" onclick="
                             const inp = document.getElementById('login-password');
                             if (inp.type === 'password') { inp.type = 'text'; this.textContent = 'Ocultar'; }
@@ -181,7 +188,7 @@
     <!-- ======================================================================
          APLICACIÓN PRINCIPAL: CABECERA, SIDEBAR Y VISTAS SGR
          ====================================================================== -->
-    <div id="sgr-app-container" style="display: none;">
+    <div id="sgr-app-container" style="display: {% if native_crud %}block{% else %}none{% endif %};">
 
         <!-- CABECERA INSTITUCIONAL PERMANENTE (PDF PÁGINAS 2, 7 A 10) -->
         <header class="sgr-topbar">
@@ -318,7 +325,8 @@
             </aside>
 
             <!-- CONTENIDO PRINCIPAL DINÁMICO -->
-            <main class="sgr-main-content">
+            <main class="sgr-main-content{% if native_crud %} sgr-django-content{% endif %}">
+                {% block main_content %}
 
                 <!-- ==========================================================
                      VISTA 1: MANTENEDOR DELEGACIONES (DISEÑO C3)
@@ -805,6 +813,7 @@
                     </div>
                 </section>
 
+                {% endblock %}
             </main>
         </div>
     </div>
@@ -893,6 +902,7 @@
     <script src="/evaluacion2/js/photo-cropper.js?v=1bc7c40144cb"></script>
     <script src="/evaluacion2/js/profile.js?v=a7c90cbccce2"></script>
     <script src="/evaluacion2/js/data_eval2.js?v=f086ca22e88e"></script>
-    <script src="/evaluacion2/js/app_eval2.js?v=d4f2e22df6dc"></script>
+    <script src="/evaluacion2/js/app_eval2.js?v=login-password-20261027"></script>
+    {% block extra_scripts %}{% endblock %}
 </body>
 </html>

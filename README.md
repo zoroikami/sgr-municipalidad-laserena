@@ -12,6 +12,7 @@ Requiere Python 3.10 o superior. En este equipo el proyecto está en el Escritor
 cd ~/Desktop/sgr-municipalidad-laserena
 source .venv/bin/activate
 python manage.py migrate
+python manage.py collectstatic --noinput
 python manage.py runserver 127.0.0.1:8000
 ```
 
@@ -60,6 +61,7 @@ Crear las tablas, la primera cuenta y ejecutar Django:
 ```bash
 python manage.py migrate
 python manage.py createsuperuser
+python manage.py collectstatic --noinput
 python manage.py runserver 127.0.0.1:8000
 ```
 
@@ -67,7 +69,7 @@ python manage.py runserver 127.0.0.1:8000
 
 En el equipo actual el entorno virtual, el `.env` y las tablas ya están preparados. Si todavía no creaste una cuenta, detener el servidor con **Ctrl+C**, ejecutar `python manage.py createsuperuser` y volver a iniciarlo.
 
-**La base nueva `db.sqlite3` comienza vacía.** No se importan usuarios, contraseñas, registros ni semillas anteriores. La base antigua `database/sgr_laserena.db` se conserva separada y Django no la abre. Los datos antiguos del almacenamiento del navegador tampoco se recuperan.
+**La base nueva `db.sqlite3` comienza vacía.** El inicio de la aplicación no precarga registros. Para recuperar explícitamente los ejemplos del prototipo anterior se puede ejecutar `python manage.py recuperar_datos_anteriores`. El comando lee `database/sgr_laserena.db` sin modificarla, incorpora los registros faltantes y conserva los datos actuales. Completa campos vacíos de las cuentas coincidentes por correo o RUT, conservando su contraseña y permisos actuales. Las claves de las cuentas nuevas importadas se guardan con hash Django. La recuperación ya se ejecutó en este equipo por solicitud del usuario. Los datos del almacenamiento del navegador no se recuperan.
 
 Ejecutar la aplicación con Django: abrir `index.html` directamente o usar un servidor de archivos estáticos no proporciona autenticación ni acceso a la API.
 
@@ -79,7 +81,17 @@ Ejecutar la aplicación con Django: abrir `index.html` directamente o usar un se
 4. Asignar delegación al superusuario y crear usuarios con nombre, RUT, correo, rol y delegación.
 5. Crear tipos, subatenciones y metas desde la aplicación o administración.
 
-No se generan cuentas automáticamente. La interfaz conserva la clave inicial `LaSerena2026*` para los usuarios nuevos; deben cambiarla mediante recuperación. Para elegir una contraseña al crear una cuenta, usar la administración Django.
+No se generan cuentas automáticamente. El formulario Django de usuarios permite elegir la contraseña al crear una cuenta y conservarla al editar dejando ese campo vacío. Las claves se guardan con hash de Django.
+
+## CRUD de preevaluación III
+
+Los seis mantenedores usan vistas de clase (`ListView`, `CreateView`, `UpdateView`, `DeleteView`), un `ModelForm` por entidad y templates de Django. Crear/editar se muestran en Modal Bootstrap y eliminar se confirma con SweetAlert2 mediante POST + CSRF. El buscador, los filtros y la paginación se procesan en el servidor.
+
+Cada listado permite ordenar sus registros y seleccionar 5, 15 o 30 filas. La elección de tamaño se recuerda en la sesión por mantenedor y los enlaces conservan búsqueda, filtros y orden después de guardar o cambiar de página.
+
+Los mantenedores conservan los logos, la cabecera y la barra lateral con los iconos originales; `/acceso/` reutiliza el login original. Desde el menú de la aplicación se accede a las nuevas pantallas `/gestion/`. También se puede abrir `/gestion/delegaciones/`; si no hay sesión, se solicita acceso en `/acceso/`. Bootstrap y SweetAlert2 están incluidos localmente para estas pantallas.
+
+Consulta la [guía de ejecución y defensa de la preevaluación](docs/PREEVALUACION_III.md) para localizar las clases, formularios, rutas, templates y permisos de cada mantenedor.
 
 ## API e implementación
 

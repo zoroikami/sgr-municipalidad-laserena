@@ -1,0 +1,29 @@
+<template id="record-detail-{{ record.pk }}" data-record-name="{{ record.nombre }}">
+    <dl class="profile-details">
+        {% if catalog_slug == 'usuarios' %}
+        <div><dt>RUT</dt><dd>{{ record.rut|default:'Sin RUT' }}</dd></div>
+        {% else %}
+        <div><dt>Código</dt><dd>{{ record.codigo }}</dd></div>
+        {% endif %}
+        <div><dt>Nombre</dt><dd>{% if record.nombre %}{{ record.nombre }}{% elif catalog_slug == 'usuarios' %}{{ record.username }}{% endif %}</dd></div>
+        {% if catalog_slug == 'delegaciones' %}
+        <div><dt>Dirección</dt><dd>{{ record.direccion }}</dd></div>
+        <div><dt>Comuna</dt><dd>{{ record.comuna }}</dd></div>
+        {% elif catalog_slug == 'usuarios' %}
+        <div><dt>Correo</dt><dd>{{ record.email }}</dd></div>
+        <div><dt>Rol</dt><dd>{{ record.rol.nombre }}</dd></div>
+        <div><dt>Delegación</dt><dd>{{ record.delegacion.nombre }}</dd></div>
+        {% elif catalog_slug == 'sub-atenciones' %}
+        <div><dt>Tipo de atención</dt><dd>{{ record.tipo.nombre }}</dd></div>
+        {% else %}
+        <div><dt>Descripción</dt><dd>{{ record.descripcion|default:'Sin descripción' }}</dd></div>
+        {% endif %}
+        {% if catalog_slug == 'roles' %}
+        <div><dt>Permisos</dt><dd>{{ record.permisos }}</dd></div>
+        <div><dt>Alcance</dt><dd>{{ record.alcance }}</dd></div>
+        {% elif catalog_slug == 'items-metas' %}
+        <div><dt>Meta</dt><dd>{{ record.meta_cantidad }} {{ record.unidad_medida }}</dd></div>
+        {% endif %}
+        <div><dt>Estado</dt><dd>{{ record.estado }}</dd></div>
+    </dl>
+</template>

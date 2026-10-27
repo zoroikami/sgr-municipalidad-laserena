@@ -1496,7 +1496,12 @@ select.form-control { min-height: 2.75rem; padding-block: var(--space-sm); }
 .role-chip:active { background: var(--brand-soft); transition: none; }
 .sgr-sidebar { width: 15rem; padding: var(--space-lg) var(--space-md); }
 .sidebar-category { padding: 0 var(--space-md); margin-top: var(--space-xl); font-size: 0.625rem; letter-spacing: 0.06em; font-weight: 600; }
-.sidebar-nav { display: grid; gap: var(--space-xs); }
+.sidebar-nav {
+    display: grid;
+    gap: var(--space-xs);
+    margin: 0;
+    padding: 0;
+}
 .nav-link-btn {
     min-height: 2.75rem;
     padding: var(--space-sm) var(--space-md);

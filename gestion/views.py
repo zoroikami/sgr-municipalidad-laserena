@@ -211,6 +211,8 @@ def can_write(user, resource):
 def collection(request, resource, pk=None):
     if not authenticated(request):
         return error('Debe iniciar sesión.', 401)
+    if resource == 'usuarios' and not communal(request.user) and not request.user.delegacion_id:
+        return error('La cuenta no tiene una delegación asignada.', 403)
     if resource == 'stats' and request.method == 'GET':
         return JsonResponse({key.replace('-', '_'):scoped(request.user, model).count() for key,(model,_,_) in RESOURCES.items()})
     if resource not in RESOURCES:
@@ -281,7 +283,8 @@ def collection(request, resource, pk=None):
                 obj.username = obj.email
                 obj.foto_perfil = validate_photo(body.get('foto_perfil'))
             if not communal(request.user):
-                if obj.rol_id not in ('ROL04', 'ROL05'):
+                if (obj.rol_id not in ('ROL04', 'ROL05')
+                        or Rol.objects.filter(codigo=obj.rol_id, permisos='total').exists()):
                     return error('Solo puede administrar operadores y consultores.', 403)
                 obj.delegacion_id = request.user.delegacion_id
             if not pk or body.get('password'):
@@ -300,7 +303,7 @@ def collection(request, resource, pk=None):
                     return error('La subatención no pertenece al tipo seleccionado.')
             else:
                 supplied = str(body.get('codigo', '')).strip().upper()
-                if supplied and resource not in ('delegaciones', 'items-metas'):
+                if supplied and resource not in ('delegaciones', 'items-metas', 'roles'):
                     obj.codigo = supplied
                 else:
                     code = next_code(resource, prefix, width)
@@ -321,5 +324,5 @@ def scoped(user, model):
     if not communal(user) and model in (Usuario, Atencion):
         records = records.filter(delegacion_id=user.delegacion_id)
         if model == Usuario:
-            records = records.filter(is_superuser=False, rol_id__in=['ROL04', 'ROL05'])
+            records = records.filter(is_superuser=False, rol_id__in=['ROL04', 'ROL05']).exclude(rol__permisos='total')
     return records

@@ -1,0 +1,78 @@
+/* firma · componente: CRUD Django dentro de la interfaz municipal original */
+.sgr-django-content {
+    --bs-primary: var(--primary);
+    --bs-body-color: var(--text-main);
+    --bs-link-color: var(--primary);
+    --bs-link-hover-color: var(--primary-dark);
+}
+.sgr-django-content .btn-primary {
+    --bs-btn-bg: var(--primary);
+    --bs-btn-border-color: var(--primary);
+    --bs-btn-hover-bg: var(--primary-dark);
+    --bs-btn-hover-border-color: var(--primary-dark);
+    --bs-btn-active-bg: var(--primary-dark);
+    --bs-btn-disabled-bg: var(--primary);
+    --bs-btn-disabled-border-color: var(--primary);
+}
+.sgr-django-content .btn-outline-primary {
+    --bs-btn-color: var(--primary);
+    --bs-btn-border-color: var(--primary);
+    --bs-btn-hover-bg: var(--primary);
+    --bs-btn-hover-border-color: var(--primary);
+    --bs-btn-active-bg: var(--primary-dark);
+}
+.sgr-django-content .sgr-filters {
+    padding: var(--space-lg);
+    border: 1px solid var(--brand-border);
+    border-radius: var(--radius-md);
+    background: var(--brand-white);
+}
+.sgr-django-content .sgr-records {
+    border: 1px solid var(--brand-border);
+    border-radius: var(--radius-md);
+    background: var(--brand-white);
+}
+.sgr-django-content .sgr-records th {
+    background: var(--brand-surface);
+    color: var(--text-muted);
+    font-size: var(--type-small);
+}
+.sgr-django-content .sgr-records :is(td, th) { padding: var(--space-lg); }
+.sgr-django-content .sgr-code { color: var(--primary); font-variant-numeric: tabular-nums; }
+.sgr-django-content a.action-link { text-decoration: none; }
+.sgr-django-content .sgr-status {
+    display: inline-block;
+    padding: var(--space-xs) var(--space-sm);
+    border-radius: var(--radius-sm);
+    background: var(--state-inactive-bg);
+    color: var(--state-inactive);
+    font-size: var(--type-caption);
+}
+.sgr-django-content .sgr-status.is-active {
+    background: var(--status-active-bg);
+    color: var(--status-active-ink);
+    border: 1px solid var(--status-active-border);
+}
+.sgr-django-content .page-link { color: var(--primary); }
+.sgr-django-content .active > .page-link {
+    color: var(--brand-white);
+    background: var(--primary);
+    border-color: var(--primary);
+}
+.sgr-django-content :is(.form-control, .form-select):focus {
+    border-color: var(--border-focus);
+    box-shadow: 0 0 0 var(--space-xs) color-mix(in srgb, var(--primary) 15%, transparent);
+}
+.sgr-django-content .sgr-login {
+    max-width: 28rem;
+    padding: var(--space-xl);
+    border: 1px solid var(--brand-border);
+    border-radius: var(--radius-md);
+    background: var(--brand-white);
+}
+#crudModal .modal-content { border-color: var(--brand-border); }
+#crudModal form { display: flex; flex-direction: column; max-height: calc(100dvh - 4rem); }
+#crudModal .modal-body { overflow-y: auto; }
+@media (max-width: 575px) {
+    .sgr-django-content .sgr-records { font-size: var(--type-small); }
+}

@@ -1,0 +1,32 @@
+<div class="modal fade" id="crudModal" tabindex="-1" aria-labelledby="crudModalTitle" {% if open_modal %}data-open-modal="true"{% endif %} data-return-url="{{ list_url }}">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg">
+        <div class="modal-content">
+            <form method="post" novalidate>
+                {% csrf_token %}
+                <div class="modal-header">
+                    <h2 class="modal-title fs-5" id="crudModalTitle">{% if editing %}Editar{% else %}Crear{% endif %} {{ singular }}</h2>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar formulario"></button>
+                </div>
+                <div class="modal-body">
+                    {% if not editing and catalog_slug != 'usuarios' %}<p class="text-body-secondary small">El código se genera automáticamente al guardar.</p>{% endif %}
+                    {% if editing and catalog_slug == 'roles' %}<p class="text-body-secondary small">Código del rol: <strong>{{ object.codigo }}</strong></p>{% endif %}
+                    {% if form.errors %}<div class="alert alert-danger" role="alert">Revisa los campos indicados. Los cambios aún no se han guardado.</div>{% endif %}
+                    {% for error in form.non_field_errors %}<div class="alert alert-danger">{{ error }}</div>{% endfor %}
+                    {% for field in form %}
+                    <div class="mb-3">
+                        <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}{% if field.field.required %} <span class="text-danger" aria-label="obligatorio">*</span>{% endif %}</label>
+                        {{ field }}
+                        {% if field.name == 'rut' %}<div id="{{ field.id_for_label }}_feedback" class="rut-feedback" aria-live="polite"></div>{% endif %}
+                        {% if field.help_text %}<div class="form-text" id="{{ field.id_for_label }}_helptext">{{ field.help_text }}</div>{% endif %}
+                        {% for error in field.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
+                    </div>
+                    {% endfor %}
+                </div>
+                <div class="modal-footer">
+                    <a class="btn btn-outline-secondary" href="{{ list_url }}">Cancelar</a>
+                    <button class="btn btn-primary" type="submit" data-save-button>Guardar cambios</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
