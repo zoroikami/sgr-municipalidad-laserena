@@ -85,7 +85,7 @@ El trabajo cubre los seis CRUD de la preevaluación y sus consultas protegidas. 
 
 ## Verificación realizada el 27 de octubre de 2026
 
-- 58 pruebas Django y 23 pruebas JavaScript de los flujos vigentes aprobadas.
+- 60 pruebas Django y 23 pruebas JavaScript de los flujos vigentes aprobadas.
 - check sin incidencias; makemigrations --check --dry-run sin cambios; recursos estáticos preparados.
 - En navegador, con base temporal: login, creación y edición con persistencia, errores del servidor dentro del modal Bootstrap, confirmación SweetAlert2 y cancelación, búsqueda/filtro/orden/página combinados y preferencia de tamaño.
 - El borrado por POST, las relaciones protegidas y el acceso por URL directa se verificaron también en las pruebas Django.

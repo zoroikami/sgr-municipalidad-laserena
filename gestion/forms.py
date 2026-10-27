@@ -6,7 +6,7 @@ from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
 from django.db.models import Q
 from rut import normalize_rut, RutError
-from .models import Delegacion, Rol, Usuario, ItemMeta, TipoAtencion, SubAtencion
+from .models import Delegacion, Rol, Usuario, ItemMeta, TipoAtencion, SubAtencion, Atencion
 
 
 class AccesoForm(AuthenticationForm):
@@ -135,3 +135,18 @@ class UsuarioForm(CatalogoForm):
             user.save()
             self.save_m2m()
         return user
+
+
+class AtencionForm(forms.ModelForm):
+    class Meta:
+        model = Atencion
+        fields = ['folio', 'solicitante_rut', 'solicitante_nombre', 'delegacion', 'tipo', 'subtipo', 'descripcion', 'responsable_nombre']
+
+    def clean_solicitante_rut(self):
+        rut = self.cleaned_data.get('solicitante_rut')
+        if rut:
+            try:
+                return normalize_rut(rut)
+            except RutError as err:
+                raise forms.ValidationError(str(err))
+        return rut

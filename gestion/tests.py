@@ -140,3 +140,18 @@ class MigrationTests(TestCase):
         self.assertEqual(self.client.post('/api/delegaciones', '{', content_type='application/json').status_code, 400)
         self.assertEqual(self.post('/api/delegaciones', []).status_code, 400)
         self.assertEqual(self.client.get('/api/no-existe').status_code, 404)
+
+    def test_modelforms_and_query_filters(self):
+        from .forms import DelegacionForm, UsuarioForm
+        form = DelegacionForm(data={'codigo':'DEL99', 'nombre':'La Pampa', 'direccion':'Av. 1', 'comuna':'La Serena', 'estado':'Activa'})
+        self.assertTrue(form.is_valid())
+        bad_rut_form = UsuarioForm(data={'rut':'invalido'})
+        self.assertFalse(bad_rut_form.is_valid())
+        self.login()
+        res = self.client.get('/api/delegaciones?q=Centro')
+        self.assertEqual(res.status_code, 200)
+        self.assertEqual(len(res.json()), 1)
+        res_empty = self.client.get('/api/delegaciones?q=Inexistente')
+        self.assertEqual(len(res_empty.json()), 0)
+        res_filter = self.client.get('/api/delegaciones?estado=Activa')
+        self.assertEqual(res_filter.status_code, 200)

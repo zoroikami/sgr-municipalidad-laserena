@@ -101,7 +101,7 @@ def asset(request, asset_path):
         raise Http404
     root = settings.STATIC_ROOT.resolve()
     candidate = (root / asset_path).resolve()
-    filename = candidate if candidate.is_relative_to(root) and candidate.is_file() else finders.find(asset_path)
+    filename = candidate if candidate.is_relative_to(root) and candidate.is_file() else (finders.find(asset_path) or finders.find(str(Path(asset_path))))
     if not filename:
         raise Http404
     return FileResponse(open(filename, 'rb'))
@@ -145,29 +145,32 @@ def auth(request, action):
         return error('El correo es obligatorio.')
     if action == 'recuperar-codigo':
         user = Usuario.objects.filter(email__iexact=email, is_active=True, estado='Activo').first()
+        ttl_seconds = getattr(settings, 'PASSWORD_RESET_CODE_TTL', 600)
+        cooldown_seconds = int(ttl_seconds * 0.9)
         if user:
-            recent = Recuperacion.objects.filter(usuario=user, expiracion__gt=timezone.now() + timedelta(minutes=9)).exists()
+            recent = Recuperacion.objects.filter(usuario=user, expiracion__gt=timezone.now() + timedelta(seconds=cooldown_seconds)).exists()
             if not recent:
                 code = f'{secrets.randbelow(1000000):06d}'
                 with transaction.atomic():
                     Recuperacion.objects.filter(usuario=user, usado=False).update(usado=True)
-                    Recuperacion.objects.create(usuario=user, codigo_hash=make_password(code), expiracion=timezone.now()+timedelta(minutes=10))
+                    Recuperacion.objects.create(usuario=user, codigo_hash=make_password(code), expiracion=timezone.now() + timedelta(seconds=ttl_seconds))
                 try:
                     send_mail('Recuperación de contraseña SGR', f'Su código de verificación es: {code}', settings.DEFAULT_FROM_EMAIL, [email])
                 except (OSError, smtplib.SMTPException):
                     logging.getLogger(__name__).exception('No se pudo enviar el correo de recuperación')
-        return JsonResponse({'success':True, 'message':'Si la cuenta existe, recibirás un código de 6 dígitos.', 'expires_in_minutes':10})
+        return JsonResponse({'success':True, 'message':'Si la cuenta existe, recibirás un código de 6 dígitos.', 'expires_in_minutes':max(1, round(ttl_seconds / 60))})
     if action == 'validar-codigo':
+        max_attempts = getattr(settings, 'PASSWORD_RESET_MAX_ATTEMPTS', 3)
         with transaction.atomic():
             rec = Recuperacion.objects.select_for_update().filter(usuario__email__iexact=email, usado=False).order_by('-id').first()
             if not rec or rec.expiracion <= timezone.now():
                 return error('Código vencido o solicitud inexistente.')
-            if rec.intentos >= 3:
-                return error('Se superó el límite de 3 intentos. Solicite otro código.', 429)
+            if rec.intentos >= max_attempts:
+                return error(f'Se superó el límite de {max_attempts} intentos. Solicite otro código.', 429)
             if not check_password(str(body.get('codigo', '')), rec.codigo_hash):
                 rec.intentos += 1
                 rec.save(update_fields=['intentos'])
-                return error(f'Código incorrecto. Le quedan {3-rec.intentos} intentos.')
+                return error(f'Código incorrecto. Le quedan {max_attempts-rec.intentos} intentos.')
             rec.verificado = True
             rec.save(update_fields=['verificado'])
             request.session['recovery_id'] = rec.id
@@ -225,6 +228,17 @@ def collection(request, resource, pk=None):
             records = records.filter(delegacion_id=delegation)
         if model == SubAtencion and request.GET.get('tipo'):
             records = records.filter(tipo_id=request.GET['tipo'])
+        q = request.GET.get('q', '').strip()
+        if q:
+            if model == Atencion:
+                records = records.filter(Q(folio__icontains=q) | Q(solicitante_nombre__icontains=q) | Q(solicitante_rut__icontains=q))
+            elif model == Usuario:
+                records = records.filter(Q(nombre__icontains=q) | Q(email__icontains=q) | Q(rut__icontains=q) | Q(username__icontains=q))
+            elif hasattr(model, 'codigo') and hasattr(model, 'nombre'):
+                records = records.filter(Q(codigo__icontains=q) | Q(nombre__icontains=q))
+        estado = request.GET.get('estado', '').strip()
+        if estado and estado.upper() != 'TODOS' and hasattr(model, 'estado'):
+            records = records.filter(estado__iexact=estado)
         return JsonResponse([serialize(obj) for obj in records], safe=False)
     if request.method not in ('POST', 'PUT', 'DELETE') or (request.method == 'POST' and pk) or (request.method != 'POST' and not pk):
         return error('Método no permitido.', 405)
