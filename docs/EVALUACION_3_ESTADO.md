@@ -18,7 +18,7 @@ gestión de cuentas se mantienen con la política de alcance documentada.
 
 | Comprobación | Resultado observado |
 | --- | --- |
-| `pytest tests_django` | 53 pruebas sobre MySQL y Redis reales, incluidas regresiones de concurrencia en ambos CRUD |
+| `pytest tests_django` | 53 pruebas aprobadas sobre MySQL y Redis reales, incluidas regresiones de concurrencia en ambos CRUD |
 | Pruebas históricas Python | 22 aprobadas |
 | Pruebas históricas Node | 48 aprobadas |
 | Migraciones | Aplicadas en MySQL; `makemigrations --check --dry-run` sin cambios |
@@ -95,6 +95,10 @@ modificó ni se importó automáticamente a la base nueva.
 | 13. Croppr | Recorte final, persistencia, cancelación y propietario comprobados |
 | 14. Portal cliente | Dos clientes de A, listados/detalles distintos y rechazo cruzado comprobados |
 | 15. Navegación y errores | Recorridos, legibilidad, teclado y 400/403/404/500 con DEBUG=False comprobados |
+
+La revisión independiente final aprobó el alcance local implementado y la calidad
+del código después de comprobar las correcciones. No quedaron hallazgos
+importantes abiertos; AWS y revisión de compañeros siguen pendientes.
 
 ## Pendientes externos
 

@@ -1,6 +1,6 @@
 # Evaluación III Django Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [x]`) syntax for tracking.
 
 **Goal:** Aplicar al SGR la evaluación TI3041 aprobada en `docs/EVALUACION_3_PROPUESTA.md`.
 
@@ -36,10 +36,10 @@ Templates base: bloques `title`, `content`, `extra_css`, `extra_js`. Contexto gl
 
 Owner: agente principal. Files: `manage.py`, `config/`, `gestion/models.py`, `gestion/apps.py`, `requirements*.txt`, `compose.yaml`, `.env.example`, `.gitignore`, `pytest.ini`, `tests_django/`.
 
-- [ ] Crear configuración que exige secretos y MySQL por entorno, Redis, CSRF, middleware y ASGI. No fallback SQLite.
-- [ ] Iniciar MySQL/Redis locales mediante Docker, sin publicar puertos a interfaces externas.
-- [ ] Escribir primero pruebas que rechacen relaciones de distintas delegaciones, cantidades inválidas y códigos duplicados.
-- [ ] Implementar modelos, constraints y secuencias bloqueadas por transacción. Ejecutar migraciones y pruebas.
+- [x] Crear configuración que exige secretos y MySQL por entorno, Redis, CSRF, middleware y ASGI. No fallback SQLite.
+- [x] Iniciar MySQL/Redis locales mediante Docker, sin publicar puertos a interfaces externas.
+- [x] Escribir primero pruebas que rechacen relaciones de distintas delegaciones, cantidades inválidas y códigos duplicados.
+- [x] Implementar modelos, constraints y secuencias bloqueadas por transacción. Ejecutar migraciones y pruebas.
 
 Validación: `.venv/bin/python manage.py check`; `.venv/bin/pytest tests_django/test_domain.py`.
 
@@ -47,11 +47,11 @@ Validación: `.venv/bin/python manage.py check`; `.venv/bin/pytest tests_django/
 
 Owner: un subagente, archivos `cuentas/`, `templates/cuentas/`, `static/sgr/perfil.js`, `static/vendor/croppr*`, `tests_django/test_accounts.py`. No editar modelos de gestión ni configuración global.
 
-- [ ] Pruebas primero de login/logout, edición propia sin escalación, perfil ajeno, imagen inválida/grande, clave actual y reset de token.
-- [ ] Implementar Perfil y formularios con lista explícita de campos. Grupos/permisos Django. Datos de usuario por ámbito.
-- [ ] Login, logout POST, reset por correo con respuesta genérica y validadores Django.
-- [ ] Croppr, canvas, preview, multipart, imagen final validada con Pillow y vista de foto protegida.
-- [ ] Usuarios de prueba administrables solo dentro del ámbito y roles predefinidos; roles globales solo técnico.
+- [x] Pruebas primero de login/logout, edición propia sin escalación, perfil ajeno, imagen inválida/grande, clave actual y reset de token.
+- [x] Implementar Perfil y formularios con lista explícita de campos. Grupos/permisos Django. Datos de usuario por ámbito.
+- [x] Login, logout POST, reset por correo con respuesta genérica y validadores Django.
+- [x] Croppr, canvas, preview, multipart, imagen final validada con Pillow y vista de foto protegida.
+- [x] Usuarios de prueba administrables solo dentro del ámbito y roles predefinidos; roles globales solo técnico.
 
 Validación: `.venv/bin/pytest tests_django/test_accounts.py` y prueba de navegador del recorte.
 
@@ -59,11 +59,11 @@ Validación: `.venv/bin/pytest tests_django/test_accounts.py` y prueba de navega
 
 Owner: principal. Files: `gestion/forms.py`, `gestion/access.py`, `gestion/queries.py`, `gestion/views.py`, `gestion/urls.py`, `tests_django/test_crud.py`.
 
-- [ ] Probar lector no escribe, editor no archiva, IDs ajenos 404, FK ajena inválida y cliente sin acceso administrativo.
-- [ ] Implementar ModelForms, dos CRUD completos con deleted_at y catálogos existentes; códigos automáticos y RUT.
-- [ ] Consultas con búsqueda, filtros, orden permitido, paginación y sesión por módulo. Pruebas con más de 30 filas, estado entre rutas y página inválida.
-- [ ] Excel con conjunto filtrado completo, ámbito, exclusión de archivados y cadenas tratadas como texto.
-- [ ] Portal y detalle filtrados por propietario; dos clientes de la misma delegación.
+- [x] Probar lector no escribe, editor no archiva, IDs ajenos 404, FK ajena inválida y cliente sin acceso administrativo.
+- [x] Implementar ModelForms, dos CRUD completos con deleted_at y catálogos existentes; códigos automáticos y RUT.
+- [x] Consultas con búsqueda, filtros, orden permitido, paginación y sesión por módulo. Pruebas con más de 30 filas, estado entre rutas y página inválida.
+- [x] Excel con conjunto filtrado completo, ámbito, exclusión de archivados y cadenas tratadas como texto.
+- [x] Portal y detalle filtrados por propietario; dos clientes de la misma delegación.
 
 Validación: `.venv/bin/pytest tests_django/test_crud.py`.
 
@@ -71,11 +71,11 @@ Validación: `.venv/bin/pytest tests_django/test_crud.py`.
 
 Owner: siguiente subagente, `templates/base.html`, `templates/gestion/`, `templates/errors/`, `static/sgr/app.css`, `static/sgr/app.js`, `static/vendor/bootstrap*`, `static/vendor/sweetalert*`.
 
-- [ ] Base municipal heredada, menú por rol, perfil y logout POST; enlaces visibles para todos los recorridos.
-- [ ] Listados, detalles, formularios con modal Bootstrap abierto también con errores, labels visibles y errores asociados.
-- [ ] Confirmar archivado con SweetAlert2; cancelar sin POST. Guardado válido regresa al listado conservado.
-- [ ] Páginas 400/403/404/500 con salida segura y mensajes sin detalles técnicos.
-- [ ] Verificar teclado, 375/768/1280, recursos locales y ausencia de enlaces rotos.
+- [x] Base municipal heredada, menú por rol, perfil y logout POST; enlaces visibles para todos los recorridos.
+- [x] Listados, detalles, formularios con modal Bootstrap abierto también con errores, labels visibles y errores asociados.
+- [x] Confirmar archivado con SweetAlert2; cancelar sin POST. Guardado válido regresa al listado conservado.
+- [x] Páginas 400/403/404/500 con salida segura y mensajes sin detalles técnicos.
+- [x] Verificar teclado, 375/768/1280, recursos locales y ausencia de enlaces rotos.
 
 Validación: suite HTTP, guard de copy firma y recorrido en navegador.
 
@@ -83,9 +83,9 @@ Validación: suite HTTP, guard de copy firma y recorrido en navegador.
 
 Owner: principal. Files: `gestion/consumers.py`, `gestion/realtime.py`, `gestion/routing.py`, `config/asgi.py`, `tests_django/test_realtime.py`; integración `static/sgr/app.js` después de Task 4.
 
-- [ ] Pruebas de conexión anónima/origen indebido, A vs B y clientes excluidos; canales reales con Redis cuando esté disponible.
-- [ ] Guardado/archivado notifica exclusivamente después del commit; rollback o formulario inválido no notifica.
-- [ ] La tabla se consulta solo al evento WebSocket, con filtros y paginación conservados; estado de desconexión visible.
+- [x] Pruebas de conexión anónima/origen indebido, A vs B y clientes excluidos; canales reales con Redis cuando esté disponible.
+- [x] Guardado/archivado notifica exclusivamente después del commit; rollback o formulario inválido no notifica.
+- [x] La tabla se consulta solo al evento WebSocket, con filtros y paginación conservados; estado de desconexión visible.
 
 Validación: `.venv/bin/pytest tests_django/test_realtime.py` y dos sesiones de navegador.
 
@@ -93,12 +93,12 @@ Validación: `.venv/bin/pytest tests_django/test_realtime.py` y dos sesiones de 
 
 Owner: principal o siguiente subagente con ownership delimitado. Files: `gestion/management/commands/seed_demo.py`, `deploy/`, `Dockerfile`, `README.md`, `diagramas/modelos_django.mmd`, `tests_django/test_seed.py`, `.github/workflows/`.
 
-- [ ] Semillas idempotentes 2.286 y seis cuentas, fechas variadas; contraseñas solo archivo privado ignorado con modo 600.
-- [ ] Diagrama desde modelos finales. README con instalación, matriz de cuentas, pruebas, límites y estado real de AWS.
-- [ ] ASGI sin root, Nginx WebSocket, estáticos, imágenes privadas, correo configurado y secretos externos.
-- [ ] Retirar credenciales incrustadas y contraseñas publicadas de los archivos activos, conservar pruebas históricas sin exponer nuevos secretos.
-- [ ] Prueba integral MySQL, Redis, correo de pruebas, HTTP/WS y errores DEBUG=False. Revisar cambios y corregir hallazgos.
-- [ ] Preparar commits de rama y PR si existe acceso; nunca fingir revisión humana ni despliegue AWS si no hay acceso.
+- [x] Semillas idempotentes 2.286 y seis cuentas, fechas variadas; contraseñas solo archivo privado ignorado con modo 600.
+- [x] Diagrama desde modelos finales. README con instalación, matriz de cuentas, pruebas, límites y estado real de AWS.
+- [x] ASGI sin root, Nginx WebSocket, estáticos, imágenes privadas, correo configurado y secretos externos.
+- [x] Retirar credenciales incrustadas y contraseñas publicadas de los archivos activos, conservar pruebas históricas sin exponer nuevos secretos.
+- [x] Prueba integral MySQL, Redis, correo de pruebas, HTTP/WS y errores DEBUG=False. Revisar cambios y corregir hallazgos.
+- [x] Preparar commits de rama y PR si existe acceso; nunca fingir revisión humana ni despliegue AWS si no hay acceso.
 
 Validación: `.venv/bin/pytest tests_django`; `node --test tests/test_*.cjs`; `python3 -m unittest discover -s tests -p 'test_*.py'`; `manage.py check --deploy`; `makemigrations --check --dry-run`; `collectstatic --noinput`.
 
@@ -112,3 +112,10 @@ GUARDRAILS: un subagente implementador activo a la vez, archivos separados del p
 OUTPUT: implementación en la rama feature, README operativo y registro `docs/EVALUACION_3_ESTADO.md` con verificaciones y pendientes externos medidos.
 
 Comprobación de alcance: requisitos fijados por PDF y propuesta, sin meta estética indefinida. Coste limitado por tareas y rondas de corrección; AWS depende de acceso real. Los verificadores se instalarán y ejecutarán antes de declarar éxito.
+
+## Pendientes externos tras la implementación local
+
+- [ ] Desplegar y demostrar HTTP, WebSocket y correo en una instancia AWS identificada y accesible.
+- [ ] Integrar mediante PR con revisión real de un compañero y registrar aportes reales de cada integrante.
+
+Verificaciones y límites: `docs/EVALUACION_3_ESTADO.md`. La rama feature conserva main sin cambios.
