@@ -1,0 +1,118 @@
+# Modelos implementados en Django
+
+Relaciones y atributos de `gestion/models.py` y `cuentas/models.py`. `User`, grupos y permisos pertenecen a Django; `Secuencia` es infraestructura y no cuenta como registro de negocio.
+
+```mermaid
+erDiagram
+    DELEGACION ||--o{ PERFIL : "asigna ámbito"
+    USUARIO ||--o| PERFIL : "perfil propio"
+    USUARIO }o--o{ GRUPO_DJANGO : "roles"
+    GRUPO_DJANGO }o--o{ PERMISO_DJANGO : "autoriza acciones"
+    DELEGACION ||--o{ ITEM_META : "gestiona"
+    DELEGACION ||--o{ TIPO_ATENCION : "define"
+    DELEGACION ||--o{ SUB_ATENCION : "define"
+    TIPO_ATENCION ||--o{ SUB_ATENCION : "agrupa"
+    DELEGACION ||--o{ ATENCION : "registra"
+    TIPO_ATENCION ||--o{ ATENCION : "clasifica"
+    SUB_ATENCION ||--o{ ATENCION : "clasifica"
+    USUARIO o|--o{ ATENCION : "cliente propietario opcional"
+    USUARIO ||--o{ ATENCION : "responsable"
+
+    DELEGACION {
+        bigint id PK
+        varchar codigo UK
+        varchar nombre
+        varchar direccion
+        varchar comuna
+        varchar estado
+        datetime created_at
+        datetime updated_at
+        datetime deleted_at
+    }
+    PERFIL {
+        bigint id PK
+        bigint user_id FK,UK
+        bigint delegacion_id FK
+        varchar rut UK
+        varchar foto
+    }
+    ITEM_META {
+        bigint id PK
+        bigint delegacion_id FK
+        varchar codigo UK
+        varchar nombre
+        text descripcion
+        varchar unidad_medida
+        int meta_cantidad
+        varchar estado
+        datetime created_at
+        datetime updated_at
+        datetime deleted_at
+    }
+    TIPO_ATENCION {
+        bigint id PK
+        bigint delegacion_id FK
+        varchar codigo UK
+        varchar nombre
+        text descripcion
+        varchar estado
+        datetime created_at
+        datetime updated_at
+        datetime deleted_at
+    }
+    SUB_ATENCION {
+        bigint id PK
+        bigint delegacion_id FK
+        bigint tipo_id FK
+        varchar codigo UK
+        varchar nombre
+        text descripcion
+        varchar estado
+        datetime created_at
+        datetime updated_at
+        datetime deleted_at
+    }
+    ATENCION {
+        bigint id PK
+        bigint delegacion_id FK
+        bigint tipo_id FK
+        bigint subatencion_id FK
+        bigint cliente_id FK "nullable"
+        bigint responsable_id FK
+        varchar folio UK
+        varchar solicitante_rut
+        varchar solicitante_nombre
+        text descripcion
+        varchar estado
+        datetime created_at
+        datetime updated_at
+        datetime deleted_at
+    }
+    SECUENCIA {
+        bigint id PK
+        varchar prefijo UK
+        bigint valor
+    }
+    USUARIO {
+        bigint id PK
+        varchar username UK
+        varchar first_name
+        varchar last_name
+        varchar email
+        varchar password "hash Django"
+        boolean is_active
+        boolean is_staff
+        boolean is_superuser
+    }
+    GRUPO_DJANGO {
+        bigint id PK
+        varchar name UK
+    }
+    PERMISO_DJANGO {
+        bigint id PK
+        varchar codename
+        bigint content_type_id FK
+    }
+```
+
+Los catálogos tienen unicidad de nombre por delegación; las metas incluyen cantidad no negativa. El borrado lógico usa `deleted_at`. Las relaciones de negocio se validan además en los ModelForms del servidor.

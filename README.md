@@ -1,260 +1,210 @@
-# Sistema de Gestión de Resultados (SGR)
-## Ilustre Municipalidad de La Serena - Dirección de Servicios Comunitarios (DISERCO)
+# SGR · Municipalidad de La Serena
 
-![Evaluación](https://img.shields.io/badge/Evaluaci%C3%B3n-Segunda%20Entrega%20(Mantenedores%20y%20Acceso)-8e1525?style=for-the-badge)
-![Estado](https://img.shields.io/badge/Estado-100%25%20Pauta%20Verificada-brightgreen?style=for-the-badge)
-![Institución](https://img.shields.io/badge/INACAP-Proyecto%20Integrado-blue?style=for-the-badge)
-![Backend](https://img.shields.io/badge/Backend-Python%20%7C%20REST%20API%20%7C%20SQLite-orange?style=for-the-badge)
-![Despliegue](https://img.shields.io/badge/Despliegue-AWS%20EC2%20%7C%20Systemd%20Port%2080-232f3e?style=for-the-badge)
+Sistema de Gestión de Resultados para registrar atenciones ciudadanas y consultar metas por delegación municipal. El personal trabaja sobre su delegación; cada cliente consulta exclusivamente sus atenciones, incluso cuando comparte delegación con otro cliente.
 
----
+Implementación de la Evaluación Sumativa III de Programación Back End, TI3041, INACAP La Serena. El código anterior de Proyecto Integrado se conserva como antecedente; el servidor vigente es **Django**, no `server.py`.
 
-## 1. Información Institucional y Académica
+## Ejecutar en este equipo
 
-- **Institución:** INACAP
-- **Carrera:** Ingeniería en Informática
-- **Asignatura:** Proyecto Integrado
-- **Profesor Guía:** Jorge Cortés
-- **Período Académico:** Segundo Semestre 2026
-
-
----
-
-## 2. Descripción General del Proyecto
-
-El **Sistema de Gestión de Resultados (SGR)** es una solución de software integral concebida para modernizar, transparentar y controlar el cumplimiento de metas y compromisos vecinales en las **6 Delegaciones Municipales** de la comuna de La Serena:
-1. **Delegación Centro** (Casco histórico y comercio comunal)
-2. **Delegación Las Compañías** (Mayor densidad poblacional y alta actividad comunitaria)
-3. **Delegación La Pampa** (Sectores residenciales consolidados y áreas verdes)
-4. **Delegación La Antena - La Florida** (Comités de vivienda y programas sociales)
-5. **Delegación Avenida del Mar** (Borde costero turístico y fiscalización de bienes públicos)
-6. **Delegación Rural** (Algarrobito, Las Rojas, Lambert, Altovalsol y valles interiores)
-
-### Pilares Funcionales del SGR:
-- **Trazabilidad Inalterable de Evidencias:** Cada actividad en terreno genera un código único correlativo (`EVI-2026-XXXX`) respaldado por fotografía obligatoria con georreferenciación.
-- **Segregación de Funciones y Control de Calidad:** Bandeja técnica exclusiva para el Verificador Municipal, quien dictamina la aprobación o rechazo fundamentado de las evidencias.
-- **Motor Matemático de Semáforo Diario:** Cálculo dinámico de cumplimiento ponderado al 100% y semaforización proporcional (*Verde, Ámbar, Rojo*) evaluada contra los días transcurridos del trimestre.
-- **Atención Social Multietapa:** Registro unificado de personas usuarias vulnerables permitiendo concatenar hasta 3 gestiones por beneficiario sin duplicar la ficha (Regla `RN-10`).
-- **Tubo de Trabajo y Agenda Colectiva:** Tablero Kanban territorial con 4 estados (*Ingresado, Pendiente, En Proceso, Realizado*) con alertas operativas de compromisos vencidos.
-- **Bitácora Inmutable de Auditoría:** Registro de cada transacción con marca de tiempo, IP, usuario y datos previos/nuevos en formato JSON.
-
----
-
-## 3. Matriz de Entregables y Rúbrica Oficial
-
-Todos los artefactos requeridos por la rúbrica institucional se encuentran formalmente construidos y enlazados:
-
-| Criterio Rúbrica | Puntos | Entregable Oficial | Ubicación en el Repositorio |
-| :--- | :---: | :--- | :--- |
-| **1. Planner / Jira** | 15 pts | Planificación operativa completa en Microsoft Planner con 8 depósitos, 22 tareas con DoD y flujo Kanban. | [`gestion_agil/backlog_planner_sgr.md`](gestion_agil/backlog_planner_sgr.md) |
-| **2. Diagrama Requerimientos** | 10 pts | Diagrama jerárquico SysML (Visual Paradigm) y Matriz de Trazabilidad multidimensional. | [`diagramas/diagrama_requerimientos.svg`](diagramas/diagrama_requerimientos.svg)<br>[`diagramas/matriz_trazabilidad.md`](diagramas/matriz_trazabilidad.md) |
-| **3. Caso de Uso General** | 10 pts | Modelo UML 2.5 formal con límite del sistema, 6 actores primarios y 1 actor secundario. | [`diagramas/caso_uso_general.svg`](diagramas/caso_uso_general.svg)<br>[`diagramas/caso_uso_general.puml`](diagramas/caso_uso_general.puml) |
-| **4. Casos Específicos + Fichas** | 20 pts | 12 Casos de uso detallados individuales en PlantUML + Fichas textuales completas + 8 micro-fichas de extensión. | [`diagramas/casos_uso_detallados/`](diagramas/casos_uso_detallados/)<br>[`especificaciones/fichas_casos_uso.md`](especificaciones/fichas_casos_uso.md) |
-| **5. Diagrama de Clases** | 15 pts | Modelo formal de clases UML 2.5: 14 clases de dominio, atributos tipados, visibilidad `+`/`-`/`#`, métodos y multiplicidades. | [`diagramas/diagrama_clases_sgr.svg`](diagramas/diagrama_clases_sgr.svg)<br>[`diagramas/diagrama_clases_sgr.puml`](diagramas/diagrama_clases_sgr.puml) |
-| **6. DER MySQL** | 10 pts | Modelo Entidad-Relación relacional normalizado en 3FN para MySQL 8.0 (14 tablas con PKs, FKs y tablas N:M). | [`diagramas/der_mysql_sgr.svg`](diagramas/der_mysql_sgr.svg)<br>[`diagramas/der_mysql_sgr.puml`](diagramas/der_mysql_sgr.puml) |
-| **7. Script SQL Ejecutable** | 10 pts | Script MySQL 8.0 `database_sgr.sql` con 17 tablas, restricciones `ON DELETE RESTRICT` y 18 bloques de datos semilla reales. | [`base_datos/database_sgr.sql`](base_datos/database_sgr.sql) |
-| **8. Mockup Funcional + Git** | 10 pts | Prototipo web interactivo y responsivo con 10 vistas, cálculo dinámico de semáforos y modales de validación. | [`mockup/`](mockup/) ([`index.html`](mockup/index.html), [`styles.css`](mockup/css/styles.css), [`app.js`](mockup/js/app.js)) |
-| **Informe Consolidado** | Requisito | Documento técnico formal unificado con carátula institucional de INACAP y justificación integral. | [`INFORME_PRIMERA_EVALUACION_SGR.md`](INFORME_PRIMERA_EVALUACION_SGR.md)<br>[`INFORME_PRIMERA_EVALUACION_SGR.html`](INFORME_PRIMERA_EVALUACION_SGR.html) |
-
----
-
-## 4. Estructura de Carpetas del Repositorio
-
-```text
-PROYECTO INTEGRADO/
-│
-├── .gitignore                          # Exclusión de archivos temporales y entornos virtuales
-├── README.md                           # Documentación técnica general del repositorio
-├── INFORME_PRIMERA_EVALUACION_SGR.md   # Informe técnico consolidado oficial en formato Markdown
-├── INFORME_PRIMERA_EVALUACION_SGR.html # Versión HTML imprimible y exportable a PDF
-├── generar_informe_html.py             # Script compilador del informe técnico
-│
-├── gestion_agil/                       # Entregable 1: Planificación Operativa
-│   └── backlog_planner_sgr.md          # 8 Depósitos, 22 tareas, DoD, hitos y convención Git
-│
-├── diagramas/                          # Entregables 2, 3, 5 y 6: Modelado UML y Datos
-│   ├── diagrama_requerimientos.puml    # Código fuente SysML / Visual Paradigm
-│   ├── diagrama_requerimientos.svg     # Diagrama vectorial en alta definición
-│   ├── matriz_trazabilidad.md          # Matriz cruzada (RF, CU, Mockup, Tabla BD, Regla)
-│   ├── caso_uso_general.puml           # Diagrama general UML 2.5 con límite del sistema
-│   ├── caso_uso_general.svg            # Gráfico vectorial del caso de uso general
-│   ├── diagrama_clases_sgr.puml        # Diagrama de clases del dominio (14 clases)
-│   ├── diagrama_clases_sgr.svg         # Gráfico vectorial de clases UML
-│   ├── der_mysql_sgr.puml              # Modelo Entidad-Relación para MySQL 8.0 en 3FN
-│   ├── der_mysql_sgr.svg               # Gráfico vectorial del DER relacional
-│   │
-│   └── casos_uso_detallados/           # Entregable 4: 12 Casos de Uso Específicos
-│       ├── CU-01_autenticacion_acceso.puml
-│       ├── CU-02_registrar_actividad_evidencia.puml
-│       ├── CU-03_generar_codigo_verificador.puml
-│       ├── CU-04_validar_evidencia_fotografica.puml
-│       ├── CU-05_registrar_atencion_social_multietapa.puml
-│       ├── CU-06_crear_compromiso_agenda_colectiva.puml
-│       ├── CU-07_actualizar_estado_compromiso.puml
-│       ├── CU-08_calcular_avance_semaforo_diario.puml
-│       ├── CU-09_consultar_tablero_delegacion.puml
-│       ├── CU-10_configurar_metas_ponderadores_periodo.puml
-│       ├── CU-11_administrar_catalogos_servicios.puml
-│       └── CU-12_auditoria_trazabilidad_cambios.puml
-│
-├── especificaciones/                  # Entregable 4: Fichas Textuales
-│   └── fichas_casos_uso.md             # 12 Fichas maestras completas + 8 cuadros de extensión
-│
-├── base_datos/                         # Entregable 7: Persistencia y Script SQL
-│   └── database_sgr.sql                # Script ejecutable MySQL 8.0 verificado con seed data
-│
-└── mockup/                             # Entregable 8: Prototipo Web Funcional Interactivo
-    ├── index.html                      # Aplicación SPA con 10 vistas y 7 modales
-    ├── README.md                       # Guía específica de arquitectura y navegación
-    ├── css/
-    │   └── styles.css                  # Sistema de diseño con colores corporativos de La Serena
-    ├── js/
-    │   ├── data.js                     # Base de datos en memoria y datos semilla comunales
-    │   ├── calculations.js             # Motor matemático de avance y semáforos diarios
-    │   └── app.js                      # Controlador de eventos, navegación y modales
-    └── assets/
-        ├── logo_laserena.jpg           # Escudo oficial de la Municipalidad de La Serena
-        ├── evidencia_terreno.jpg       # Fotografía de prueba en terreno (Algarrobito)
-        └── evidencia_social.jpg        # Fotografía de prueba de gestión social
-```
-
----
-
-
----
-
-## 6. Flujo de Trabajo Colaborativo en Git y GitHub (`crear proyecto.pdf`)
-
-El proyecto sigue estrictamente el flujo de trabajo institucional **GitHub Flow**:
-
-### Política de Ramas:
-- La rama `main` contiene código de producción estable y verificado.
-- Nadie programa directamente sobre `main`.
-- Toda nueva característica se desarrolla en una rama vinculada a una tarea de Planner:
-  - `feature/SGR-[ID]-[descripcion-corta]`
-  - Ejemplo: `feature/SGR-06-codigo-evidencia`
-  - Ejemplo: `feature/SGR-12-validacion-verificador`
-  - Ejemplo: `feature/SGR-19-semaforo-diario`
-
-### Formato Obligatorio de Commits:
-Cada commit se encabeza con el identificador de la tarea de Planner, seguido de una descripción en tiempo imperativo:
-- `SGR-01: Inicialización del repositorio institucional y estructura del SGR La Serena`
-- `SGR-06: Generación automática de código correlativo único EVI-2026 para actividades`
-- `SGR-12: Implementación de visor de evidencias con zoom y dictamen de aprobación`
-- `SGR-19: Algoritmo dinámico de cálculo de semáforo proporcional diario`
-
-
-
-
----
-
-## 7. Segunda Evaluación: Mantenedores, Acceso, Roles y Pruebas
-
-Para la **Segunda Evaluación**, se incorporó la solución operativa integral que cubre el 100% de la pauta y rúbrica oficial:
-
-### Módulos y Pantallas Implementadas:
-1. **Acceso al Sistema (Login):** Validación de credenciales institucionales, diferenciación de perfiles y estados de cuenta.
-2. **Flujo de Recuperación de Contraseña (3 Pasos):**
-   * **Paso 1 (Solicitar Código):** Formulario con respuesta neutra de seguridad institucional.
-   * **Paso 2 (Validar Código):** 6 casillas independientes con captura individual, soporte para pegar (paste), expiración de 10 min y límite estricto de 3 intentos fallidos.
-   * **Paso 3 (Crear Nueva Clave):** Validación en tiempo real de políticas de complejidad (mínimo 8 caracteres, mayúscula, número y símbolo especial) y retorno al login.
-3. **Los Seis Mantenedores (CRUD Completos):**
-   * **CRUD Delegaciones:** Código, nombre, dirección, comuna y estado.
-   * **CRUD Roles:** Código, nombre, descripción, permisos, alcance y estado.
-   * **CRUD Usuarios:** RUT, nombre, correo, rol, delegación asignada y estado.
-   * **CRUD Ítems y Metas:** Código, nombre, descripción, unidad de medida, meta y estado.
-   * **CRUD Tipo de Atención:** Código, nombre, descripción y estado.
-   * **CRUD Sub Atención:** Código, nombre, tipo de atención asociado y estado con validación de integridad referencial.
-   * *Cada mantenedor incluye:* Buscador inteligente en tiempo real, filtro por estado, paginación dinámica, modales de Crear/Editar/Ver y botón funcional de **Exportar a Excel (.xlsx)** con SheetJS.
-4. **Ingreso de Atención Ciudadana:** Formulario dependiente en cascada (Tipo de Atención $\rightarrow$ Subatención), contexto de delegación bloqueado al usuario activo, responsable y timestamp automáticos, y generación de folio correlativo único (`ATN-2026-XXXX`).
-5. **Identidad Visual y Cabecera de Delegación:** Paleta institucional de La Serena: rojo luminoso `#DB3334`, rojo heráldico `#C41230` y rojo oscuro `#8B1D19`; logotipo horizontal vectorial, alertas SweetAlert2 por encima de los modales y distintivo de delegación activa con selector para perfiles comunales.
-6. **Acceso por credenciales:** Sin ingreso automático, accesos rápidos ni conmutador de perfiles. Se conservan las cuentas y los permisos de cada rol; los errores del servidor no habilitan acceso local alternativo. Los códigos de delegaciones e ítems/metas se generan automáticamente al guardar, y la paginación mantiene un número acotado de botones.
-
-### Credenciales de Demostración para el Evaluador:
-
-| Perfil | Nombre | Correo Electrónico | Contraseña | Alcance Autorizado |
-| :--- | :--- | :--- | :--- | :--- |
-| **Superadministrador** | Harold Concha | `harold.concha@laserena.cl` | `Admin123*` | Todas las delegaciones y todos los mantenedores |
-| **Superadministrador (Gmail)** | KeoniPruebas | `keonijolievergara@gmail.com` | `keoni123!` | Todas las delegaciones y verificación de correo real |
-| **Coordinador** | Keoni Vergara | `keoni.vergara@laserena.cl` | `Coord123*` | Supervisión comunal, metas y atenciones |
-| **Delegado Municipal** | Claudio Romo | `claudio.romo@laserena.cl` | `Deleg123*` | Delegación Las Compañías (`DEL02`) |
-| **Operador / Ventanilla** | Carlos Miranda | `carlos.miranda@laserena.cl` | `Oper123*` | Ingreso de atención en Delegación Centro (`DEL01`) |
-| **Consultor** | Luis Ejemplo | `luis@example.test` | `Luis1234*` | Sólo lectura y auditoría |
-
-> [!TIP]
-> **Servicio de Correo Real (SMTP Oficial):**  
-> El sistema cuenta con despacho real de correos electrónicos institucionales vía Gmail SMTP (`smtp.gmail.com:587` STARTTLS).  
-> * **Cuenta Emisora Oficial:** `sgrmunicipalidadelaserena@gmail.com`
-> * **Diseño:** Plantilla HTML oficial de la Ilustre Municipalidad de La Serena con código correlativo de 6 dígitos y expiración de 10 minutos.
-> * Al solicitar la recuperación con `keonijolievergara@gmail.com`, el código de verificación llega en segundos a la bandeja de entrada real.
-
----
-
-### Matriz de Cumplimiento de Pauta y Rúbrica Oficial (100% Verificado):
-
-| Ítem Rúbrica / Pauta | Requisito Técnico Exigido | Implementación SGR La Serena | Estado |
-| :--- | :--- | :--- | :---: |
-| **1. Autenticación y Acceso** | Login validado, mensajes de error, estados de cuenta y roles diferenciados | Validación en BD SQLite y cliente, SweetAlert2 y sesión por token | **100% CUMPLIDO** |
-| **2. Recuperación Paso 1** | Solicitud de código con respuesta neutra (no revelar existencia) | Mensaje genérico de ciberseguridad + envío de correo real vía SMTP institucional | **100% CUMPLIDO** |
-| **3. Recuperación Paso 2** | 6 casillas individuales, auto-avance, soporte de pegar (paste), max 3 intentos | Inputs individuales con evento paste, decremento de intentos y bloqueo formal | **100% CUMPLIDO** |
-| **4. Recuperación Paso 3** | Creación de contraseña con reglas de complejidad en vivo | Validador interactivo de mayúscula, número, símbolo y longitud mínima (8) | **100% CUMPLIDO** |
-| **5. Los 6 Mantenedores (CRUD)** | Delegaciones, Roles, Usuarios, Metas, Tipo y Sub Atención con filtros | 6 CRUDs completos con persistencia relacional en SQLite y backend REST API | **100% CUMPLIDO** |
-| **6. Funcionalidades de Tablas** | Búsqueda reactiva, filtros de estado, paginación y modales CRUD | Tablas dinámicas con buscador en tiempo real, selector de páginas y modales | **100% CUMPLIDO** |
-| **7. Exportación a Excel** | Descarga de datos filtrados en formato `.xlsx` estructurado | Exportación mediante SheetJS (`xlsx.full.min.js`) sanitizada sin contraseñas | **100% CUMPLIDO** |
-| **8. Ingreso de Atención** | Cascada dependiente Tipo $\rightarrow$ Subatención, delegación fijada y folio | Cascada reactiva en tiempo real, campo readonly contextual y folio `ATN-2026-XXXX` | **100% CUMPLIDO** |
-| **9. Estándares Visuales** | Colores institucionales de La Serena (`#8e1525`) y SweetAlert2 | Paleta granate oficial, tipografía DM Sans, logo municipal y SweetAlert2 | **100% CUMPLIDO** |
-| **10. Pruebas de Estrés** | Concurrencia (10, 25, 50 hilos), RPS, latencia media, P95 y tasa error | Suite automatizada `tests/stress_test.py` con informe consolidado | **100% CUMPLIDO** |
-
----
-
-### Resumen de Resultados de Pruebas de Estrés (A3):
-
-Pruebas ejecutadas contra el backend SGR en entorno concurrente progresivo:
-* **Concurrencia estándar (10 - 25 hilos):** Latencia media entre **30.8 ms y 96.5 ms**, rendimiento de hasta **454 RPS** y **0.0% tasa de errores**.
-* **Carga intensiva (50 hilos concurrentes):** Rendimiento máximo sostenido de **468 RPS**, con degradación controlada y latencia promedio bajo 170 ms.
-* El informe completo y la matriz de casos de prueba funcional (PF-01 a PF-18) se encuentra en: [`docs/PLAN_DE_PRUEBAS_EVAL2.md`](docs/PLAN_DE_PRUEBAS_EVAL2.md).
-
----
-
-### Instrucciones de Ejecución Local:
+Con el entorno ya preparado:
 
 ```bash
-# 1. Inicializar base de datos SQLite relacional
-python server.py --init-db
-
-# 2. Iniciar el servidor SGR (Backend API + Interfaz Web)
-python server.py --port 8000
-
-# 3. Acceder en el navegador:
-# Portal General:     http://localhost:8000/
-# Segunda Evaluación: http://localhost:8000/evaluacion2/index.html
-# API Health:         http://localhost:8000/api/health
+source .venv/bin/activate
+docker compose up -d mysql redis mailpit
+daphne -b 127.0.0.1 -p 8001 config.asgi:application
 ```
 
-### Instrucciones de Despliegue en AWS EC2:
+Aplicación: [http://127.0.0.1:8001](http://127.0.0.1:8001). Buzón SMTP local: [http://127.0.0.1:8025](http://127.0.0.1:8025).
 
-El repositorio incluye el script automatizado [`deploy_ec2.sh`](deploy_ec2.sh) que instala dependencias y configura un servicio `systemd` en el puerto 80:
+Las seis credenciales de prueba se guardan exclusivamente en `.private/cuentas-demo.json`, con permisos `600` y fuera de Git. Entregarlas al docente por un medio privado. No existen accesos automáticos ni botones para cambiar de cuenta.
+
+**Estado de AWS:** todavía no se ha identificado una instancia ni una dirección pública para esta migración. No se acredita despliegue AWS con las pruebas locales. Se requiere registrar aquí la URL verificada, recurso EC2 y commit de `main` desplegado después de la integración y la revisión real.
+
+## Instalación desde cero
+
+Requisitos: Python 3.11+, `uv`, Docker con Compose y las bibliotecas de compilación de mysqlclient. Versiones Python fijadas en [requirements.txt](requirements.txt); dependencias de pruebas en [requirements-dev.txt](requirements-dev.txt).
+
+En Ubuntu/Debian:
 
 ```bash
-# En la instancia EC2 (Ubuntu o Amazon Linux):
-chmod +x deploy_ec2.sh
-./deploy_ec2.sh
+sudo apt-get update
+sudo apt-get install -y python3-dev build-essential default-libmysqlclient-dev pkg-config
 ```
 
----
+En macOS:
 
-## 8. Equipo de Desarrollo y Asignación de Roles
+```bash
+brew install mysql-client pkgconf
+export PKG_CONFIG_PATH="$(brew --prefix mysql-client)/lib/pkgconfig"
+```
 
-| Integrante |
-| :--- | :--- |
-| **Harold Concha** 
-| **Keoni Vergara** 
-| **Claudio Romo** 
+Preparación local:
 
----
+```bash
+uv venv --python 3.11
+source .venv/bin/activate
+uv pip install -r requirements-dev.txt
+python scripts/configure_local.py
+docker compose up -d mysql redis mailpit
+python manage.py migrate
+python manage.py seed_demo
+python manage.py check
+daphne -b 127.0.0.1 -p 8001 config.asgi:application
+```
 
-## 9. Licencia y Derechos Institucionales
+Si MySQL todavía está inicializándose, esperar a que `docker compose ps` indique `healthy` antes de migrar. `scripts/configure_local.py` genera secretos aleatorios y no sobrescribe un `.env` existente. Para un entorno distinto, usar [.env.example](.env.example) como referencia y configurar sus valores privados.
 
-Este proyecto ha sido desarrollado exclusivamente con fines académicos para la asignatura **Proyecto Integrado** de la carrera de Informática en **INACAP**, bajo la tutela del docente **Jorge Cortés**.  
-Todos los derechos sobre la identidad visual pertenecen a la **Ilustre Municipalidad de La Serena (2026)**.
+El entorno local utiliza MySQL 8.4 en `127.0.0.1:3307`, Redis 7.4 en `127.0.0.1:6380` y Mailpit en los puertos locales 1025/8025. Los volúmenes conservan MySQL al detener contenedores. No ejecutar `docker compose down -v` sobre datos que se quieran conservar. No hay fallback a SQLite.
 
+`DEBUG=true` solo se utiliza para desarrollo local y permite servir los estáticos con ASGI. Producción usa `DEBUG=false`, Nginx y `collectstatic`. Las fotos no tienen URL pública bajo MEDIA: se entregan mediante una vista autenticada que comprueba su propietario.
+
+## Arquitectura y módulos
+
+- `config/`: settings por entorno, rutas, ASGI, consola técnica y errores HTTP.
+- `cuentas/`: autenticación Django, perfil, foto privada, cambio/recuperación de contraseña, grupos y administración acotada de cuentas.
+- `gestion/`: modelos de negocio, ModelForms, consultas autorizadas, CRUD, exportaciones, portal, Channels y semillas.
+- `templates/`: herencia de `base.html`, formularios en modal Bootstrap, tablas y errores 400/403/404/500.
+- `static/`: Bootstrap 5.3.3, SweetAlert2 11.14.5, Croppr 2.3.1 y código municipal, todos locales y con licencias.
+- `tests_django/`: integración sobre MySQL y Redis reales; `tests_browser/`: recorridos de Chromium.
+- `deploy/`: Nginx HTTPS/WebSocket y Compose de producción; `Dockerfile` ejecuta Daphne como usuario `sgr`, sin root.
+
+Los dos CRUD evaluados son **Ítems y Metas** y **Atenciones ciudadanas**. Incluyen crear, listar, detalle, editar, archivar con `deleted_at`, búsqueda por varios campos, filtro de negocio, orden permitido, páginas 5/15/30 y exportación `.xlsx` de todos los resultados filtrados.
+
+También están disponibles los catálogos de tipos/subatenciones, la consulta y edición de la delegación propia y la gestión acotada de usuarios. El administrador A crea o edita cuentas únicamente en A y asigna los cuatro roles predefinidos; puede desactivarlas. La creación de delegaciones y el mantenimiento global de roles pertenecen al soporte técnico, mediante `/admin/` o su pantalla de permisos. Ninguna cuenta de revisión tiene acceso a Django Admin. Para crear un superusuario técnico adicional, utilizar `python manage.py createsuperuser`; no reemplaza al administrador A.
+
+El modelo implementado está documentado en [diagramas/modelos_django.md](diagramas/modelos_django.md), con [fuente Mermaid](diagramas/modelos_django.mmd). Los diagramas MySQL anteriores corresponden a la primera entrega, no a estas migraciones.
+
+### Reglas aplicadas en servidor
+
+- Consultas, detalle, edición, archivado, relaciones, exportación y fragmentos de tabla limitados por delegación.
+- Clientes filtrados además por `cliente=request.user`; no acceden a funciones administrativas ni a fotos ajenas.
+- Permisos de Django por acción. Editor sin eliminación/archivado; lector sin escrituras. Cuenta sin permiso recibe 403; objeto ajeno o inexistente recibe 404.
+- ModelForms con campos explícitos: el navegador no decide delegación, responsable, código, folio, privilegios ni cantidad de meta.
+- Nombres duplicados por delegación rechazados; cantidades no negativas; nuevas metas con cantidad automática 100; las existentes conservan su cantidad.
+- Tipo y subatención activos de la misma delegación y relación tipo/subatención coherente; cliente vinculado de la misma delegación con rol Cliente.
+- RUT normalizado y validado por módulo 11. ORM y CSRF, escape de templates y ordenamiento mediante lista explícita.
+- JPEG/PNG hasta 2 MiB completamente decodificados con Pillow. Croppr genera el recorte real antes del guardado multipart; cancelar conserva la foto anterior.
+
+Al editar se conserva `created_at`; el orden inicial es creación descendente e id descendente. Búsqueda, filtros, orden, tamaño y página se conservan **en sesión, por módulo**. Una consulta nueva vuelve a página 1; una página que ya no existe se ajusta a una válida. El Excel reutiliza la consulta autorizada completa, excluye archivados y credenciales y trata el contenido del usuario como texto, no como fórmulas.
+
+## Datos de revisión
+
+Carga reproducible e idempotente:
+
+```bash
+python manage.py seed_demo
+```
+
+| Modelo de negocio | Registros | Distribución |
+| --- | ---: | --- |
+| Delegacion | 6 | Delegaciones municipales |
+| ItemMeta | 360 | 60 por delegación |
+| TipoAtencion | 30 | 5 por delegación |
+| SubAtencion | 90 | 15 por delegación |
+| Atencion | 1.800 | 300 por delegación |
+| **Total** | **2.286** | Ambos CRUD tienen más de 50 registros y más de una página de 30 en A y B |
+
+Los clientes 1 y 2 tienen 30 atenciones distintas cada uno dentro de las 300 de Centro. Las semillas incluyen nombres ficticios, fechas de creación variadas, distintos estados, unidades y servicios. No se cuentan usuarios, perfiles, grupos, permisos, sesiones ni secuencias en los 2.286 registros.
+
+Se crean seis cuentas activas de revisión y cuatro responsables ficticios inactivos, sin contraseña utilizable, para las otras delegaciones. Ejecutar de nuevo no duplica registros, no reinicia contraseñas y no sobrescribe ediciones o fotos existentes. Los códigos de las semillas llevan `DEMO` para no colisionar con los códigos automáticos de operaciones nuevas.
+
+### Cuentas, responsabilidades y recorridos
+
+A = Centro (`DEL01`); B = Las Compañías (`DEL02`). Todos los correos iniciales son ficticios `@example.test` y llegan al buzón local Mailpit. Para una revisión con correo externo, configurar el correo de la cuenta mediante su perfil o proporcionar `DEMO_EMAIL_ADMIN_A` antes de la primera carga. La contraseña nunca se publica en esta tabla.
+
+| Alias | Rol / ámbito | Responsabilidad y acciones permitidas | Restricciones | Recorrido y resultado esperado |
+| --- | --- | --- | --- | --- |
+| `admin_a` | Administrador A | Gestionar atenciones, metas, catálogos y cuentas de A; consultar/exportar, crear/editar/archivar | Sin B, permisos globales, privilegios técnicos ni Django Admin | Login → ambos CRUD → crear/editar → cancelar SweetAlert sin cambios → confirmar archivado → registro excluido de listado/Excel |
+| `editor_a` | Editor A | Registrar y actualizar atención y metas de Centro | Sin archivado/eliminación, usuarios ni B | Login → editar atención → guardar → lector A cambia sin F5 → intentar POST de archivado y recibir 403 |
+| `lector_a` | Lector A | Consultar detalle y exportar datos de A | Sin escrituras ni B | Login → buscar/filtrar/ordenar/paginar → abrir detalle → regresar conserva estado → intento de creación devuelve 403 |
+| `lector_b` | Lector B | Consultar y exportar datos de Las Compañías | Sin escrituras ni A | Abrir listado en otro perfil → editor A guarda → no recibe evento ni datos de A; URL ajena devuelve 404 |
+| `cliente_1` | Cliente / propietario 1 en A | Consultar sus 30 atenciones, detalle y perfil/foto propios | Sin administración, datos ni foto del Cliente 2 | Login → Mis atenciones → detalle propio → Croppr/guardar/recargar → persiste recorte → detalle del Cliente 2 devuelve 404 |
+| `cliente_2` | Cliente / propietario 2 en A | Consultar otras 30 atenciones, detalle y perfil/foto propios | Sin administración, datos ni foto del Cliente 1 | Login en sesión independiente → datos distintos → detalle del Cliente 1 devuelve 404 → perfil solo modifica su cuenta |
+
+## WebSocket aplicado al CRUD
+
+Ruta: `/ws/atenciones/`. Servidor: `daphne config.asgi:application`. Capa: `channels_redis.core.RedisChannelLayer`.
+
+Recorrido del evento:
+
+1. Editor guarda un ModelForm válido dentro de una transacción.
+2. `transaction.on_commit` notifica al grupo calculado por el servidor desde su delegación.
+3. El lector autenticado del mismo ámbito recibe una notificación mínima, sin registros ni datos personales.
+4. El navegador solicita `/gestion/atenciones/tabla/`, una vista HTTP protegida que reaplica ámbito, filtros, orden y página.
+5. Se reemplaza únicamente la tabla/paginación; no hay F5, recarga de la página ni polling.
+
+Las conexiones anónimas, de clientes y de orígenes no permitidos se rechazan. B no se une al grupo de A. Antes de enviar cada evento se revisan nuevamente permisos, delegación y vigencia de la sesión; logout o cambio de contraseña invalidan la recepción. La interfaz informa desconexión o fallo de actualización y conserva los datos visibles sin afirmar que están actualizados.
+
+Redis permite varios procesos ASGI; no se utiliza una capa en memoria que limite la demostración a un solo proceso.
+
+## Recuperación y contraseña
+
+Login por usuario o correo, logout exclusivamente POST con CSRF, vistas privadas protegidas, contraseña actual para cambiarla y validadores Django (mínimo 10 caracteres, similitud, claves comunes y solo numéricas).
+
+La recuperación usa enlace y token Django de una hora. Solicitarlo muestra la misma respuesta para correos registrados y desconocidos. El correo contiene una URL del host que sirve la aplicación; en AWS deben configurarse los hosts/orígenes públicos y el SMTP real o buzón de pruebas accesible. Un enlace usado o inválido no permite otro cambio. No basta con imprimir enlaces en consola.
+
+Localmente Mailpit recibe correo SMTP real del proceso Django y permite abrirlo en su buzón web. En producción, configurar `EMAIL_HOST`, `EMAIL_PORT`, usuario/contraseña privados, TLS y remitente. La credencial SMTP incrustada de la versión anterior se retiró del código activo; como permanece en el historial, debe reemplazarse en el proveedor antes de reutilizar esa cuenta de correo.
+
+## Verificación
+
+Primero conceder a la cuenta local permiso sobre **su base aislada de pruebas**:
+
+```bash
+docker compose exec -T mysql sh -c 'MYSQL_PWD="$MYSQL_ROOT_PASSWORD" mysql -uroot -e "GRANT ALL PRIVILEGES ON test_sgr_django.* TO '\''sgr'\''@'\''%'\'';"'
+pytest tests_django
+python manage.py makemigrations --check --dry-run
+DJANGO_DEBUG=false python manage.py check --deploy --fail-level WARNING
+python manage.py collectstatic --noinput
+python -m unittest discover -s tests -p 'test_*.py'
+node --test tests/test_*.cjs
+```
+
+Los tests Django usan MySQL real y Redis. No ejecutar varias suites pytest simultáneamente contra la misma base de pruebas. La configuración rápida de hashes se limita a `config/test_settings.py`; la aplicación usa los hashes seguros de Django.
+
+Con ASGI y Mailpit funcionando, las semillas cargadas y las credenciales privadas disponibles:
+
+```bash
+playwright install chromium
+python tests_browser/check_crop.py
+python tests_browser/check_flows.py
+```
+
+El segundo recorrido usa seis sesiones independientes, comprueba cambios WebSocket solo en A, filtros, cancelación de SweetAlert, errores dentro del modal, navegación, portal, foto, correo SMTP, token de un uso y cambio/logout. Modifica y restaura un nombre ficticio, guarda una foto de prueba en Cliente 1 y restaura su contraseña privada. Ejecutarlo sobre datos de demostración. Las capturas locales se escriben en `output/browser/`, excluido de Git.
+
+Las pruebas controladas de 400/500 viven exclusivamente en `tests_django/error_urls.py` con `DEBUG=False`; no hay rutas de producción para forzar fallos. Ver [docs/EVALUACION_3_ESTADO.md](docs/EVALUACION_3_ESTADO.md) para resultados y límites verificados.
+
+## AWS: preparación y puesta en marcha
+
+La configuración preparada utiliza EC2, MySQL persistente en volumen, Redis, Daphne sin root y Nginx con HTTPS y Upgrade WebSocket. No crea recursos AWS ni contrata servicios.
+
+Después de identificar la instancia, integrar el PR revisado a `main` y disponer de Docker/Compose:
+
+1. Clonar o actualizar el repositorio en la instancia con el commit de `main` elegido.
+2. Preparar `.env` privado a partir de `.env.example`, con secretos nuevos, `DJANGO_DEBUG=false`, `DJANGO_ALLOWED_HOSTS` público, `CSRF_TRUSTED_ORIGINS=https://dominio`, cookies seguras y SMTP externo. No usar las credenciales de desarrollo.
+3. Colocar certificados válidos en `deploy/tls/fullchain.pem` y `deploy/tls/privkey.pem`, fuera de Git. Restringir la clave privada y permitir acceso de solo lectura al proceso Nginx.
+4. Permitir HTTP/HTTPS en el recurso AWS; MySQL, Redis y Mailpit no deben exponerse públicamente. El script no detiene automáticamente un servicio anterior que ocupe 80/443.
+5. Ejecutar desde el checkout limpio de `main`:
+
+```bash
+./deploy_ec2.sh https://dominio-publico-de-la-instancia
+```
+
+El script comprueba configuración de producción, respalda MySQL en `.private/backups/`, migra, carga semillas idempotentes, recopila estáticos e inicia servicios. Escribe credenciales nuevas únicamente en el archivo privado del host; las inyecta en un volumen temporal, no en la imagen. `APP_COMMIT` se establece desde Git y aparece en `/api/health/`.
+
+6. Comprobar desde otro equipo la URL, certificados, archivos, fotos privadas, correo, 2.286 semillas, seis cuentas y WebSocket con A/B. Registrar URL pública y recurso en este README. Mostrar `git rev-parse HEAD` y `/api/health/` durante la revisión.
+
+`deploy/compose.production.yaml` complementa `compose.yaml`; sus rutas se resuelven desde la raíz:
+
+```bash
+docker compose -f compose.yaml -f deploy/compose.production.yaml ps
+```
+
+La base SQLite anterior no se modifica ni se importa automáticamente: el nuevo esquema tiene ámbitos y validaciones distintos. `python scripts/backup_legacy.py` crea una copia privada coherente para una migración de datos revisada. No ejecutar el script SQL destructivo de la primera entrega sobre esta base.
+
+## Git y entrega académica
+
+Desarrollo en `feature/SGR-evaluacion3-django`; integrar mediante Pull Request revisado por otro integrante, sin commits ni push directos a `main`. La CI declarada en `.github/workflows/django.yml` ejecuta las pruebas con MySQL/Redis y conserva las pruebas históricas. La revisión de un agente no sustituye la revisión de un compañero requerida por la pauta.
+
+Cada integrante debe aportar al menos un PR funcional con su autoría y revisión reales. Este trabajo no crea aportes ni revisiones ficticias y no reescribe el historial previo.
+
+La entrega en la plataforma consiste en el enlace del repositorio y los nombres completos de todos los integrantes. No se exige un informe adicional. Los antecedentes de primera/segunda entrega permanecen en `diagramas/`, `especificaciones/`, `gestion_agil/`, `mockup/` y los documentos históricos; no representan el estado operativo actual de Django.

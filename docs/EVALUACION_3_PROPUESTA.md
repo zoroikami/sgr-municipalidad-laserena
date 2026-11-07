@@ -2,8 +2,9 @@
 
 Fecha: 6 de noviembre de 2026.
 
-Estado: propuesta para revisión. Este documento no acredita implementación,
-cumplimiento de la rúbrica ni despliegue. No se ha modificado la aplicación.
+Estado: propuesta aprobada por el usuario e implementada en la rama de trabajo.
+Este diseño no acredita por sí solo cumplimiento ni despliegue. Los resultados
+y pendientes externos están registrados en `EVALUACION_3_ESTADO.md`.
 
 Fuente: `Evaluacion_Sumativa_3_Back_End_TI3041.pdf`, facilitado desde Downloads
 (10 páginas). Los requisitos de esta evaluación sustituyen las decisiones

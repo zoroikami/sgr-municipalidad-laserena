@@ -1,0 +1,44 @@
+name: Django MySQL Redis
+on: [push, pull_request]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_DATABASE: sgr_django
+          MYSQL_ROOT_HOST: "%"
+          MYSQL_ROOT_PASSWORD: ci-fixture-only
+        ports: ["3306:3306"]
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -pci-fixture-only"
+          --health-interval=5s --health-timeout=5s --health-retries=30
+      redis:
+        image: redis:7.4-alpine
+        ports: ["6379:6379"]
+    env:
+      DJANGO_SECRET_KEY: ci-only-sgr-secret-used-exclusively-for-isolated-test-databases-2026
+      DJANGO_DEBUG: "false"
+      DJANGO_ALLOWED_HOSTS: localhost,127.0.0.1,testserver
+      DB_NAME: sgr_django
+      DB_USER: root
+      DB_PASSWORD: ci-fixture-only
+      DB_HOST: 127.0.0.1
+      DB_PORT: "3306"
+      REDIS_URL: redis://127.0.0.1:6379/0
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - run: sudo apt-get update && sudo apt-get install -y default-libmysqlclient-dev pkg-config
+      - run: pip install -r requirements-dev.txt
+      - run: python manage.py check --deploy
+      - run: python manage.py makemigrations --check --dry-run
+      - run: pytest tests_django
+      - run: python -m unittest discover -s tests -p 'test_*.py'
+      - run: node --test tests/test_*.cjs

@@ -47,7 +47,7 @@ def send_recovery_email(email_destinatario, codigo):
     smtp_host = os.environ.get("SMTP_HOST", "smtp.gmail.com")
     smtp_port = int(os.environ.get("SMTP_PORT", 587))
     smtp_user = os.environ.get("SMTP_USER", "sgrmunicipalidadelaserena@gmail.com")
-    smtp_pass = os.environ.get("SMTP_PASS", "ksocpffuigsugzsr")
+    smtp_pass = os.environ.get("SMTP_PASS", "")
     smtp_from = os.environ.get("SMTP_FROM", smtp_user or "sgrmunicipalidadelaserena@gmail.com")
 
     if not smtp_host or not smtp_user or not smtp_pass:
