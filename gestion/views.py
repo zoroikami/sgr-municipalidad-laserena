@@ -68,26 +68,32 @@ def form_view(request, modulo, pk=None):
     authorize(request.user, model, 'change' if pk else 'add')
     if modulo == 'delegaciones' and not pk:
         raise PermissionDenied('La creación de delegaciones corresponde a administración técnica.')
-    obj = get_object_or_404(scoped(request.user, model), pk=pk) if pk else None
-    form = FORMS[modulo](request.POST if request.method == 'POST' else None,
-                         request.FILES if request.method == 'POST' else None,
-                         instance=obj, user=request.user)
-    if request.method == 'POST' and form.is_valid():
-        try:
-            with transaction.atomic():
-                saved = form.save()
-                if modulo == 'atenciones':
-                    notify_after_commit(saved.delegacion_id)
-        except IntegrityError:
-            form.add_error(None, 'Ya existe un registro con esos datos. Revisa el nombre y vuelve a guardar.')
-        else:
-            messages.success(request, 'Los cambios se guardaron correctamente.' if pk else 'El registro se creó correctamente.')
-            return redirect('gestion:listado', modulo=modulo)
-    return render(request, 'gestion/formulario.html', {
-        'form': form, 'obj': obj, 'modulo': modulo,
-        'titulo': ('Editar ' if pk else 'Crear ') + config['title'],
-        'return_url': reverse('gestion:listado', args=[modulo]),
-    })
+    with transaction.atomic():
+        query = scoped(request.user, model)
+        if request.method == 'POST':
+            query = query.select_for_update()
+        # Read and validate the existing row under the same lock used by archive.
+        # A stale editor cannot write deleted_at=None over an administrator's archive.
+        obj = get_object_or_404(query, pk=pk) if pk else None
+        form = FORMS[modulo](request.POST if request.method == 'POST' else None,
+                             request.FILES if request.method == 'POST' else None,
+                             instance=obj, user=request.user)
+        if request.method == 'POST' and form.is_valid():
+            try:
+                with transaction.atomic():
+                    saved = form.save()
+                    if modulo == 'atenciones':
+                        notify_after_commit(saved.delegacion_id)
+            except IntegrityError:
+                form.add_error(None, 'Ya existe un registro con esos datos. Revisa el nombre y vuelve a guardar.')
+            else:
+                messages.success(request, 'Los cambios se guardaron correctamente.' if pk else 'El registro se creó correctamente.')
+                return redirect('gestion:listado', modulo=modulo)
+        return render(request, 'gestion/formulario.html', {
+            'form': form, 'obj': obj, 'modulo': modulo,
+            'titulo': ('Editar ' if pk else 'Crear ') + config['title'],
+            'return_url': reverse('gestion:listado', args=[modulo]),
+        })
 
 
 @login_required
@@ -137,9 +143,9 @@ def archivar(request, modulo, pk):
     authorize(request.user, config['model'], 'delete')
     if modulo == 'delegaciones':
         raise PermissionDenied('La delegación activa no se puede archivar desde este módulo.')
-    obj = get_object_or_404(scoped(request.user, config['model']), pk=pk)
     try:
         with transaction.atomic():
+            obj = get_object_or_404(scoped(request.user, config['model']).select_for_update(), pk=pk)
             # Referenced catalogues stay usable until their business records are resolved.
             if modulo in ['tipos', 'subatenciones'] and obj.atencion_set.filter(deleted_at__isnull=True).exists():
                 raise ProtectedError('Registro relacionado', [obj])

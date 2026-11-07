@@ -41,6 +41,18 @@
   if (modalElement && window.bootstrap?.Modal) {
     document.documentElement.classList.add('modal-enhanced');
     const modal = new window.bootstrap.Modal(modalElement);
+    modalElement.addEventListener('keydown', event => {
+      if (event.key !== 'Tab') return;
+      const controls = Array.from(modalElement.querySelectorAll('a[href], button, input, select, textarea, [tabindex]'))
+        .filter(element => element.tabIndex >= 0 && !element.disabled && element.getClientRects().length);
+      const first = controls[0];
+      const last = controls[controls.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault(); last?.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault(); first?.focus();
+      }
+    });
     modalElement.addEventListener('shown.bs.modal', () => {
       const target = modalElement.querySelector('.error-summary, input:not([type="hidden"]):not([disabled]), select:not([disabled]), textarea');
       target?.focus();

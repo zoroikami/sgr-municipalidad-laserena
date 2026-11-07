@@ -18,7 +18,7 @@ gestión de cuentas se mantienen con la política de alcance documentada.
 
 | Comprobación | Resultado observado |
 | --- | --- |
-| `pytest tests_django` | 51 pruebas aprobadas sobre MySQL y Redis reales |
+| `pytest tests_django` | 53 pruebas sobre MySQL y Redis reales, incluidas regresiones de concurrencia en ambos CRUD |
 | Pruebas históricas Python | 22 aprobadas |
 | Pruebas históricas Node | 48 aprobadas |
 | Migraciones | Aplicadas en MySQL; `makemigrations --check --dry-run` sin cambios |
@@ -26,7 +26,7 @@ gestión de cuentas se mantienen con la política de alcance documentada.
 | `collectstatic` | 151 archivos recopilados |
 | Semillas | 6 delegaciones + 360 metas + 30 tipos + 90 subatenciones + 1.800 atenciones = 2.286 registros de negocio |
 | Segunda carga | Sin duplicados, sin reiniciar contraseñas ni sobrescribir ediciones |
-| Imagen Docker | Construida localmente; usuario de ejecución `sgr` sin root |
+| Imagen Docker | Construida localmente; usuario de ejecución `sgr` sin root; se comprobó que no contiene `deploy/tls`, `.env` ni `.private` |
 | Nginx | Sintaxis válida usando un certificado efímero exclusivamente local |
 | Diagrama | Mermaid validado en Chromium; SVG generado y revisado |
 | JavaScript y copy | Sintaxis correcta; guard es-CL: 27 archivos, cero errores/advertencias |
@@ -36,6 +36,12 @@ editor sin archivado, administrador limitado sin Django Admin, IDs/FK ajenos,
 clientes en la misma delegación, archivos falsificados/truncados/grandes,
 exportación fuera de la página actual y como texto seguro, tokens de recuperación,
 sesiones revocadas y WebSocket posterior al commit, sin evento al hacer rollback.
+
+La revisión final detectó y se corrigieron dos problemas: la exclusión de
+certificados privados del contexto Docker y una carrera entre edición y
+archivado. Los dos CRUD ahora obtienen y guardan la fila bajo el mismo bloqueo
+transaccional que el archivado. Las regresiones reproducen el intercalado con
+conexiones MySQL independientes y comprueban que el registro sigue archivado.
 
 ### Navegador real
 
@@ -51,6 +57,9 @@ independientes y los siguientes resultados:
   SweetAlert2 no envió ninguna solicitud de archivado.
 - Navegar de módulo y regresar restauró búsqueda, tamaño y página. Se revisaron
   capturas a 375, 768 y 1280 píxeles, sin desbordamiento horizontal de la página.
+- Login por Enter, recorrido del modal con Tab y cancelación por Enter se
+  comprobaron en Chromium. Se añadió retorno de foco al primer/último control
+  para impedir que Tab saliera del diálogo hacia los controles del navegador.
 - Los dos clientes mostraron atenciones propias distintas y rechazaron el
   detalle del otro cliente y las rutas administrativas.
 - Se guardó un recorte reconocible de una imagen de dos colores. La imagen

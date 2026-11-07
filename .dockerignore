@@ -3,6 +3,7 @@
 .env
 .env.*
 .private
+deploy/tls
 .superpowers
 __pycache__
 *.pyc
