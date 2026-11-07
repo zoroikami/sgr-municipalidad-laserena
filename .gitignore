@@ -48,3 +48,14 @@ scratch/
 *.sqlite3
 .env
 .env.local
+
+# Django runtime, uploads and private demo credentials
+media/
+staticfiles/
+.private/
+.pytest_cache/
+.coverage
+.env.*
+!.env.example
+deploy/tls/
+output/browser/

@@ -1,0 +1,6 @@
+Croppr.js 2.3.1
+Source: https://github.com/jamesssooi/Croppr.js
+Package: https://registry.npmjs.org/croppr/-/croppr-2.3.1.tgz
+License: MIT (see croppr-2.3.1.LICENSE)
+NPM SHA-512 integrity: sha512-0rvTl4VmR3I4AahjJPF1u9IlT7ckvjIcgaLnUjYaY+UZsP9oxlVYZWYDuqM3SVCQiaI7DXMjR7wOEYT+mydOFg==
+Downloaded archive SHA-256: 7b6609bdc7ed19f28fb1308150d70d196b346e29db66d7f3796996589e337674

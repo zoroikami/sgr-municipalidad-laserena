@@ -1,0 +1,18 @@
+<div class="results-summary"><p>{{ page_obj.paginator.count }} registro{{ page_obj.paginator.count|pluralize:'s' }}{% if page_obj.paginator.count %} · Mostrando {{ page_obj.start_index }} a {{ page_obj.end_index }}{% endif %}</p><span>Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}</span></div>
+<div class="table-responsive" role="region" aria-label="Registros de {{ titulo }}" tabindex="0">
+  <table class="table records-table">
+    <caption class="visually-hidden">{{ titulo }} de tu delegación</caption>
+    <thead><tr>{% for column in columns %}<th scope="col">{{ column.label }}</th>{% endfor %}<th scope="col">Acciones</th></tr></thead>
+    <tbody>
+      {% for row in rows %}<tr>
+        {% for cell in row.cells %}<td>{% if forloop.first %}<a class="record-key" href="{% url 'gestion:detalle' modulo row.obj.pk %}">{{ cell|default:'Sin dato' }}</a>{% else %}{{ cell|default:'Sin dato' }}{% endif %}</td>{% endfor %}
+        <td><div class="row-actions">
+          <a href="{% url 'gestion:detalle' modulo row.obj.pk %}" aria-label="Ver {{ row.obj }}">Ver</a>
+          {% if can_change %}<a href="{% url 'gestion:editar' modulo row.obj.pk %}" aria-label="Editar {{ row.obj }}">Editar</a>{% endif %}
+          {% if can_delete %}<form class="archive-form" action="{% url 'gestion:archivar' modulo row.obj.pk %}" method="post" data-record="{{ row.obj }}">{% csrf_token %}<button class="archive-button" type="submit" aria-label="Archivar {{ row.obj }}">Archivar</button></form>{% endif %}
+        </div></td>
+      </tr>{% empty %}<tr><td class="empty-state" colspan="{{ columns|length|add:'1' }}">{% if state.q or state.estado or state.tipo %}<strong>No hay registros que coincidan con los filtros.</strong><p>Prueba otra búsqueda o limpia los filtros para ver los registros disponibles.</p>{% else %}<strong>Aún no hay registros en esta sección.</strong><p>{% if can_add %}Selecciona Crear registro para ingresar el primero.{% else %}Los registros de tu delegación aparecerán aquí cuando estén disponibles.{% endif %}</p>{% endif %}</td></tr>{% endfor %}
+    </tbody>
+  </table>
+</div>
+{% if page_obj.paginator.num_pages > 1 %}<nav class="results-pagination" aria-label="Páginas de resultados"><ul class="pagination">{% for item in pagination %}<li class="page-item{% if item.current %} active{% endif %}{% if not item.url %} disabled{% endif %}">{% if item.url %}<a class="page-link" href="{{ item.url }}"{% if item.current %} aria-current="page"{% endif %} aria-label="Página {{ item.number }}">{{ item.number }}</a>{% else %}<span class="page-link">{{ item.number }}</span>{% endif %}</li>{% endfor %}</ul></nav>{% endif %}

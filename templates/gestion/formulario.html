@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="form-context"><a class="back-link" href="{{ return_url }}">Volver al listado</a><h1>{{ titulo }}</h1><p>Completa los datos del registro de tu delegación.</p></div>
+<div class="modal record-modal" id="record-modal" tabindex="-1" aria-labelledby="record-modal-title" data-return-url="{{ return_url }}">
+  <div class="modal-dialog modal-lg modal-dialog-scrollable"><div class="modal-content">
+    <div class="modal-header"><h2 class="modal-title" id="record-modal-title">{{ titulo }}</h2><a class="modal-close" href="{{ return_url }}" aria-label="Cancelar y volver al listado">Cerrar</a></div>
+    <div class="modal-body">
+      <p class="locked-scope"><strong>Delegación:</strong> {{ request.user.perfil.delegacion.nombre }}. El ámbito se asigna a tu cuenta.</p>
+      <form method="post" enctype="multipart/form-data" id="record-form"{% if modulo == 'atenciones' %} data-subatenciones-url="{% url 'gestion:subatenciones' %}"{% endif %}>
+        {% csrf_token %}
+        {% if form.errors %}<div class="alert alert-danger error-summary" role="alert" tabindex="-1"><h3>Revisa los datos antes de guardar</h3>{% if form.non_field_errors %}{{ form.non_field_errors }}{% endif %}<ul>{% for field in form %}{% if field.errors %}<li><a href="#{{ field.id_for_label }}">{{ field.label }}: {{ field.errors|striptags }}</a></li>{% endif %}{% endfor %}</ul></div>{% endif %}
+        {% for field in form %}<div class="form-field{% if field.errors %} has-error{% endif %}">
+          {{ field.label_tag }}{% if field.field.required %}<span class="required-label"> (obligatorio)</span>{% endif %}
+          {{ field }}
+          <div class="field-help" id="{{ field.auto_id }}_help">{{ field.help_text|safe }}</div>
+          <div class="field-errors" id="{{ field.auto_id }}_errors">{% if field.errors %}{{ field.errors }}{% endif %}</div>
+        </div>{% endfor %}
+        {% if modulo == 'atenciones' %}<p id="subatencion-status" class="field-help" role="status" aria-live="polite"></p>{% endif %}
+        <div class="form-actions"><button class="btn btn-primary" type="submit">{% if obj %}Guardar cambios{% else %}Crear registro{% endif %}</button><a class="btn btn-outline-secondary" href="{{ return_url }}">Cancelar</a></div>
+      </form>
+    </div>
+  </div></div>
+</div>
+{% endblock %}
