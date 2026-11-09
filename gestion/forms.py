@@ -5,6 +5,42 @@ from .access import delegation_id
 from .models import Atencion, Delegacion, ItemMeta, SubAtencion, TipoAtencion
 
 
+class AtencionFilterForm(forms.Form):
+    responsable = forms.ModelChoiceField(
+        label='Responsable', required=False, queryset=get_user_model().objects.none(),
+        empty_label='Todos los responsables', widget=forms.Select(attrs={'class': 'form-select'}),
+        error_messages={'invalid_choice': 'Selecciona un responsable de tu delegación.'},
+    )
+    desde = forms.DateField(
+        label='Desde', required=False, input_formats=['%Y-%m-%d'],
+        widget=forms.DateInput(format='%Y-%m-%d', attrs={'type': 'date', 'class': 'form-control'}),
+        error_messages={'invalid': 'Ingresa una fecha Desde válida.'},
+    )
+    hasta = forms.DateField(
+        label='Hasta', required=False, input_formats=['%Y-%m-%d'],
+        widget=forms.DateInput(format='%Y-%m-%d', attrs={'type': 'date', 'class': 'form-control'}),
+        error_messages={'invalid': 'Ingresa una fecha Hasta válida.'},
+    )
+
+    def __init__(self, *args, user, **kwargs):
+        super().__init__(*args, **kwargs)
+        org = delegation_id(user)
+        # Include archived assignments so that archiving a last record keeps the filter valid.
+        assigned = Atencion.all_objects.filter(delegacion_id=org).order_by().values('responsable_id')
+        self.fields['responsable'].queryset = get_user_model().objects.filter(
+            pk__in=assigned, perfil__delegacion_id=org,
+        ).order_by('first_name', 'last_name', 'username')
+        self.fields['responsable'].label_from_instance = lambda account: account.get_full_name() or account.username
+
+    def clean(self):
+        dates = super().clean()
+        start = dates.get('desde')
+        end = dates.get('hasta')
+        if start and end and end < start:
+            self.add_error('hasta', 'La fecha Hasta debe ser igual o posterior a la fecha Desde.')
+        return dates
+
+
 class ScopedModelForm(forms.ModelForm):
     def __init__(self, *args, user, **kwargs):
         self.user = user
