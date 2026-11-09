@@ -13,15 +13,15 @@
     <div class="filter-search"><label for="filter-q">Buscar</label><input class="form-control" id="filter-q" type="search" name="q" value="{{ state.q }}" maxlength="140"></div>
     <div><label for="filter-estado">Estado</label><select class="form-select" id="filter-estado" name="estado"><option value="">Todos los estados</option>{% for value,label in filter_choices %}<option value="{{ value }}"{% if state.estado == value %} selected{% endif %}>{{ label }}</option>{% endfor %}</select></div>
     {% if modulo == 'atenciones' %}<div><label for="filter-tipo">Tipo de atención</label><select class="form-select" id="filter-tipo" name="tipo"><option value="">Todos los tipos</option>{% for tipo in tipos %}<option value="{{ tipo.pk }}"{% if state.tipo == tipo.pk|stringformat:'s' %} selected{% endif %}>{{ tipo.nombre }}</option>{% endfor %}</select></div>{% endif %}
-    {% if date_form %}
-      {% for field in date_form %}
+    {% if filter_form %}
+      {% for field in filter_form %}
         <div><label for="{{ field.id_for_label }}">{{ field.label }}</label>{{ field }}{{ field.errors }}</div>
       {% endfor %}
     {% endif %}
     <div><label for="filter-orden">Orden</label><select class="form-select" id="filter-orden" name="orden">{% for value,label in order_choices %}<option value="{{ value }}"{% if state.orden == value %} selected{% endif %}>{{ label }}</option>{% endfor %}</select></div>
     <div class="filter-size"><label for="filter-tamano">Por página</label><select class="form-select" id="filter-tamano" name="tamano">{% for size in page_sizes %}<option value="{{ size }}"{% if state.tamano == size %} selected{% endif %}>{{ size }}</option>{% endfor %}</select></div>
     <button class="btn btn-primary" type="submit">Aplicar filtros</button>
-    <a class="filter-reset" href="{% url 'gestion:listado' modulo %}?q=&amp;estado=&amp;tipo=&amp;orden=-created_at&amp;tamano=15&amp;pagina=1{% if date_form %}&amp;desde=&amp;hasta={% endif %}">Limpiar filtros</a>
+    <a class="filter-reset" href="{% url 'gestion:listado' modulo %}?q=&amp;estado=&amp;tipo=&amp;orden=-created_at&amp;tamano=15&amp;pagina=1{% if filter_form %}&amp;responsable=&amp;desde=&amp;hasta={% endif %}">Limpiar filtros</a>
   </form>
   <div id="tabla-region">{% include 'gestion/_tabla.html' %}</div>
 </section>

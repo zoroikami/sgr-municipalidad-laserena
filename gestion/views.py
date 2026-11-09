@@ -167,9 +167,9 @@ def archivar(request, modulo, pk):
 def exportar(request, modulo):
     config = module_config(modulo)
     authorize(request.user, config['model'])
-    state, date_form = state_for(request, modulo)
-    if date_form and date_form.errors:
-        raise BadRequest('El rango de fechas de la exportación es inválido.')
+    state, filter_form = state_for(request, modulo)
+    if filter_form and filter_form.errors:
+        raise BadRequest('Los filtros de la exportación son inválidos.')
     query = query_for(request.user, modulo, state)
     book = Workbook(write_only=True)
     sheet = book.create_sheet(config['title'][:31])

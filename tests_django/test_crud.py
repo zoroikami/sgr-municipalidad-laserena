@@ -191,7 +191,7 @@ def test_attention_export_is_filtered_unpaginated_and_excludes_archive(client, m
     assert 'Bernarda Norte' not in str(list(sheet.values))
 
 
-def test_attention_date_range_is_shared_by_list_refresh_and_excel(client, mundo):
+def test_attention_date_and_responsible_filters_are_shared_by_list_refresh_and_excel(client, mundo):
     login(client, mundo, 'lector_a')
     local = ZoneInfo('America/Santiago')
     start = datetime(2026, 11, 1, tzinfo=local)
@@ -208,15 +208,21 @@ def test_attention_date_range_is_shared_by_list_refresh_and_excel(client, mundo)
     create_attention('Periodo posterior', datetime(2026, 11, 6, tzinfo=local))
     create_attention('Periodo pendiente', start, estado='Ingresada')
     create_attention('Periodo archivado', end, deleted_at=end)
+    create_attention('Periodo otro responsable', end, responsable=mundo['users']['admin_a'])
     create_attention('Periodo ajeno', end, delegacion=mundo['b'], tipo=mundo['tipo_b'],
                      subatencion=mundo['sub_b'], responsable=mundo['users']['lector_b'])
 
     args = ['atenciones']
     url = reverse('gestion:listado', args=args)
     filters = {'q': 'Periodo', 'estado': 'Resuelta', 'desde': '2026-11-01', 'hasta': '2026-11-05', 'tamano': 5}
+    responsable = mundo['users']['editor_a'].pk
     client.get(url, {'q': 'Periodo', 'estado': 'Resuelta', 'tamano': 5})
     assert client.get(url, {'pagina': 2}).context['page_obj'].number == 2
     result = client.get(url, filters | {'pagina': 2})
+    assert result.context['page_obj'].number == 1
+    assert result.context['page_obj'].paginator.count == len(expected) + 1
+    assert client.get(url, {'pagina': 2}).context['page_obj'].number == 2
+    result = client.get(url, {'responsable': responsable, 'pagina': 2})
     assert result.context['page_obj'].number == 1
     assert result.context['page_obj'].paginator.count == len(expected)
     page_two = client.get(result.context['pagination'][1]['url'])
@@ -226,7 +232,7 @@ def test_attention_date_range_is_shared_by_list_refresh_and_excel(client, mundo)
     assert refresh.context['page_obj'].number == 2
     assert refresh.context['rows'][0]['obj'] == expected[0]
 
-    client.get(url, {'desde': '2026-11-06', 'hasta': ''})
+    client.get(url, {'desde': '2026-11-06', 'hasta': '', 'responsable': ''})
     response = client.get(page_two.context['export_url'])
     sheet = load_workbook(BytesIO(response.content)).active
     assert {row[0] for row in list(sheet.values)[1:]} == {item.folio for item in expected}
@@ -242,13 +248,30 @@ def test_invalid_attention_date_range_keeps_previous_session_and_rejects_export(
     url = reverse('gestion:listado', args=args)
     client.get(url, {'desde': '2026-11-01', 'hasta': '2026-11-05'})
     result = client.get(url, invalid)
-    assert result.context['date_form'].errors
+    assert result.context['filter_form'].errors
     assert result.context['page_obj'].paginator.count == 0
     assert not result.context['export_url']
     assert client.get(reverse('gestion:exportar', args=args), invalid).status_code == 400
     assert client.get(url).context['state']['desde'] == '2026-11-01'
     cleared = client.get(url, {'desde': '', 'hasta': ''})
     assert cleared.context['state']['desde'] == cleared.context['state']['hasta'] == ''
+
+
+def test_attention_responsible_filter_rejects_other_delegation(client, mundo):
+    login(client, mundo, 'lector_a')
+    args = ['atenciones']
+    url = reverse('gestion:listado', args=args)
+    responsable = mundo['users']['editor_a']
+    valid = client.get(url, {'responsable': responsable.pk})
+    assert list(valid.context['filter_form'].fields['responsable'].queryset) == [responsable]
+    foreign_filter = {'responsable': mundo['users']['lector_b'].pk}
+    invalid = client.get(url, foreign_filter)
+    assert 'responsable' in invalid.context['filter_form'].errors
+    assert not invalid.context['rows']
+    assert not invalid.context['export_url']
+    assert client.get(reverse('gestion:exportar', args=args), foreign_filter).status_code == 400
+    assert client.get(url).context['state']['responsable'] == str(responsable.pk)
+    assert client.get(url, {'responsable': ''}).context['state']['responsable'] == ''
 
 
 def test_client_only_own_records_and_no_admin_urls(client, mundo):

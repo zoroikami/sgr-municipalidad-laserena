@@ -5,7 +5,7 @@ from django.urls import reverse
 from urllib.parse import urlencode
 
 from .access import scoped
-from .forms import AtencionDateFilterForm
+from .forms import AtencionFilterForm
 from .models import Atencion, Delegacion, ItemMeta, SubAtencion, TipoAtencion, ESTADOS, ESTADOS_ATENCION
 
 
@@ -32,7 +32,7 @@ def state_for(request, modulo):
     config = MODULES[modulo]
     default = {'q': '', 'estado': '', 'orden': '-created_at', 'tamano': 15, 'pagina': 1, 'tipo': ''}
     if modulo == 'atenciones':
-        default.update(desde='', hasta='')
+        default.update(responsable='', desde='', hasta='')
     state = {**default, **request.session.get(f'listado_{modulo}', {})}
     previous = state.copy()
     for name in default:
@@ -56,17 +56,20 @@ def state_for(request, modulo):
         state['pagina'] = 1
     tipo = str(state['tipo'])
     state['tipo'] = tipo if modulo == 'atenciones' and tipo.isdigit() and len(tipo) <= 12 else ''
-    date_form = None
+    filter_form = None
     if modulo == 'atenciones':
-        date_form = AtencionDateFilterForm(state)
-        if not date_form.is_valid():
-            return state, date_form
-        for name, value in date_form.cleaned_data.items():
+        filter_form = AtencionFilterForm(state, user=request.user)
+        if not filter_form.is_valid():
+            return state, filter_form
+        responsable = filter_form.cleaned_data['responsable']
+        state['responsable'] = str(responsable.pk) if responsable else ''
+        for name in ('desde', 'hasta'):
+            value = filter_form.cleaned_data[name]
             state[name] = value.isoformat() if value else ''
     if any(state[name] != previous[name] for name in default if name != 'pagina'):
         state['pagina'] = 1
     request.session[f'listado_{modulo}'] = state
-    return state, date_form
+    return state, filter_form
 
 
 def query_for(user, modulo, state):
@@ -76,6 +79,8 @@ def query_for(user, modulo, state):
         query = query.select_related('tipo', 'subatencion', 'responsable', 'cliente')
         if state['tipo']:
             query = query.filter(tipo_id=state['tipo'])
+        if state['responsable']:
+            query = query.filter(responsable_id=state['responsable'])
         if state['desde']:
             query = query.filter(created_at__date__gte=state['desde'])
         if state['hasta']:
@@ -94,12 +99,12 @@ def query_for(user, modulo, state):
 
 def list_context(request, modulo):
     config = MODULES[modulo]
-    state, date_form = state_for(request, modulo)
-    invalid_dates = bool(date_form and date_form.errors)
-    query = config['model'].objects.none() if invalid_dates else query_for(request.user, modulo, state)
+    state, filter_form = state_for(request, modulo)
+    invalid_filters = bool(filter_form and filter_form.errors)
+    query = config['model'].objects.none() if invalid_filters else query_for(request.user, modulo, state)
     page = Paginator(query, state['tamano']).get_page(state['pagina'])
     state['pagina'] = page.number
-    if not invalid_dates:
+    if not invalid_filters:
         request.session[f'listado_{modulo}'] = state
     model_name = config['model']._meta.model_name
     can = lambda action: request.user.has_perm(f'gestion.{action}_{model_name}')
@@ -111,7 +116,7 @@ def list_context(request, modulo):
         pagination.append({'number': number, 'url': f'{base}?{urlencode({**state, "pagina": number})}' if isinstance(number, int) else '', 'current': number == page.number})
     export_url = reverse('gestion:exportar', args=[modulo])
     if modulo == 'atenciones':
-        export_url = '' if invalid_dates else f'{export_url}?{urlencode(state)}'
+        export_url = '' if invalid_filters else f'{export_url}?{urlencode(state)}'
     return {
         'modulo': modulo, 'titulo': config['title'], 'state': state, 'page_obj': page,
         'columns': cols, 'rows': rows, 'can_add': can('add') and modulo != 'delegaciones',
@@ -119,7 +124,7 @@ def list_context(request, modulo):
         'filter_choices': ESTADOS_ATENCION if modulo == 'atenciones' else ESTADOS,
         'order_choices': [(key, sort_label(key)) for key in config['sort']],
         'page_sizes': [5, 15, 30], 'pagination': pagination,
-        'date_form': date_form, 'invalid_dates': invalid_dates, 'export_url': export_url,
+        'filter_form': filter_form, 'invalid_filters': invalid_filters, 'export_url': export_url,
         'tipos': scoped(request.user, TipoAtencion).filter(estado='Activo'),
     }
 
