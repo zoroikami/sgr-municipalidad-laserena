@@ -4,7 +4,7 @@ from urllib.parse import urlencode
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.core.exceptions import PermissionDenied
+from django.core.exceptions import BadRequest, PermissionDenied
 from django.db import IntegrityError, connection, transaction
 from django.db.models import ProtectedError
 from django.http import Http404, HttpResponse, JsonResponse
@@ -167,7 +167,9 @@ def archivar(request, modulo, pk):
 def exportar(request, modulo):
     config = module_config(modulo)
     authorize(request.user, config['model'])
-    state = state_for(request, modulo)
+    state, date_form = state_for(request, modulo)
+    if date_form and date_form.errors:
+        raise BadRequest('El rango de fechas de la exportación es inválido.')
     query = query_for(request.user, modulo, state)
     book = Workbook(write_only=True)
     sheet = book.create_sheet(config['title'][:31])

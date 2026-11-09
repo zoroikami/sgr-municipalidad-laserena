@@ -5,6 +5,27 @@ from .access import delegation_id
 from .models import Atencion, Delegacion, ItemMeta, SubAtencion, TipoAtencion
 
 
+class AtencionDateFilterForm(forms.Form):
+    desde = forms.DateField(
+        label='Desde', required=False, input_formats=['%Y-%m-%d'],
+        widget=forms.DateInput(format='%Y-%m-%d', attrs={'type': 'date', 'class': 'form-control'}),
+        error_messages={'invalid': 'Ingresa una fecha Desde válida.'},
+    )
+    hasta = forms.DateField(
+        label='Hasta', required=False, input_formats=['%Y-%m-%d'],
+        widget=forms.DateInput(format='%Y-%m-%d', attrs={'type': 'date', 'class': 'form-control'}),
+        error_messages={'invalid': 'Ingresa una fecha Hasta válida.'},
+    )
+
+    def clean(self):
+        dates = super().clean()
+        start = dates.get('desde')
+        end = dates.get('hasta')
+        if start and end and end < start:
+            self.add_error('hasta', 'La fecha Hasta debe ser igual o posterior a la fecha Desde.')
+        return dates
+
+
 class ScopedModelForm(forms.ModelForm):
     def __init__(self, *args, user, **kwargs):
         self.user = user
