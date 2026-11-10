@@ -33,6 +33,7 @@ backup_file=".private/backups/mysql-$(date -u +%Y%m%dT%H%M%SZ).sql"
 "${compose[@]}" run --rm --user "$(id -u):$(id -g)" -v "$PWD/.private:/private" web python manage.py seed_demo --credentials-file /private/cuentas-demo.json
 "${compose[@]}" run --rm web python manage.py collectstatic --noinput
 "${compose[@]}" up -d web nginx
+sleep 2
 curl --fail --silent --show-error --retry 5 --retry-delay 2 "$public_origin/api/health/"
 echo
 echo "Commit desplegado: $APP_COMMIT"
