@@ -58,4 +58,9 @@ staticfiles/
 .env.*
 !.env.example
 deploy/tls/
+
+# Material docente / diapositivas de clases
+unidad1/
+unidad2/
+
 output/browser/
