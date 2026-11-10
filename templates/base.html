@@ -2,55 +2,169 @@
 <!doctype html>
 <html lang="es-CL">
 <head>
-  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>{% block title %}{{ titulo|default:'SGR La Serena' }}{% endblock %} · SGR La Serena</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}{{ titulo|default:'SGR La Serena' }}{% endblock %} · Municipalidad de La Serena</title>
+  <link rel="icon" type="image/svg+xml" href="{% static 'municipal/logo-la-serena.svg' %}">
+  
+  <!-- Estilos base y componentes -->
   <link rel="stylesheet" href="{% static 'vendor/bootstrap-5.3.3.min.css' %}">
   <link rel="stylesheet" href="{% static 'vendor/sweetalert2-11.14.5.min.css' %}">
   <link rel="stylesheet" href="{% static 'municipal/brand.css' %}">
+  <link rel="stylesheet" href="{% static 'sgr/sgr_maqueta.css' %}">
   <link rel="stylesheet" href="{% static 'sgr/app.css' %}">
   {% block extra_css %}{% endblock %}
 </head>
-<body>
+<body class="sgr-body">
   <a class="skip-link" href="#contenido">Ir al contenido</a>
-  <header class="municipal-header">
-    <a class="municipal-brand" href="{% url 'gestion:inicio' %}"><img src="{% static 'municipal/logo-la-serena-horizontal.svg' %}" alt="Municipalidad de La Serena" width="240" height="67"></a>
-    <div class="system-name">Sistema de Gestión de Resultados</div>
-    {% if user.is_authenticated %}
-    <div class="session-actions">
-      <a class="profile-link" href="{% url 'cuentas:perfil' %}"{% if request.resolver_match.url_name == 'perfil' %} aria-current="page"{% endif %}>
-        {% if user.perfil.foto %}<img class="profile-avatar" src="{% url 'cuentas:foto' user.pk %}" width="36" height="36" alt="">{% endif %}
-        <span><strong>{{ user.get_full_name|default:user.username }}</strong><small>Mi perfil · {{ role_label }}</small></span>
+
+  <!-- CABECERA INSTITUCIONAL PERMANENTE DE LA MAQUETA ORIGINAL -->
+  <header class="sgr-topbar">
+    <div class="topbar-left">
+      <a href="{% url 'gestion:inicio' %}" title="Inicio SGR">
+        <img src="{% static 'municipal/logo-la-serena-horizontal.svg' %}" alt="La Serena · Ilustre Municipalidad" class="topbar-logo-horizontal" style="height: 42px; width: auto; filter: brightness(0) invert(1);">
       </a>
-      <form method="post" action="{% url 'cuentas:logout' %}">{% csrf_token %}<button class="btn btn-outline-secondary" type="submit">Cerrar sesión</button></form>
+    </div>
+
+    <!-- DISTINTIVO PERMANENTE DE DELEGACIÓN ACTIVA -->
+    {% if user.is_authenticated and user.perfil.delegacion %}
+    <div class="topbar-delegacion-pill">
+      <span style="font-size: 1.1rem; color: #ffdad6;">📍</span>
+      <div class="topbar-delegacion-label">
+        <span id="header-delegacion-name">{{ user.perfil.delegacion.nombre }}</span>
+        <span id="header-delegacion-code">{{ user.perfil.delegacion.codigo|default:'Delegación activa' }}</span>
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- PERFIL DE USUARIO Y CIERRE DE SESIÓN -->
+    {% if user.is_authenticated %}
+    <div class="topbar-right">
+      <a href="{% url 'cuentas:perfil' %}" class="header-profile-button" title="Mi perfil">
+        {% if user.perfil.foto %}
+          <img class="header-user-avatar" src="{% url 'cuentas:foto' user.pk %}" width="38" height="38" alt="" style="border-radius: 50%; object-fit: cover; border: 2px solid rgba(255,255,255,0.7);">
+        {% else %}
+          <img class="header-user-avatar" src="{% static 'municipal/avatar-default.svg' %}" width="38" height="38" alt="" style="border-radius: 50%; background: #fff; padding: 2px;">
+        {% endif %}
+        <span class="user-header-info text-start">
+          <span class="user-header-name d-block text-white fw-bold" style="font-size: 0.9rem;">{{ user.get_full_name|default:user.username }}</span>
+          <span class="user-header-role d-block" style="font-size: 0.75rem; color: #ffdad6;">{{ role_label }}</span>
+        </span>
+      </a>
+      <form method="post" action="{% url 'cuentas:logout' %}" style="margin: 0;">
+        {% csrf_token %}
+        <button type="submit" class="btn-header-logout" style="background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.3); color: #fff; padding: 6px 14px; border-radius: 6px; font-size: 0.85rem; font-weight: 500; display: inline-flex; align-items: center; gap: 6px; cursor: pointer;">
+          <span>Cerrar sesión</span>
+        </button>
+      </form>
     </div>
     {% endif %}
   </header>
-  <div class="workspace{% if not user.is_authenticated %} workspace-public{% endif %}">
+
+  <div class="sgr-app-layout">
     {% if user.is_authenticated %}
-    <aside class="workspace-sidebar">
-      <p class="scope-label"><span>Ámbito de trabajo</span><strong>{{ user.perfil.delegacion.nombre|default:'Sin delegación asignada' }}</strong>{% if user.perfil.delegacion.codigo %}<small>{{ user.perfil.delegacion.codigo }}</small>{% endif %}</p>
-      <nav class="module-nav" aria-label="Navegación principal">
+    <!-- SIDEBAR ORIGINAL DE LA MAQUETA -->
+    <aside class="sgr-sidebar">
+      <div class="sidebar-navigation">
         {% if is_cliente %}
-          <a href="{% url 'gestion:portal' %}"{% if request.resolver_match.app_name == 'gestion' %} aria-current="page"{% endif %}>Mis atenciones</a>
+          <div class="sidebar-category">Portal Vecinal</div>
+          <ul class="sidebar-nav">
+            <li>
+              <a href="{% url 'gestion:portal' %}" class="nav-link-btn active">
+                <span>📋 Mis atenciones</span>
+              </a>
+            </li>
+          </ul>
         {% else %}
-          <a href="{% url 'gestion:inicio' %}"{% if request.resolver_match.url_name == 'inicio' %} aria-current="page"{% endif %}>Inicio</a>
-          {% if perms.gestion.view_atencion %}<a href="{% url 'gestion:listado' 'atenciones' %}"{% if modulo == 'atenciones' %} aria-current="page"{% endif %}>Atenciones ciudadanas</a>{% endif %}
-          {% if perms.gestion.view_itemmeta %}<a href="{% url 'gestion:listado' 'metas' %}"{% if modulo == 'metas' %} aria-current="page"{% endif %}>Ítems y metas</a>{% endif %}
-          {% if perms.gestion.view_tipoatencion %}<a href="{% url 'gestion:listado' 'tipos' %}"{% if modulo == 'tipos' %} aria-current="page"{% endif %}>Tipos de atención</a>{% endif %}
-          {% if perms.gestion.view_subatencion %}<a href="{% url 'gestion:listado' 'subatenciones' %}"{% if modulo == 'subatenciones' %} aria-current="page"{% endif %}>Subatenciones</a>{% endif %}
-          {% if perms.gestion.view_delegacion %}<a href="{% url 'gestion:listado' 'delegaciones' %}"{% if modulo == 'delegaciones' %} aria-current="page"{% endif %}>Delegaciones</a>{% endif %}
-          {% if user.is_superuser or role_label == 'Administrador' %}<a href="{% url 'cuentas:usuarios' %}"{% if request.resolver_match.url_name == 'usuarios' or request.resolver_match.url_name == 'usuario_crear' or request.resolver_match.url_name == 'usuario_editar' %} aria-current="page"{% endif %}>Usuarios</a>{% endif %}
-          {% if user.is_superuser %}<a href="{% url 'cuentas:roles' %}"{% if request.resolver_match.url_name == 'roles' %} aria-current="page"{% endif %}>Roles y permisos</a>{% endif %}
+          <!-- Atención Ciudadana -->
+          <div class="sidebar-category">Atención Ciudadana</div>
+          <ul class="sidebar-nav">
+            {% if perms.gestion.view_atencion %}
+            <li>
+              <a href="{% url 'gestion:listado' 'atenciones' %}" class="nav-link-btn {% if modulo == 'atenciones' %}active{% endif %}">
+                <span>📝 Ingreso de Atención</span>
+              </a>
+            </li>
+            {% endif %}
+          </ul>
+
+          <!-- Mantenedores del Sistema (CRUDs) -->
+          <div class="sidebar-category">Mantenedores del Sistema</div>
+          <ul class="sidebar-nav">
+            {% if perms.gestion.view_delegacion %}
+            <li>
+              <a href="{% url 'gestion:listado' 'delegaciones' %}" class="nav-link-btn {% if modulo == 'delegaciones' %}active{% endif %}">
+                <span>🏛️ Delegaciones</span>
+              </a>
+            </li>
+            {% endif %}
+            {% if user.is_superuser %}
+            <li>
+              <a href="{% url 'cuentas:roles' %}" class="nav-link-btn {% if request.resolver_match.url_name == 'roles' %}active{% endif %}">
+                <span>🛡️ Roles y permisos</span>
+              </a>
+            </li>
+            {% endif %}
+            {% if user.is_superuser or role_label == 'Administrador' %}
+            <li>
+              <a href="{% url 'cuentas:usuarios' %}" class="nav-link-btn {% if request.resolver_match.url_name == 'usuarios' %}active{% endif %}">
+                <span>👥 Usuarios del sistema</span>
+              </a>
+            </li>
+            {% endif %}
+            {% if perms.gestion.view_itemmeta %}
+            <li>
+              <a href="{% url 'gestion:listado' 'metas' %}" class="nav-link-btn {% if modulo == 'metas' %}active{% endif %}">
+                <span>🎯 Ítems y metas</span>
+              </a>
+            </li>
+            {% endif %}
+            {% if perms.gestion.view_tipoatencion %}
+            <li>
+              <a href="{% url 'gestion:listado' 'tipos' %}" class="nav-link-btn {% if modulo == 'tipos' %}active{% endif %}">
+                <span>📂 Tipo de Atención</span>
+              </a>
+            </li>
+            {% endif %}
+            {% if perms.gestion.view_subatencion %}
+            <li>
+              <a href="{% url 'gestion:listado' 'subatenciones' %}" class="nav-link-btn {% if modulo == 'subatenciones' %}active{% endif %}">
+                <span>📑 Sub Atención</span>
+              </a>
+            </li>
+            {% endif %}
+          </ul>
         {% endif %}
-      </nav>
+      </div>
+
+      <div class="sidebar-footer-note" style="padding: 16px 24px; font-size: 0.75rem; color: #8c7e7a; border-top: 1px solid var(--border-color);">
+        <strong>SGR La Serena</strong><br>
+        Gestión Territorial y Resultados<br>
+        Ilustre Municipalidad de La Serena
+      </div>
     </aside>
     {% endif %}
-    <main class="workspace-main" id="contenido" tabindex="-1">
-      {% if messages %}<div class="messages" aria-live="polite">{% for message in messages %}<div class="alert {% if message.tags == 'error' %}alert-danger{% elif message.tags == 'success' %}alert-success{% else %}alert-info{% endif %}" role="status">{{ message }}</div>{% endfor %}</div>{% endif %}
+
+    <!-- CONTENIDO PRINCIPAL -->
+    <main class="sgr-main-content" id="contenido" tabindex="-1">
+      {% if messages %}
+      <div class="messages mb-3" aria-live="polite">
+        {% for message in messages %}
+        <div class="alert {% if message.tags == 'error' %}alert-danger{% elif message.tags == 'success' %}alert-success{% else %}alert-info{% endif %} shadow-sm" role="status">
+          {{ message }}
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+
       {% block content %}{% endblock %}
     </main>
   </div>
-  <footer class="workspace-footer">Municipalidad de La Serena · Sistema de Gestión de Resultados</footer>
+
+  <footer class="text-center py-3" style="font-size: 0.8rem; color: #8c7e7a; border-top: 1px solid #ebd9d7; background: #fff;">
+    Municipalidad de La Serena · Sistema de Gestión de Resultados
+  </footer>
+
   <script src="{% static 'vendor/bootstrap-5.3.3.bundle.min.js' %}" defer></script>
   <script src="{% static 'vendor/sweetalert2-11.14.5.min.js' %}" defer></script>
   <script src="{% static 'sgr/app.js' %}" defer></script>
