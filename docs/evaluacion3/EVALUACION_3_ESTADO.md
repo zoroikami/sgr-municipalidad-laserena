@@ -1,14 +1,27 @@
 # Evaluación III: estado verificable
 
 Fecha: 10 de noviembre de 2026, America/Santiago.
-Base de esta preparación: `main` después del merge del PR #12 (`191edd6`).
+Aplicación desplegada desde `main`: merge del PR #13 (`8f189c8807c1d0051ab7dc6eb1c0a751c5d4369a`).
+
+## AWS verificado
+
+- URL pública: https://sgr-100-58-127-230.sslip.io
+- EC2 existente: `i-0a5533ede6cc60b7e`, `us-east-1`, Amazon Linux 2023.
+- Imagen Docker construida en EC2; Compose con MySQL 8.4.13, Redis, Daphne y Nginx; migraciones aplicadas; `verify_environment --demo --production` aprobado.
+- Certificado público Let's Encrypt; cookies Secure y HTTPS/WSS comprobados sin desactivar verificación TLS. Simulación de renovación ACME aprobada y temporizador diario activo.
+- Siete sesiones: seis cuentas nombradas y un superadministrador independiente con todos los ámbitos, módulos, gestión de roles y portal ciudadano.
+- Recorrido real en navegador: WebSocket A/B, filtros, modal inválido, cancelación SweetAlert, layouts 375/768/1280, aislamiento de clientes, foto recortada persistente y privada.
+- Recuperación enviada mediante SMTP a **Mailpit privado**; token de un uso, rechazo de contraseña anterior y cambio con contraseña actual verificados. No acredita entrega a correo externo.
+- Respaldo previo de MySQL, fotos, configuración e imagen anterior disponible en el host. El historial local anterior quedó conservado en una rama de archivo.
+- MySQL y aplicación reiniciados: la huella de registros de negocio, usuarios, hashes de contraseñas y fotos permaneció idéntica; `/api/health/` volvió a responder correctamente.
+- El nombre DNS depende de la IP actual del laboratorio. Al cambiar la IP se debe actualizar el dominio, hosts y certificado.
 
 ## Validación local completada
 
 | Comprobación | Resultado observado |
 | --- | --- |
 | Motor y migraciones | MySQL 8.4.7 real, base aislada, migraciones aplicadas; sin migraciones pendientes |
-| Suite Django | 87 pruebas aprobadas con MySQL y Redis reales, incluidas concurrencia, permisos, recuperación y errores HTTP |
+| Suite Django | 91 pruebas aprobadas con MySQL y Redis reales, incluidas provisión de superadministrador, aislamiento del portal, nombres, concurrencia, permisos, recuperación y errores HTTP |
 | RUT compartido | 2 pruebas Python y 2 Node aprobadas |
 | Servicios | Redis 7.4.11 con envío/recepción real; SMTP entregado a Mailpit 1.27.10 |
 | Navegador | Cinco scripts aprobados: Croppr, flujos completos, diseño, paneles y usabilidad |
@@ -28,8 +41,8 @@ El entorno fue Windows con servicios nativos aislados. Redis utilizó el port de
 redis-windows para MSYS2; Mailpit y Nginx se obtuvieron de sus proyectos oficiales.
 Los binarios, configuraciones privadas, certificados y logs permanecieron fuera del
 repositorio. Las capturas están en `output/browser/`, excluido de Git. Esto acredita
-el comportamiento local, no un despliegue ni una construcción nueva de la imagen
-Docker para Linux. Docker no está instalado en este equipo.
+el comportamiento local. La imagen Docker para Linux se construyó posteriormente
+en EC2 y se verificó allí el despliegue público descrito arriba.
 
 ## Preparación reproducible
 
@@ -45,22 +58,21 @@ Docker para Linux. Docker no está instalado en este equipo.
 
 ## Pendientes externos para la entrega
 
-- **AWS, pospuesto por el usuario:** construir la imagen Linux en el host de
-  despliegue, verificar Compose, certificados públicos, correo y puertos; desplegar
-  el `main` final y repetir la demostración con HTTP/WSS, persistencia y las seis
-  cuentas. Registrar URL pública, recurso EC2 y SHA desplegado en README.
+- **Disponibilidad del laboratorio:** mantener EC2 encendido durante la demostración;
+  revisar la dirección pública si AWS cambia la IP al reiniciar el laboratorio.
 - **Revisión humana:** un compañero debe revisar los PR funcionales de cada
   integrante. Los aportes de zoroikami, Hvsh-bit y Bogotor existen; en los PR
   consultados no aparecían revisiones formales. No se fabrican revisiones ni autoría.
 - **GitHub Actions:** los últimos trabajos no iniciaron pasos por bloqueo de
   facturación de la cuenta. Resolverlo corresponde al propietario; después ejecutar
   la CI sobre el commit final.
-- **Correo externo:** reemplazar en el proveedor la credencial SMTP expuesta en una
-  versión histórica antes de reutilizar esa cuenta; no se reescribió el historial.
+- **Correo externo:** configurar un proveedor SMTP y correos de destinatarios reales;
+  actualmente los mensajes llegan exclusivamente al buzón de pruebas privado.
+  Reemplazar en el proveedor cualquier credencial expuesta en el historial antes de reutilizarla.
 - **Entrega y defensa:** registrar el repositorio y nombres completos en la
   plataforma; entregar las seis credenciales por medio privado y explicar código,
   permisos, ORM/ModelForms, sesión y recorrido de `transaction.on_commit` a Redis,
   WebSocket y la vista protegida de tabla. La pauta no pide un informe adicional.
 
-No se asigna puntaje ni se afirma cumplimiento del 100% de la evaluación antes de
-la demostración pública en AWS y la revisión real del equipo.
+No se asigna puntaje ni se afirma cumplimiento del 100% de la evaluación: la
+revisión real del equipo, facturación de CI y entrega académica siguen pendientes.
