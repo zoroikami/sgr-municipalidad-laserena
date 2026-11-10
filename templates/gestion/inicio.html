@@ -1,9 +1,11 @@
 {% extends 'base.html' %}
 {% block content %}
 <section aria-labelledby="page-title">
+  <div class="module-breadcrumb">Gestión municipal / Inicio</div>
   <div class="page-heading"><div><h1 id="page-title">Gestión municipal</h1><p>Consulta y administra los registros de {{ request.user.perfil.delegacion.nombre }} según los permisos de tu cuenta.</p></div></div>
+  <div class="welcome-panel"><strong>{{ user.get_full_name|default:user.username }}, bienvenido al SGR</strong><p>Tu espacio de trabajo reúne las atenciones ciudadanas y los mantenedores de tu delegación. Selecciona un módulo para comenzar.</p></div>
   <h2>Registros de tu delegación</h2>
-  <dl class="module-summary">{% for stat in stats %}<div><dt><a href="{{ stat.url }}">{{ stat.titulo }}</a></dt><dd>{{ stat.total }}</dd></div>{% empty %}<p>Tu cuenta aún no tiene secciones de consulta asignadas.</p>{% endfor %}</dl>
+  <dl class="module-summary">{% for stat in stats %}<div><dt><a href="{{ stat.url }}">{% include 'shared/icon.html' with name='arrow' %}{{ stat.titulo }}</a></dt><dd>{{ stat.total }}</dd></div>{% empty %}<p>Tu cuenta aún no tiene secciones de consulta asignadas.</p>{% endfor %}</dl>
   <p class="text-muted">Los totales corresponden a registros disponibles y excluyen los archivados.</p>
 </section>
 {% endblock %}

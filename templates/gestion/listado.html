@@ -1,16 +1,19 @@
 {% extends 'base.html' %}
+{% load static %}
 {% block content %}
 <section aria-labelledby="page-title"{% if modulo == 'atenciones' %} data-realtime-table data-table-url="{% url 'gestion:tabla' modulo %}"{% endif %}>
+  <div class="module-breadcrumb"><a href="{% url 'gestion:inicio' %}">Gestión municipal</a> / {{ titulo }}</div>
   <div class="page-heading">
     <div><h1 id="page-title">{{ titulo }}</h1><p class="text-muted">Consulta los registros de tu delegación.</p></div>
     <div class="heading-actions">
-      <a class="btn btn-outline-secondary" href="{{ export_url }}">Exportar Excel</a>
-      {% if can_add %}<a class="btn btn-primary" href="{% url 'gestion:crear' modulo %}">Crear registro</a>{% endif %}
+      <a class="btn btn-outline-secondary btn-export-excel" href="{{ export_url }}"><img class="excel-icon" src="{% static 'municipal/excel.svg' %}" width="20" height="20" alt="">Exportar Excel</a>
+      {% if can_add %}<a class="btn btn-primary" href="{% url 'gestion:crear' modulo %}">{% include 'shared/icon.html' with name='plus' %}Crear registro</a>{% endif %}
     </div>
   </div>
   {% if modulo == 'atenciones' %}<p class="connection-status" id="realtime-status" role="status" aria-live="polite" data-state="connecting">Conectando actualizaciones en tiempo real…</p>{% endif %}
-  <form class="filter-form" method="get" action="{% url 'gestion:listado' modulo %}" role="search" aria-label="Filtrar {{ titulo }}">
-    <div class="filter-search"><label for="filter-q">Buscar</label><input class="form-control" id="filter-q" type="search" name="q" value="{{ state.q }}" maxlength="140"></div>
+  <div class="table-card">
+  <form class="filter-form table-toolbar" method="get" action="{% url 'gestion:listado' modulo %}" role="search" aria-label="Filtrar {{ titulo }}">
+    <div class="filter-search"><label for="filter-q">Buscar</label><div class="search-input-wrapper">{% include 'shared/icon.html' with name='search' %}<input class="form-control" id="filter-q" type="search" name="q" value="{{ state.q }}" maxlength="140" placeholder="Buscar registros…"></div></div>
     <div><label for="filter-estado">Estado</label><select class="form-select" id="filter-estado" name="estado"><option value="">Todos los estados</option>{% for value,label in filter_choices %}<option value="{{ value }}"{% if state.estado == value %} selected{% endif %}>{{ label }}</option>{% endfor %}</select></div>
     {% if modulo == 'atenciones' %}<div><label for="filter-tipo">Tipo de atención</label><select class="form-select" id="filter-tipo" name="tipo"><option value="">Todos los tipos</option>{% for tipo in tipos %}<option value="{{ tipo.pk }}"{% if state.tipo == tipo.pk|stringformat:'s' %} selected{% endif %}>{{ tipo.nombre }}</option>{% endfor %}</select></div>{% endif %}
     <div><label for="filter-orden">Orden</label><select class="form-select" id="filter-orden" name="orden">{% for value,label in order_choices %}<option value="{{ value }}"{% if state.orden == value %} selected{% endif %}>{{ label }}</option>{% endfor %}</select></div>
@@ -19,5 +22,6 @@
     <a class="filter-reset" href="{% url 'gestion:listado' modulo %}?q=&amp;estado=&amp;tipo=&amp;orden=-created_at&amp;tamano=15&amp;pagina=1">Limpiar filtros</a>
   </form>
   <div id="tabla-region">{% include 'gestion/_tabla.html' %}</div>
+  </div>
 </section>
 {% endblock %}

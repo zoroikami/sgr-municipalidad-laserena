@@ -2,11 +2,12 @@
 {% block title %}Usuarios | SGR{% endblock %}
 {% block content %}
 <section aria-labelledby="account-title">
+  <div class="module-breadcrumb"><a href="{% url 'gestion:inicio' %}">Gestión municipal</a> / Usuarios</div>
   <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-3"><h1 id="account-title">Usuarios</h1><a class="btn btn-primary" href="{% url 'cuentas:usuario_crear' %}">Crear usuario</a></div>
   <p>Administra las cuentas de tu ámbito.</p>
-  <div class="table-responsive"><table class="table"><thead><tr><th scope="col">Usuario</th><th scope="col">Nombre</th><th scope="col">Delegación</th><th scope="col">Rol</th><th scope="col">Estado</th><th scope="col">Acción</th></tr></thead><tbody>
-    {% for account in usuarios %}<tr><td>{{ account.username }}</td><td>{{ account.get_full_name|default:'Sin nombre' }}</td><td>{{ account.perfil.delegacion.nombre }}</td><td>{% for group in account.groups.all %}{{ group.name }}{% if not forloop.last %}, {% endif %}{% empty %}Sin rol{% endfor %}</td><td>{% if account.is_active %}Activa{% else %}Inactiva{% endif %}</td><td><a href="{% url 'cuentas:usuario_editar' account.pk %}" aria-label="Editar usuario {{ account.username }}">Editar</a></td></tr>
+  <div class="table-card"><div class="table-responsive"><table class="table records-table"><thead><tr><th scope="col">Usuario</th><th scope="col">Nombre</th><th scope="col">Delegación</th><th scope="col">Rol</th><th scope="col">Estado</th><th scope="col">Acción</th></tr></thead><tbody>
+    {% for account in usuarios %}<tr><td>{{ account.username }}</td><td>{{ account.get_full_name|default:'Sin nombre' }}</td><td>{{ account.perfil.delegacion.nombre }}</td><td>{% for group in account.groups.all %}{{ group.name }}{% if not forloop.last %}, {% endif %}{% empty %}Sin rol{% endfor %}</td><td><span class="badge-status {% if account.is_active %}activa{% else %}inactiva{% endif %}">{% if account.is_active %}Activa{% else %}Inactiva{% endif %}</span></td><td><div class="row-actions"><a class="action-link edit" href="{% url 'cuentas:usuario_editar' account.pk %}" aria-label="Editar usuario {{ account.username }}">{% include 'shared/icon.html' with name='edit' %}Editar</a></div></td></tr>
     {% empty %}<tr><td colspan="6">No hay cuentas en tu ámbito.</td></tr>{% endfor %}
-  </tbody></table></div>
+  </tbody></table></div></div>
 </section>
 {% endblock %}

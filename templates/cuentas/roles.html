@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% block title %}Roles y permisos | SGR{% endblock %}
 {% block content %}
-<section aria-labelledby="account-title">
+<section class="content-panel" aria-labelledby="account-title">
   <h1 id="account-title">Roles y permisos</h1>
   <p>Selecciona el grupo y el conjunto completo de permisos que quieres asignar.</p>
   <form method="post">{% csrf_token %}{% include 'cuentas/_fields.html' %}<button class="btn btn-primary" type="submit">Guardar permisos</button></form>

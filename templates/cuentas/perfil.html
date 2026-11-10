@@ -2,10 +2,14 @@
 {% block title %}Mi perfil | SGR{% endblock %}
 {% block extra_css %}<link rel="stylesheet" href="{% static 'vendor/croppr-2.3.1.min.css' %}">{% endblock %}
 {% block content %}
-<section class="account-section" aria-labelledby="account-title">
+<div class="module-breadcrumb">Mi cuenta / Perfil</div>
+<section class="account-section content-panel" aria-labelledby="account-title">
   <h1 id="account-title">Mi perfil</h1>
-  <dl><dt>RUT</dt><dd>{{ perfil.rut }}</dd><dt>Delegación</dt><dd>{{ perfil.delegacion.nombre }}</dd></dl>
-  {% if perfil.foto %}<img id="current-photo" src="{% url 'cuentas:foto' request.user.pk %}" width="128" height="128" alt="Tu foto de perfil actual">{% endif %}
+  <p class="text-muted">Actualiza tus datos de contacto y tu foto de perfil.</p>
+  <div class="profile-overview">
+    {% if perfil.foto %}<img id="current-photo" src="{% url 'cuentas:foto' request.user.pk %}" width="128" height="128" alt="Tu foto de perfil actual">{% else %}<img class="profile-placeholder" src="{% static 'municipal/avatar-default.svg' %}" width="96" height="96" alt="Sin foto de perfil">{% endif %}
+    <dl><dt>Usuario</dt><dd>{{ user.username }}</dd><dt>RUT</dt><dd>{{ perfil.rut }}</dd><dt>Delegación</dt><dd>{{ perfil.delegacion.nombre }}</dd><dt>Rol</dt><dd>{{ role_label }}</dd></dl>
+  </div>
   <form method="post" enctype="multipart/form-data" id="profile-form">
     {% csrf_token %}{% include 'cuentas/_fields.html' %}
     <div id="crop-panel" hidden>

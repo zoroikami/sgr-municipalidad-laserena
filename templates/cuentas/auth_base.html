@@ -1,0 +1,12 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+<section class="account-section auth-card" aria-labelledby="account-title">
+  <div class="auth-header">
+    <img src="{% static 'municipal/logo-la-serena-horizontal.svg' %}" alt="La Serena · Ilustre Municipalidad" width="320" height="89">
+    <h1 class="auth-title" id="account-title">{% block auth_heading %}{% endblock %}</h1>
+    {% block auth_description %}{% endblock %}
+  </div>
+  {% block auth_content %}{% endblock %}
+</section>
+{% endblock %}
