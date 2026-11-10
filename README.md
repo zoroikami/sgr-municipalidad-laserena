@@ -18,7 +18,7 @@ Aplicación: [http://127.0.0.1:8001](http://127.0.0.1:8001). Buzón SMTP local: 
 
 Las seis credenciales de prueba se guardan exclusivamente en `.private/cuentas-demo.json`, con permisos `600` y fuera de Git. Entregarlas al docente por un medio privado. No existen accesos automáticos ni botones para cambiar de cuenta.
 
-**Estado de AWS:** todavía no se ha identificado una instancia ni una dirección pública para esta migración. No se acredita despliegue AWS con las pruebas locales. Se requiere registrar aquí la URL verificada, recurso EC2 y commit de `main` desplegado después de la integración y la revisión real.
+**Estado de AWS:** el despliegue final se realizará después de validar e integrar esta preparación. El [PR #8](https://github.com/zoroikami/sgr-municipalidad-laserena/pull/8) registró una instancia anterior (`i-0a5533ede6cc60b7e`, `us-east-1`), pero la conexión al endpoint documentado agotó el tiempo de espera el 10 de noviembre de 2026. Esa evidencia histórica no acredita disponibilidad ni el commit final. Tras desplegar se registrarán aquí URL verificada, instancia y SHA de `main`.
 
 ## Instalación desde cero
 
@@ -38,7 +38,7 @@ brew install mysql-client pkgconf
 export PKG_CONFIG_PATH="$(brew --prefix mysql-client)/lib/pkgconfig"
 ```
 
-Preparación local:
+Preparación local (Bash; en PowerShell activa con `.venv\Scripts\Activate.ps1`):
 
 ```bash
 uv venv --python 3.11
@@ -49,12 +49,13 @@ docker compose up -d mysql redis mailpit
 python manage.py migrate
 python manage.py seed_demo
 python manage.py check
+python manage.py verify_environment --demo
 daphne -b 127.0.0.1 -p 8001 config.asgi:application
 ```
 
 Si MySQL todavía está inicializándose, esperar a que `docker compose ps` indique `healthy` antes de migrar. `scripts/configure_local.py` genera secretos aleatorios y no sobrescribe un `.env` existente. Para un entorno distinto, usar [.env.example](.env.example) como referencia y configurar sus valores privados.
 
-El entorno local utiliza MySQL 8.4 en `127.0.0.1:3307`, Redis 7.4 en `127.0.0.1:6380` y Mailpit en los puertos locales 1025/8025. Los volúmenes conservan MySQL al detener contenedores. No ejecutar `docker compose down -v` sobre datos que se quieran conservar. No hay fallback a SQLite.
+El entorno local utiliza MySQL 8.4 en `127.0.0.1:3307`, Redis 7.4 en `127.0.0.1:6380` y Mailpit en los puertos locales 1025/8025. Los volúmenes conservan MySQL al detener contenedores. No ejecutar `docker compose down -v` sobre datos que se quieran conservar. MySQL es el motor predeterminado. SQLite solo se habilita explícitamente con `USE_SQLITE=true` y `DJANGO_DEBUG=true` para una revisión rápida; producción lo rechaza.
 
 `DEBUG=true` solo se utiliza para desarrollo local y permite servir los estáticos con ASGI. Producción usa `DEBUG=false`, Nginx y `collectstatic`. Las fotos no tienen URL pública bajo MEDIA: se entregan mediante una vista autenticada que comprueba su propietario.
 
@@ -74,7 +75,7 @@ También están disponibles los catálogos de tipos/subatenciones, la consulta y
 
 Para habilitar el acceso global del sistema municipal, crea la cuenta técnica después de aplicar las migraciones con `python manage.py createsuperuser --username superadmin`. Introduce una contraseña privada cuando Django la solicite. El superadministrador ve todas las delegaciones, elige la delegación al crear un registro y conserva la delegación original al editar. Su ámbito global se aplica a los listados, Excel y la actualización en tiempo real. Las cuentas municipales de prueba conservan sus restricciones.
 
-La [preevaluación III](https://github.com/zoroikami/sgr-municipalidad-laserena/tree/c61d311bd513c9ea59334ff29c172342649c5cd3) se conserva en Git con su configuración y migraciones SQLite. Para instalar esta entrega, ejecuta las migraciones de `config.settings` sobre una base MySQL nueva y conserva un respaldo independiente si tienes datos de la preevaluación. El prototipo anterior y sus pruebas históricas se mantienen juntos.
+La [preevaluación III](https://github.com/zoroikami/sgr-municipalidad-laserena/tree/c61d311bd513c9ea59334ff29c172342649c5cd3) se conserva en Git con su configuración y migraciones SQLite. Para instalar esta entrega, ejecuta las migraciones de `config.settings` sobre una base MySQL nueva y conserva un respaldo independiente si tienes datos de la preevaluación. Las pruebas históricas del servidor retirado se conservan en `tests/legacy/`; sus dependencias están en revisiones anteriores de Git.
 
 El modelo implementado está documentado en [diagramas/modelos_django.md](diagramas/modelos_django.md), con [fuente Mermaid](diagramas/modelos_django.mmd). Los diagramas MySQL anteriores corresponden a la primera entrega, no a estas migraciones.
 
@@ -132,7 +133,7 @@ Ruta: `/ws/atenciones/`. Servidor: `daphne config.asgi:application`. Capa: `chan
 Recorrido del evento:
 
 1. Editor guarda un ModelForm válido dentro de una transacción.
-2. `transaction.on_commit` notifica al grupo calculado por el servidor desde su delegación.
+2. `transaction.on_commit` notifica al grupo calculado por el servidor desde su delegación y al grupo de soporte global. Las cuentas limitadas nunca se unen al grupo global.
 3. El lector autenticado del mismo ámbito recibe una notificación mínima, sin registros ni datos personales.
 4. El navegador solicita `/gestion/atenciones/tabla/`, una vista HTTP protegida que reaplica ámbito, filtros, orden y página.
 5. Se reemplaza únicamente la tabla/paginación; no hay F5, recarga de la página ni polling.
@@ -157,7 +158,7 @@ Primero conceder a la cuenta local permiso sobre **su base aislada de pruebas**:
 docker compose exec -T mysql sh -c 'MYSQL_PWD="$MYSQL_ROOT_PASSWORD" mysql -uroot -e "GRANT ALL PRIVILEGES ON test_sgr_django.* TO '\''sgr'\''@'\''%'\'';"'
 pytest tests_django
 python manage.py makemigrations --check --dry-run
-DJANGO_DEBUG=false python manage.py check --deploy --fail-level WARNING
+DJANGO_DEBUG=false COOKIE_SECURE=true SECURE_SSL_REDIRECT=true python manage.py check --deploy --fail-level WARNING
 python manage.py collectstatic --noinput
 python -m unittest discover -s tests -p 'test_*.py'
 node --test tests/test_*.cjs
@@ -171,9 +172,12 @@ Con ASGI y Mailpit funcionando, las semillas cargadas y las credenciales privada
 playwright install chromium
 python tests_browser/check_crop.py
 python tests_browser/check_flows.py
+python tests_browser/check_design.py
+python tests_browser/check_paneles.py
+python tests_browser/check_usability.py
 ```
 
-El segundo recorrido usa seis sesiones independientes, comprueba cambios WebSocket solo en A, filtros, cancelación de SweetAlert, errores dentro del modal, navegación, portal, foto, correo SMTP, token de un uso y cambio/logout. Modifica y restaura un nombre ficticio, guarda una foto de prueba en Cliente 1 y restaura su contraseña privada. Ejecutarlo sobre datos de demostración. Las capturas locales se escriben en `output/browser/`, excluido de Git.
+El recorrido `check_flows.py` usa seis sesiones independientes, comprueba cambios WebSocket solo en A, filtros, cancelación de SweetAlert, errores dentro del modal, navegación, portal, foto, correo SMTP, token de un uso y cambio/logout. Modifica y restaura un nombre ficticio, guarda una foto de prueba en Cliente 1 y restaura su contraseña privada. Ejecutarlo sobre datos de demostración. Las capturas locales se escriben en `output/browser/`, excluido de Git.
 
 Las pruebas controladas de 400/500 viven exclusivamente en `tests_django/error_urls.py` con `DEBUG=False`; no hay rutas de producción para forzar fallos. Ver [docs/evaluacion3/EVALUACION_3_ESTADO.md](docs/evaluacion3/EVALUACION_3_ESTADO.md) para resultados y límites verificados.
 
@@ -203,14 +207,44 @@ El script comprueba configuración de producción, respalda MySQL en `.private/b
 docker compose -f compose.yaml -f deploy/compose.production.yaml ps
 ```
 
-La base SQLite anterior no se modifica ni se importa automáticamente: el nuevo esquema tiene ámbitos y validaciones distintos. `python scripts/backup_legacy.py` crea una copia privada coherente para una migración de datos revisada. No ejecutar el script SQL destructivo de la primera entrega sobre esta base.
+La base SQLite anterior no se importa automáticamente. Conserva una copia independiente antes de cualquier migración de datos revisada. Los scripts del servidor antiguo ya no forman parte de la instalación actual.
 
 ## Git y entrega académica
 
-Desarrollo en `feature/SGR-evaluacion3-django`; integrar mediante Pull Request revisado por otro integrante, sin commits ni push directos a `main`. La CI declarada en `.github/workflows/django.yml` ejecuta las pruebas con MySQL/Redis y conserva las pruebas históricas. La revisión de un agente no sustituye la revisión de un compañero requerida por la pauta.
+El [PR #12](https://github.com/zoroikami/sgr-municipalidad-laserena/pull/12) se integró a `main` el 10 de noviembre de 2026 (`191edd6`). La preparación final continúa en `feature/sgr-preparacion-final` y se integra mediante otro PR revisado por un compañero. Las pruebas actuales son `tests_django` y las pruebas compartidas de RUT; las del servidor retirado están en `tests/legacy/`.
 
-El [PR #5 · migración Django y evaluación III](https://github.com/zoroikami/sgr-municipalidad-laserena/pull/5) fue integrado el 10 de noviembre de 2026. Los ajustes posteriores de interfaz, códigos, perfil e ingreso municipal se mantienen en `feature/SGR-evaluacion3-django` para su revisión e integración. La última verificación local aprobó 80 pruebas Django y los recorridos de navegador; las 70 pruebas históricas se verificaron en la migración inicial. El run remoto original no inició pasos por un bloqueo de facturación reportado por GitHub; ese resultado no acredita pruebas remotas de los cambios posteriores.
+GitHub Actions no pudo iniciar los últimos trabajos por un bloqueo de facturación de la cuenta. Los resultados locales no se presentan como resultados de CI. La revisión de un agente tampoco sustituye la revisión de un compañero.
 
 Cada integrante debe aportar al menos un PR funcional con su autoría y revisión reales. Este trabajo no crea aportes ni revisiones ficticias y no reescribe el historial previo.
 
-La entrega en la plataforma consiste en el enlace del repositorio y los nombres completos de todos los integrantes. No se exige un informe adicional. Los antecedentes de primera/segunda entrega permanecen en `diagramas/`, `especificaciones/`, `gestion_agil/`, `mockup/` y los documentos históricos; no representan el estado operativo actual de Django.
+La entrega en la plataforma consiste en el enlace del repositorio y los nombres completos de todos los integrantes. No se exige un informe adicional. Los antecedentes de primera/segunda entrega disponibles se agrupan en `docs/antecedentes/` y en el historial de Git; no representan el estado operativo actual de Django.
+
+
+### Verificar el entorno antes de AWS
+
+### Superadministrador y cuentas de revisión
+
+`python manage.py provision_superadmin` crea una cuenta adicional `superadmin` con contraseña aleatoria guardada únicamente en `.private/superadmin.json`. Accede a todas las delegaciones, CRUD, exportaciones, usuarios, roles, portal ciudadano y consola técnica. Repetir el comando conserva su contraseña y nunca eleva una cuenta municipal existente. El portal de un cliente sigue limitado a sus propias atenciones.
+
+`python manage.py seed_demo --update-names` asigna los nombres solicitados a las cuentas de demostración existentes sin cambiar sus contraseñas ni permisos:
+
+| Usuario | Nombre | Rol / ámbito |
+| --- | --- | --- |
+| admin_a | Keoni Vergara | Administrador / Centro |
+| editor_a | Harold Concha | Editor / Centro |
+| lector_a | Marcos Ortiz | Lector / Centro |
+| lector_b | Claudio Romo | Lector / Las Compañías |
+| cliente_1 | Javier Ahumada | Cliente / registros propios |
+| cliente_2 | Jorge Cortes | Cliente / registros propios |
+
+Las cuentas conservan sus alias para mantener los recorridos de evaluación reproducibles. Los nombres de estas cuentas no constituyen evidencia de autoría académica.
+
+La renovación TLS usa `deploy/renew_tls.sh DOMINIO`, ejecutado por un temporizador del host. Nginx sirve exclusivamente el desafío ACME por HTTP y redirige las demás rutas a HTTPS. Los certificados y la cuenta ACME permanecen fuera de Git.
+
+### Comprobación de dependencias
+
+`python manage.py verify_environment --demo` comprueba MySQL, las zonas horarias de los filtros, envío/recepción en Redis y conexión SMTP real. Rechaza SQLite y capas de canales/correo en memoria o archivos. `--production` añade `DEBUG=False` y los checks de seguridad. No imprime secretos ni envía mensajes a terceros; el recorrido de navegador acredita el correo entregado al buzón de pruebas y el token.
+
+Para usar servicios nativos, conserva la misma configuración y ajusta solo los puertos privados en `.env`. La validación del 10 de noviembre se ejecutó en Windows con MySQL 8.4.7, Redis 7.4.11 (port de redis-windows para MSYS2) y Mailpit 1.27.10. Los binarios se mantuvieron fuera del repositorio. La imagen de despliegue sigue utilizando Redis oficial para Linux.
+
+Conserva las credenciales de revisión fuera del repositorio. En la revisión grupal utiliza las seis cuentas limitadas; el superusuario técnico adicional no sustituye al administrador A. Para preparar la defensa, recorre las diez comprobaciones de la pauta: AWS/commit, ambos CRUD, validaciones, consultas/Excel, permisos, aislamiento, WebSocket, correo/Croppr/clientes, Git y navegación/errores.

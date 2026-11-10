@@ -216,6 +216,8 @@ def subatenciones(request):
 
 
 def own_records(user):
+    if user.is_superuser:
+        return Atencion.objects.filter(cliente__isnull=False).select_related('tipo', 'subatencion')
     if not is_cliente(user):
         raise PermissionDenied('Esta sección está disponible para cuentas de clientes.')
     return Atencion.objects.filter(cliente=user, delegacion_id=delegation_id(user)).select_related('tipo', 'subatencion')
@@ -227,7 +229,8 @@ def portal(request):
     from django.core.paginator import Paginator
     query = own_records(request.user)
     page = Paginator(query, 15).get_page(request.GET.get('pagina'))
-    return render(request, 'gestion/portal.html', {'titulo': 'Mis atenciones', 'page_obj': page})
+    return render(request, 'gestion/portal.html', {
+        'titulo': 'Portal ciudadano' if request.user.is_superuser else 'Mis atenciones', 'page_obj': page})
 
 
 @login_required

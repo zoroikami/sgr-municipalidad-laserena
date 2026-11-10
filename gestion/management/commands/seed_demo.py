@@ -16,10 +16,10 @@ from gestion.models import Atencion, Delegacion, ItemMeta, SubAtencion, TipoAten
 
 DELEGACIONES = [('DEL01', 'Centro'), ('DEL02', 'Las Compañías'), ('DEL03', 'La Pampa'),
                 ('DEL04', 'La Antena - La Florida'), ('DEL05', 'Rural'), ('DEL06', 'Avenida del Mar')]
-ACCOUNTS = [('admin_a', 'Administrador', 0, 'Administración Centro'),
-            ('editor_a', 'Editor', 0, 'Edición Centro'), ('lector_a', 'Lector', 0, 'Consulta Centro'),
-            ('lector_b', 'Lector', 1, 'Consulta Compañías'),
-            ('cliente_1', 'Cliente', 0, 'Valentina Araya'), ('cliente_2', 'Cliente', 0, 'Tomás Gallardo')]
+ACCOUNTS = [('admin_a', 'Administrador', 0, 'Keoni Vergara'),
+            ('editor_a', 'Editor', 0, 'Harold Concha'), ('lector_a', 'Lector', 0, 'Marcos Ortiz'),
+            ('lector_b', 'Lector', 1, 'Claudio Romo'),
+            ('cliente_1', 'Cliente', 0, 'Javier Ahumada'), ('cliente_2', 'Cliente', 0, 'Jorge Cortes')]
 
 
 def fictitious_rut(number):
@@ -42,6 +42,7 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument('--credentials-file', default='.private/cuentas-demo.json')
+        parser.add_argument('--update-names', action='store_true', help='Actualizar solo los nombres de las seis cuentas de demostración.')
 
     def handle(self, *args, **options):
         path = Path(options['credentials_file']).resolve()
@@ -60,8 +61,10 @@ class Command(BaseCommand):
                 'comuna': 'La Serena'})[0] for i, (code, name) in enumerate(DELEGACIONES)]
             users = {}
             for i, (alias, role, org_index, name) in enumerate(ACCOUNTS):
+                first_name, last_name = name.split(' ', 1)
                 user, created = get_user_model().objects.get_or_create(username=alias, defaults={
-                    'first_name': name, 'email': os.environ.get(f'DEMO_EMAIL_{alias.upper()}', f'{alias}@example.test'),
+                    'first_name': first_name, 'last_name': last_name,
+                    'email': os.environ.get(f'DEMO_EMAIL_{alias.upper()}', f'{alias}@example.test'),
                     'is_staff': False, 'is_superuser': False})
                 if created:
                     password = secrets.token_urlsafe(18)
@@ -73,6 +76,13 @@ class Command(BaseCommand):
                     'delegacion': orgs[org_index], 'rut': fictitious_rut(22000001 + i)})
                 if profile.delegacion_id != orgs[org_index].pk or user.is_superuser or user.is_staff:
                     raise CommandError(f'La cuenta {alias} ya existe con otro ámbito o privilegios técnicos. No se alteró esa cuenta.')
+                if options['update_names'] and not created:
+                    previous_name = user.get_full_name()
+                    user.first_name, user.last_name = first_name, last_name
+                    user.save(update_fields=['first_name', 'last_name'])
+                    # Synchronize only unchanged demo labels; preserve edited business records.
+                    Atencion.all_objects.filter(cliente=user, folio_anterior__startswith='ATN-2026-DEMO-',
+                        solicitante_nombre=previous_name).update(solicitante_nombre=name)
                 users[alias] = user
             services = ['Social', 'Salud', 'Educación', 'Servicios urbanos', 'Seguridad ciudadana']
             units = ['Atenciones', 'Visitas', 'Gestiones', 'Operativos']

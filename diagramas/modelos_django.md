@@ -4,7 +4,7 @@ Relaciones y atributos de `gestion/models.py` y `cuentas/models.py`. `User`, gru
 
 ```mermaid
 erDiagram
-    DELEGACION ||--o{ PERFIL : "asigna ámbito"
+    DELEGACION o|--o{ PERFIL : "asigna ámbito"
     USUARIO ||--o| PERFIL : "perfil propio"
     USUARIO }o--o{ GRUPO_DJANGO : "roles"
     GRUPO_DJANGO }o--o{ PERMISO_DJANGO : "autoriza acciones"
@@ -32,14 +32,15 @@ erDiagram
     PERFIL {
         bigint id PK
         bigint user_id FK,UK
-        bigint delegacion_id FK
-        varchar rut UK
+        bigint delegacion_id FK "nullable para soporte global"
+        varchar rut UK "nullable para soporte global"
         varchar foto
     }
     ITEM_META {
         bigint id PK
         bigint delegacion_id FK
         varchar codigo UK
+        varchar codigo_anterior UK "nullable, referencia de migración"
         varchar nombre
         text descripcion
         varchar unidad_medida
@@ -53,6 +54,7 @@ erDiagram
         bigint id PK
         bigint delegacion_id FK
         varchar codigo UK
+        varchar codigo_anterior UK "nullable, referencia de migración"
         varchar nombre
         text descripcion
         varchar estado
@@ -65,6 +67,7 @@ erDiagram
         bigint delegacion_id FK
         bigint tipo_id FK
         varchar codigo UK
+        varchar codigo_anterior UK "nullable, referencia de migración"
         varchar nombre
         text descripcion
         varchar estado
@@ -80,6 +83,7 @@ erDiagram
         bigint cliente_id FK "nullable"
         bigint responsable_id FK
         varchar folio UK
+        varchar folio_anterior UK "nullable, referencia de migración"
         varchar solicitante_rut
         varchar solicitante_nombre
         text descripcion
