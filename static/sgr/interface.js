@@ -1,5 +1,11 @@
 (() => {
   'use strict';
+  document.querySelectorAll('[data-delegation-switcher]').forEach(form => {
+    const select = form.querySelector('select');
+    if (!(select instanceof HTMLSelectElement)) return;
+    form.querySelector('button[type="submit"]').hidden = true;
+    select.addEventListener('change', () => form.requestSubmit());
+  });
   document.querySelectorAll('[data-password-target]').forEach(button => {
     const input = document.getElementById(button.dataset.passwordTarget);
     if (!(input instanceof HTMLInputElement) || input.type !== 'password') return;

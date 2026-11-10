@@ -5,7 +5,7 @@
   <div class="modal-dialog modal-lg modal-dialog-scrollable"><div class="modal-content">
     <div class="modal-header"><h2 class="modal-title" id="record-modal-title">{{ titulo }}</h2><a class="modal-close" href="{{ return_url }}" aria-label="Cancelar y volver al listado">Cerrar</a></div>
     <div class="modal-body">
-      {% if user.is_superuser %}{% if obj.delegacion %}<p class="locked-scope"><strong>Delegación</strong> {{ obj.delegacion.nombre }}</p>{% endif %}{% else %}<p class="locked-scope"><strong>Delegación</strong> {{ request.user.perfil.delegacion.nombre }}. El ámbito se asigna a tu cuenta.</p>{% endif %}
+      {% if can_switch_delegation %}{% if obj.delegacion %}<p class="locked-scope"><strong>Delegación</strong> {{ obj.delegacion.nombre }}</p>{% elif active_delegation %}<p class="locked-scope"><strong>Delegación</strong> {{ active_delegation.nombre }}</p>{% endif %}{% else %}<p class="locked-scope"><strong>Delegación</strong> {{ request.user.perfil.delegacion.nombre }}. El ámbito se asigna a tu cuenta.</p>{% endif %}
       <form method="post" enctype="multipart/form-data" id="record-form"{% if modulo == 'atenciones' %} data-subatenciones-url="{% url 'gestion:subatenciones' %}"{% endif %}>
         {% csrf_token %}
         {% if form.errors %}<div class="alert alert-danger error-summary" role="alert" tabindex="-1"><h3>Revisa los datos antes de guardar</h3>{% if form.non_field_errors %}{{ form.non_field_errors }}{% endif %}<ul>{% for field in form %}{% if field.errors %}<li><a href="#{{ field.id_for_label }}">{{ field.label }}: {{ field.errors|striptags }}</a></li>{% endif %}{% endfor %}</ul></div>{% endif %}

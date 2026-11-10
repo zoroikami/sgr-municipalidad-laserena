@@ -1,15 +1,53 @@
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import Group, User
-from django.core.exceptions import PermissionDenied
+from django.core.exceptions import BadRequest, PermissionDenied
 from django.db import transaction
 from django.http import FileResponse, Http404
 from django.shortcuts import get_object_or_404, redirect, render
-from django.views.decorators.http import require_http_methods
+from django.views.decorators.http import require_http_methods, require_POST
+from django.utils.http import url_has_allowed_host_and_scheme
+from gestion.delegation import SESSION_KEY, active_delegation, has_global_scope
 
 from .forms import GroupPermissionsForm, ManagedUserForm, ProfileForm
 from .models import Perfil
 from .roles import can_manage_users
+
+
+@login_required
+@require_POST
+def cambiar_delegacion(request):
+    if not has_global_scope(request.user):
+        raise PermissionDenied
+    from gestion.models import Delegacion
+    value = request.POST.get('delegacion', '')
+    selected = None
+    if value:
+        if not value.isdecimal() or len(value) > 12:
+            raise BadRequest('Selecciona una delegación válida.')
+        selected = Delegacion.objects.filter(pk=int(value), estado='Activo').first()
+        if selected is None:
+            raise BadRequest('Selecciona una delegación activa.')
+    if selected:
+        request.session[SESSION_KEY] = selected.pk
+    else:
+        request.session.pop(SESSION_KEY, None)
+    for key in list(request.session.keys()):
+        if key.startswith('listado_'):
+            del request.session[key]
+    # Return only to GET workspaces: do not resubmit a form from another scope.
+    from django.urls import resolve, Resolver404
+    from urllib.parse import urlsplit
+    target = request.POST.get('next', '/')
+    safe_routes = {'inicio', 'listado', 'portal', 'usuarios', 'roles', 'perfil'}
+    if url_has_allowed_host_and_scheme(target, allowed_hosts={request.get_host()}, require_https=request.is_secure()):
+        try:
+            match = resolve(urlsplit(target).path)
+            if match.url_name in safe_routes:
+                return redirect(urlsplit(target).path)
+        except Resolver404:
+            pass
+    return redirect('gestion:inicio')
 
 
 @login_required
@@ -54,9 +92,12 @@ def foto(request, pk):
 def managed_users(actor):
     if not can_manage_users(actor):
         raise PermissionDenied
-    users = User.objects.select_related('perfil__delegacion').prefetch_related('groups').filter(perfil__isnull=False, is_superuser=False)
+    users = User.objects.select_related('perfil__delegacion').prefetch_related('groups').filter(perfil__isnull=False)
     if not actor.is_superuser:
-        users = users.filter(perfil__delegacion=actor.perfil.delegacion, is_staff=False)
+        users = users.filter(perfil__delegacion=actor.perfil.delegacion, is_staff=False, is_superuser=False).exclude(
+            groups__name__in=['Coordinador', 'Superadministrador'])
+    elif active_delegation(actor) is not None:
+        users = users.filter(perfil__delegacion_id=active_delegation(actor))
     return users.order_by('username')
 
 

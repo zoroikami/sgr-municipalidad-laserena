@@ -73,6 +73,13 @@ a { color: var(--brand-wine); }
 .topbar-delegacion-label strong { font-size: var(--type-small); font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .topbar-delegacion-label small { font-size: var(--type-caption); color: var(--brand-muted); }
 .topbar-delegacion-pill > .ui-icon:last-child { width: 0.875rem; }
+.delegation-switcher { margin: 0; }
+.delegation-switcher select { width: 100%; min-width: 0; min-height: 0; padding: 0; border: 0; border-radius: 0; background-color: transparent; color: var(--brand-wine); font-size: var(--type-small); font-weight: 500; cursor: pointer; }
+.delegation-submit { min-height: 0; padding: var(--space-xs) var(--space-sm); font-size: var(--type-caption); color: var(--brand-wine); border: 1px solid var(--brand-border); }
+.delegation-submit:hover { background: var(--brand-surface); }
+.delegation-submit[hidden] { display: none; }
+.form-field .account-checkbox { display: inline-flex; align-items: center; gap: var(--space-sm); min-height: var(--legacy-control-height); margin: 0; cursor: pointer; }
+.account-checkbox input[type='checkbox'] { width: var(--space-lg); height: var(--space-lg); min-height: 0; flex: 0 0 auto; padding: 0; margin: 0; accent-color: var(--brand-wine); }
 .session-actions.topbar-right { flex-wrap: nowrap; gap: var(--space-md); }
 .header-profile-button { min-width: 0; padding: var(--space-xs) var(--space-sm); border: 1px solid transparent; border-radius: var(--legacy-radius-control); color: var(--brand-white); }
 .header-profile-button:hover { background: var(--chrome-on-brand-hover); border-color: var(--chrome-on-brand-border); color: var(--brand-white); }
@@ -249,6 +256,7 @@ a { color: var(--brand-wine); }
   .topbar-delegacion-pill { flex: 1 0 100%; order: 3; width: 100%; padding-block: var(--space-xs); }
   .topbar-delegacion-label { flex-direction: row; align-items: baseline; gap: var(--space-sm); }
   .topbar-delegacion-label small { font-size: var(--type-caption); }
+  .delegation-switcher .topbar-delegacion-label { flex-direction: column; align-items: stretch; gap: 0; }
   .sgr-main-content, .workspace-footer.municipal-copyright { padding: var(--space-lg); }
   .page-heading { gap: var(--space-md); }
   .table-card .filter-form, .table-card .results-summary, .table-card .results-pagination, .portal-count, .portal-pagination { padding: var(--space-lg); }

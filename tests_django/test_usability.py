@@ -65,7 +65,7 @@ def test_saved_user_rut_is_formatted_in_user_list_and_canonical_in_storage(clien
     client.force_login(mundo['users']['admin_a'])
     response = client.post(reverse('cuentas:usuario_crear'), {
         'username': 'formato_rut', 'first_name': 'Prueba', 'last_name': 'Formato',
-        'email': 'formato@example.test', 'rut': '11111111-1', 'role': 'Lector',
+        'email': 'formato@example.test', 'rut': '11111111-1', 'role': 'Consultor',
         'new_password': 'Comprobacion#2026-58', 'is_active': 'on',
     })
     assert response.status_code == 302

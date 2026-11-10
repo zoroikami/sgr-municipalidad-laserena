@@ -16,7 +16,7 @@ def test_limited_administrator_cannot_use_django_admin_even_if_staff_flag_is_set
 
 def test_account_manager_requires_real_django_permission(client, mundo):
     user = mundo['users']['admin_a']
-    group = Group.objects.get(name='Administrador')
+    group = Group.objects.get(name='Delegado Municipal')
     group.permissions.remove(*Permission.objects.filter(content_type__app_label='cuentas', codename='view_cuentas'))
     client.force_login(user)
     assert client.get(reverse('cuentas:usuarios')).status_code == 403

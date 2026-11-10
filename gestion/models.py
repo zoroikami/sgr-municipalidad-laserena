@@ -161,6 +161,7 @@ class Atencion(models.Model):
 
     def clean(self):
         from cuentas.rut import normalize_rut, RutError
+        from .delegation import has_global_scope
         errors = {}
         try:
             self.solicitante_rut = normalize_rut(self.solicitante_rut)
@@ -174,7 +175,7 @@ class Atencion(models.Model):
             errors['subatencion'] = 'La subatención no corresponde al tipo seleccionado.'
         for field in ['cliente', 'responsable']:
             user = getattr(self, field, None) if getattr(self, f'{field}_id', None) else None
-            if field == 'responsable' and user and user.is_superuser:
+            if field == 'responsable' and user and has_global_scope(user):
                 continue
             if self.delegacion_id and user and (not hasattr(user, 'perfil') or user.perfil.delegacion_id != self.delegacion_id):
                 errors[field] = 'La cuenta debe pertenecer a tu delegación.'

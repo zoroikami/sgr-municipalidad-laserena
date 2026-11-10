@@ -6,6 +6,7 @@ from .forms import MunicipalAuthenticationForm
 
 app_name = 'cuentas'
 urlpatterns = [
+    path('delegacion/', views.cambiar_delegacion, name='cambiar_delegacion'),
     path('login/', auth_views.LoginView.as_view(template_name='cuentas/login.html', authentication_form=MunicipalAuthenticationForm,
         extra_context={'public_layout': True}), name='login'),
     path('logout/', auth_views.LogoutView.as_view(next_page=reverse_lazy('cuentas:login')), name='logout'),
