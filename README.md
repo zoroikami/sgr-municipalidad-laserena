@@ -222,6 +222,27 @@ La entrega en la plataforma consiste en el enlace del repositorio y los nombres 
 
 ### Verificar el entorno antes de AWS
 
+### Superadministrador y cuentas de revisión
+
+`python manage.py provision_superadmin` crea una cuenta adicional `superadmin` con contraseña aleatoria guardada únicamente en `.private/superadmin.json`. Accede a todas las delegaciones, CRUD, exportaciones, usuarios, roles, portal ciudadano y consola técnica. Repetir el comando conserva su contraseña y nunca eleva una cuenta municipal existente. El portal de un cliente sigue limitado a sus propias atenciones.
+
+`python manage.py seed_demo --update-names` asigna los nombres solicitados a las cuentas de demostración existentes sin cambiar sus contraseñas ni permisos:
+
+| Usuario | Nombre | Rol / ámbito |
+| --- | --- | --- |
+| admin_a | Keoni Vergara | Administrador / Centro |
+| editor_a | Harold Concha | Editor / Centro |
+| lector_a | Marcos Ortiz | Lector / Centro |
+| lector_b | Claudio Romo | Lector / Las Compañías |
+| cliente_1 | Javier Ahumada | Cliente / registros propios |
+| cliente_2 | Jorge Cortes | Cliente / registros propios |
+
+Las cuentas conservan sus alias para mantener los recorridos de evaluación reproducibles. Los nombres de estas cuentas no constituyen evidencia de autoría académica.
+
+La renovación TLS usa `deploy/renew_tls.sh DOMINIO`, ejecutado por un temporizador del host. Nginx sirve exclusivamente el desafío ACME por HTTP y redirige las demás rutas a HTTPS. Los certificados y la cuenta ACME permanecen fuera de Git.
+
+### Comprobación de dependencias
+
 `python manage.py verify_environment --demo` comprueba MySQL, las zonas horarias de los filtros, envío/recepción en Redis y conexión SMTP real. Rechaza SQLite y capas de canales/correo en memoria o archivos. `--production` añade `DEBUG=False` y los checks de seguridad. No imprime secretos ni envía mensajes a terceros; el recorrido de navegador acredita el correo entregado al buzón de pruebas y el token.
 
 Para usar servicios nativos, conserva la misma configuración y ajusta solo los puertos privados en `.env`. La validación del 10 de noviembre se ejecutó en Windows con MySQL 8.4.7, Redis 7.4.11 (port de redis-windows para MSYS2) y Mailpit 1.27.10. Los binarios se mantuvieron fuera del repositorio. La imagen de despliegue sigue utilizando Redis oficial para Linux.

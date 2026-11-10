@@ -46,6 +46,18 @@ def test_technical_console_remains_available_at_its_explicit_address(client, tec
     assert client.get(reverse('admin:index')).status_code == 200
 
 
+def test_superadmin_has_portal_access_without_changing_client_isolation(client, technician, mundo):
+    client.force_login(technician)
+    response = client.get(reverse('gestion:portal'))
+    assert response.status_code == 200
+    assert response.context['page_obj'].paginator.count == 2
+    for record in (mundo['atn_a'], mundo['atn_2']):
+        assert client.get(reverse('gestion:portal_detalle', args=[record.pk])).status_code == 200
+    client.force_login(mundo['users']['cliente_1'])
+    assert client.get(reverse('gestion:portal')).context['page_obj'].paginator.count == 1
+    assert client.get(reverse('gestion:portal_detalle', args=[mundo['atn_2'].pk])).status_code == 404
+
+
 def test_municipal_administrator_login_opens_real_frontend(client, mundo):
     response = client.post(reverse('cuentas:login'), {'username': 'admin_a', 'password': 'Ensayo#Privado2026'})
     assert response.status_code == 302
