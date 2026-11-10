@@ -1,7 +1,7 @@
 """Municipal records. Every business relationship belongs to a delegation."""
 from django.conf import settings
 from django.core.exceptions import ValidationError
-from django.core.validators import MinValueValidator
+from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db import connection, models, transaction
 from django.db.models.functions import Cast, Substr
 from django.utils import timezone
@@ -121,7 +121,10 @@ class SubAtencion(RegistroDelegacion):
 class ItemMeta(RegistroDelegacion):
     prefijo = 'IT'
     unidad_medida = models.CharField('Unidad de medida', max_length=60)
+    cargo_sgr = models.CharField('Cargo municipal (vacío: común)', max_length=30, blank=True)
     meta_cantidad = models.PositiveIntegerField('Cantidad de meta', default=100, validators=[MinValueValidator(0)])
+    ponderador = models.DecimalField('Ponderador (%)', max_digits=5, decimal_places=2, default=100,
+        validators=[MinValueValidator(0), MaxValueValidator(100)])
 
     class Meta(RegistroDelegacion.Meta):
         verbose_name = 'ítem y meta'
@@ -188,3 +191,6 @@ class Atencion(models.Model):
             year = timezone.localtime(self.created_at).year if timezone.is_aware(self.created_at) else self.created_at.year
             self.folio = Secuencia.siguiente(f'ATN-{year}-', model=type(self), field='folio', width=4)
         return super().save(*args, **kwargs)
+
+
+from .models_integrado import ActividadSGR, AusenciaSGR, GestionTubo, Organizacion  # noqa: E402,F401

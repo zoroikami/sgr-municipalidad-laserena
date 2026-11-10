@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'sgr/integrado.css' %}">{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4"><h1>Tubo de trabajo</h1><div class="d-flex gap-2"><a class="btn btn-outline-secondary" href="{% url 'gestion:listado' 'tubo' %}">Ver listado</a>{% if perms.gestion.add_gestiontubo %}<a class="btn btn-primary" href="{% url 'gestion:crear' 'tubo' %}">Nueva gestión</a>{% endif %}</div></div>
+<section class="tubo-resumen" aria-label="Resumen de gestiones">
+  <article><h2>Gestiones en tubo</h2><strong>{{ total }}</strong><p>Derivadas para seguimiento</p></article>
+  <article class="realizado"><h2>Realizadas / concluidas</h2><strong>{{ realizados }}</strong><p>Tasa de resolución: {{ porcentaje|floatformat:1 }}%</p></article>
+  <article class="proceso"><h2>En proceso activo</h2><strong>{{ proceso }}</strong><p>Con cuadrilla o área de apoyo</p></article>
+  <article class="pendiente"><h2>Pendientes / alerta</h2><strong>{{ pendientes }}</strong><p>Esperando gestión técnica</p></article>
+</section>
+<section class="tubo-columnas" aria-label="Tablero de seguimiento">
+{% for columna in columnas %}<section class="tubo-columna {{ columna.color }}" aria-label="{{ columna.estado }}">
+  <h2>{{ forloop.counter }}. {{ columna.estado }} <span>{{ columna.cantidad }}</span></h2>
+  {% for obj in columna.registros %}<article class="tubo-tarjeta">
+    <div class="tubo-codigos"><strong>{{ obj.codigo }}</strong>{% if obj.atencion %}<a href="{% url 'gestion:detalle' 'atenciones' obj.atencion_id %}">{{ obj.atencion.folio }}</a>{% endif %}</div>
+    <h3{% if obj.estado == 'Realizado' %} class="tubo-concluido"{% endif %}>{{ obj.nombre }}</h3>
+    <p><strong>Solicitante:</strong> {{ obj.solicitante }}</p>
+    {% if obj.apoyo %}<p class="tubo-apoyo"><strong>Apoyo:</strong> {{ obj.apoyo }}</p>{% endif %}
+    {% if obj.fecha_compromiso %}<p>Compromiso: {{ obj.fecha_compromiso|date:'d/m/Y' }}</p>{% endif %}
+    <footer><span>{% if obj.estado == 'Realizado' %}Concluido{% else %}Responsable: {{ obj.responsable.get_full_name|default:obj.responsable.username }}{% endif %}</span><a href="{% url 'gestion:detalle' 'tubo' obj.pk %}">Ver detalle</a>
+    {% if columna.siguiente and perms.gestion.change_gestiontubo %}<form method="post" action="{% url 'gestion:tubo_mover' obj.pk %}">{% csrf_token %}<input type="hidden" name="desde" value="{{ obj.estado }}"><button type="submit">{% if columna.siguiente == 'Realizado' %}Realizar{% else %}A {{ columna.siguiente|lower }}{% endif %}</button></form>{% endif %}</footer>
+  </article>{% empty %}<p class="text-muted">Sin gestiones en este estado.</p>{% endfor %}
+  {% if columna.cantidad > 100 %}<a href="{% url 'gestion:listado' 'tubo' %}?estado={{ columna.estado|urlencode }}">Ver las {{ columna.cantidad }} gestiones</a>{% endif %}
+</section>{% endfor %}</section>
+{% endblock %}

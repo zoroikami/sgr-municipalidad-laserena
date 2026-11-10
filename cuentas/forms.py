@@ -84,6 +84,8 @@ class ProfileForm(forms.ModelForm):
 
 
 class ManagedUserForm(forms.ModelForm):
+    from gestion.integrado import CARGOS
+    cargo_sgr = forms.ChoiceField(label='Cargo municipal', required=False, choices=[('', 'Sin cargo asignado')] + CARGOS)
     email = forms.EmailField(label='Correo electrónico')
     rut = forms.CharField(label='RUT', max_length=20, help_text=RUT_INPUT_HELP,
                          widget=forms.TextInput(attrs={'placeholder': '12345678-5', 'spellcheck': 'false'}))
@@ -105,6 +107,7 @@ class ManagedUserForm(forms.ModelForm):
         if actor.is_superuser:
             self.fields['delegacion'] = forms.ModelChoiceField(label='Delegación', queryset=Delegacion.objects.all())
         if not self.creating:
+            self.initial['cargo_sgr'] = self.instance.perfil.cargo_sgr
             self.initial['rut'] = self.instance.perfil.rut
             self.initial['role'] = self.instance.groups.filter(name__in=ROLE_NAMES).values_list('name', flat=True).first()
             if actor.is_superuser:
@@ -145,7 +148,8 @@ class ManagedUserForm(forms.ModelForm):
             user.set_password(self.cleaned_data['new_password'])
         user.save()
         delegation = self.cleaned_data['delegacion'] if self.actor.is_superuser else self.actor.perfil.delegacion
-        Perfil.objects.update_or_create(user=user, defaults={'delegacion': delegation, 'rut': self.cleaned_data['rut']})
+        Perfil.objects.update_or_create(user=user, defaults={'delegacion': delegation, 'rut': self.cleaned_data['rut'],
+            'cargo_sgr': self.cleaned_data.get('cargo_sgr', '')})
         user.groups.set([Group.objects.get_or_create(name=self.cleaned_data['role'])[0]])
         return user
 

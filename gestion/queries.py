@@ -7,10 +7,18 @@ from cuentas.rut import format_rut
 
 from .access import scoped
 from .forms import AtencionFilterForm
-from .models import Atencion, Delegacion, ItemMeta, SubAtencion, TipoAtencion, ESTADOS, ESTADOS_ATENCION
+from .models import Atencion, Delegacion, ItemMeta, SubAtencion, TipoAtencion, ESTADOS, ESTADOS_ATENCION, Organizacion, GestionTubo
 
 
 MODULES = {
+    'organizaciones': {'model': Organizacion, 'title': 'Organizaciones comunitarias',
+        'search': ['codigo', 'nombre', 'familia', 'subfamilia', 'domicilio', 'registro_pj'],
+        'columns': [('Código', 'codigo'), ('Nombre', 'nombre'), ('Familia', 'familia'), ('Subfamilia', 'subfamilia'), ('Verificada', 'verificada'), ('Estado', 'estado')],
+        'sort': ['codigo', '-codigo', 'nombre', '-nombre', 'created_at', '-created_at']},
+    'tubo': {'model': GestionTubo, 'title': 'Gestiones en tubo',
+        'search': ['codigo', 'nombre', 'solicitante', 'territorio', 'apoyo'],
+        'columns': [('Código', 'codigo'), ('Gestión', 'nombre'), ('Solicitante', 'solicitante'), ('Territorio', 'territorio'), ('Apoyo', 'apoyo'), ('Estado', 'estado')],
+        'sort': ['codigo', '-codigo', 'nombre', '-nombre', 'created_at', '-created_at']},
     'metas': {'model': ItemMeta, 'title': 'Ítems y Metas', 'search': ['codigo', 'nombre', 'descripcion'],
               'columns': [('Código', 'codigo'), ('Nombre', 'nombre'), ('Unidad', 'unidad_medida'), ('Meta', 'meta_cantidad'), ('Estado', 'estado'), ('Creación', 'created_at')],
               'sort': ['nombre', '-nombre', 'codigo', '-codigo', 'created_at', '-created_at']},
@@ -40,7 +48,7 @@ def state_for(request, modulo):
         if name in request.GET:
             state[name] = request.GET[name]
     state['q'] = str(state['q']).strip()[:140]
-    allowed_states = dict(ESTADOS_ATENCION if modulo == 'atenciones' else ESTADOS)
+    allowed_states = dict(choices_for(modulo))
     if state['estado'] not in allowed_states:
         state['estado'] = ''
     if state['orden'] not in config['sort']:
@@ -122,7 +130,7 @@ def list_context(request, modulo):
         'modulo': modulo, 'titulo': config['title'], 'state': state, 'page_obj': page,
         'columns': cols, 'rows': rows, 'can_add': can('add') and (modulo != 'delegaciones' or request.user.is_superuser),
         'can_change': can('change'), 'can_delete': can('delete') and modulo != 'delegaciones',
-        'filter_choices': ESTADOS_ATENCION if modulo == 'atenciones' else ESTADOS,
+        'filter_choices': choices_for(modulo),
         'order_choices': [(key, sort_label(key)) for key in config['sort']],
         'page_sizes': [5, 15, 30], 'pagination': pagination,
         'filter_form': filter_form, 'invalid_filters': invalid_filters, 'export_url': export_url,
@@ -140,7 +148,13 @@ def display_value(obj, key):
         return timezone.localtime(value).strftime('%d-%m-%Y %H:%M')
     if key in ('rut', 'solicitante_rut'):
         return format_rut(value)
+    if isinstance(value, bool):
+        return 'Sí' if value else 'No'
     return str(value) if value is not None else ''
+
+
+def choices_for(modulo):
+    return GestionTubo.ESTADOS if modulo == 'tubo' else ESTADOS_ATENCION if modulo == 'atenciones' else ESTADOS
 
 
 def sort_label(key):

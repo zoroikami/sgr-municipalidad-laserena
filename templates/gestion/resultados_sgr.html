@@ -1,0 +1,18 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'sgr/integrado.css' %}">{% endblock %}
+{% block content %}
+<h1>Resultados SGR</h1>
+<p>La acción realizada suma puntaje cuando tiene nombre y teléfono del usuario. El cumplimiento por ítem tiene un tope de 120%.</p>
+<div class="d-flex flex-wrap gap-2 my-3">{% if perms.gestion.add_actividadsgr %}<a class="btn btn-primary" href="{% url 'gestion:actividad_crear' %}">Registrar actividad</a>{% endif %}{% if perms.gestion.validar_delegado and perms.gestion.add_ausenciasgr %}<a class="btn btn-outline-secondary" href="{% url 'gestion:ausencia_crear' %}">Registrar ausencia</a>{% endif %}</div>
+<form method="get" class="d-flex flex-wrap align-items-end gap-3 mb-4">{{ filter_form.as_p }}<button class="btn btn-outline-primary" type="submit">Consultar</button></form>
+{% if resultados %}
+<h2>Cumplimiento del funcionario: {% if total != None %}{{ total|floatformat:1 }}%{% else %}Sin meta disponible{% endif %}</h2>
+<p>Metas ajustadas por días hábiles de lunes a viernes, descontando las ausencias registradas. Los días superpuestos se descuentan una vez.</p>
+<div class="table-responsive"><table class="table"><thead><tr><th>Ítem</th><th>Meta base</th><th>Meta ajustada</th><th>Acciones válidas</th><th>Ponderador</th><th>Cumplimiento</th><th>Configuración</th></tr></thead><tbody>{% for row in resultados %}<tr><td>{{ row.meta.nombre }}</td><td>{{ row.meta.meta_cantidad }}</td><td>{{ row.ajustada|floatformat:2 }}</td><td>{{ row.cantidad }}</td><td>{{ row.meta.ponderador }}%</td><td class="{% if row.porcentaje < 80 %}sgr-sem-rojo{% elif row.porcentaje < 100 %}sgr-sem-amarillo{% else %}sgr-sem-verde{% endif %}">{% if row.porcentaje != None %}{{ row.porcentaje|floatformat:1 }}%{% else %}No aplica{% endif %}</td><td>{% if perms.gestion.validar_delegado and perms.gestion.change_itemmeta %}<a href="{% url 'gestion:meta_configurar' row.meta.pk %}">Configurar meta</a>{% endif %}</td></tr>{% endfor %}</tbody></table></div>
+{% endif %}
+<h2>Equipo de la delegación</h2><p>Promedio del equipo: {% if total_equipo != None %}{{ total_equipo|floatformat:1 }}%{% else %}Sin resultados disponibles{% endif %}. Cada resultado individual es el promedio ponderado de sus ítems.</p>
+<ul>{% for row in equipo %}<li>{{ row.funcionario.get_full_name|default:row.funcionario.username }}: {% if row.porcentaje != None %}{{ row.porcentaje|floatformat:1 }}%{% else %}No aplica{% endif %}</li>{% empty %}<li>Selecciona un funcionario y un período para consultar.</li>{% endfor %}</ul>
+<h2>Actividades del período</h2><div class="table-responsive"><table class="table"><thead><tr><th>Fecha</th><th>Descripción</th><th>Ítem</th><th>Puntaje</th></tr></thead><tbody>{% for actividad in actividades %}<tr><td>{{ actividad.fecha|date:'d/m/Y' }}</td><td>{{ actividad.descripcion }}</td><td>{{ actividad.item.nombre }}</td><td>{{ actividad.motivo_puntaje }}</td></tr>{% empty %}<tr><td colspan="4">Sin actividades en el período seleccionado.</td></tr>{% endfor %}</tbody></table></div>
+<h2>Semáforo de ausencias</h2><ul>{% for ausencia in ausencias %}<li>{{ ausencia.desde|date:'d/m/Y' }} a {{ ausencia.hasta|date:'d/m/Y' }}: {{ ausencia.get_motivo_display }}</li>{% empty %}<li>Sin ausencias registradas en el período.</li>{% endfor %}</ul>
+{% endblock %}
