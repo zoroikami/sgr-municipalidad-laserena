@@ -19,8 +19,10 @@ def authorize(user, model, action='view'):
 
 
 def scoped(user, model):
-    from .models import Delegacion
+    from .models import Atencion, Delegacion
     query = model.objects.all()
+    if is_cliente(user):
+        return query.filter(cliente=user, delegacion_id=delegation_id(user)) if model is Atencion else query.none()
     if has_global_scope(user) and active_delegation(user) is None:
         return query
     org = active_delegation(user) if has_global_scope(user) else delegation_id(user)

@@ -10,7 +10,7 @@ ROLE_RULES = {
     'Delegado Municipal': {model: ('view', 'add', 'change', 'delete') for model in ('itemmeta', 'atencion')},
     'Operador / Funcionario': {'atencion': ('view', 'add', 'change')},
     'Consultor': {model: ('view',) for model in BUSINESS_MODELS},
-    'Cliente': {},
+    'Cliente': {'atencion': ('view',)},
 }
 
 

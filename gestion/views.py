@@ -219,9 +219,9 @@ def subatenciones(request):
 def own_records(user):
     if user.is_superuser:
         return scoped(user, Atencion).filter(cliente__isnull=False).select_related('tipo', 'subatencion')
-    if not is_cliente(user):
+    if not is_cliente(user) or not user.has_perm('gestion.view_atencion'):
         raise PermissionDenied('Esta sección está disponible para cuentas de clientes.')
-    return Atencion.objects.filter(cliente=user, delegacion_id=delegation_id(user)).select_related('tipo', 'subatencion')
+    return scoped(user, Atencion).select_related('tipo', 'subatencion')
 
 
 @login_required
