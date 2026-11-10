@@ -18,7 +18,9 @@ Aplicación: [http://127.0.0.1:8001](http://127.0.0.1:8001). Buzón SMTP local: 
 
 Las seis credenciales de prueba se guardan exclusivamente en `.private/cuentas-demo.json`, con permisos `600` y fuera de Git. Entregarlas al docente por un medio privado. No existen accesos automáticos ni botones para cambiar de cuenta.
 
-**Estado de AWS:** el despliegue final se realizará después de validar e integrar esta preparación. El [PR #8](https://github.com/zoroikami/sgr-municipalidad-laserena/pull/8) registró una instancia anterior (`i-0a5533ede6cc60b7e`, `us-east-1`), pero la conexión al endpoint documentado agotó el tiempo de espera el 10 de noviembre de 2026. Esa evidencia histórica no acredita disponibilidad ni el commit final. Tras desplegar se registrarán aquí URL verificada, instancia y SHA de `main`.
+**AWS verificado el 10 de noviembre de 2026:** [abrir SGR](https://sgr-100-58-127-230.sslip.io). Instancia existente `i-0a5533ede6cc60b7e`, región `us-east-1`, IP `100.58.127.230`. Commit de la aplicación desplegada: `8f189c8807c1d0051ab7dc6eb1c0a751c5d4369a` (merge del [PR #13](https://github.com/zoroikami/sgr-municipalidad-laserena/pull/13)); se comprueba en [/api/health/](https://sgr-100-58-127-230.sslip.io/api/health/).
+
+HTTPS utiliza un certificado público de Let's Encrypt y renovación diaria mediante `sgr-tls-renew.timer`. Se verificaron las siete cuentas, permisos, WSS entre delegaciones, Croppr y recuperación con token de un uso. MySQL 8.4.13, Redis, fotos y estáticos se ejecutan en contenedores con volúmenes persistentes y `DEBUG=False`. **El correo llega a Mailpit privado, no a buzones externos**; falta elegir/configurar SMTP saliente. No se exponen MySQL, Redis ni Mailpit a Internet. La dirección usa la IP actual mediante sslip.io: si el laboratorio detiene la instancia y cambia su IP, habrá que actualizar dominio, hosts y certificado.
 
 ## Instalación desde cero
 
@@ -211,7 +213,7 @@ La base SQLite anterior no se importa automáticamente. Conserva una copia indep
 
 ## Git y entrega académica
 
-El [PR #12](https://github.com/zoroikami/sgr-municipalidad-laserena/pull/12) se integró a `main` el 10 de noviembre de 2026 (`191edd6`). La preparación final continúa en `feature/sgr-preparacion-final` y se integra mediante otro PR revisado por un compañero. Las pruebas actuales son `tests_django` y las pruebas compartidas de RUT; las del servidor retirado están en `tests/legacy/`.
+Los [PR #12](https://github.com/zoroikami/sgr-municipalidad-laserena/pull/12) y [PR #13](https://github.com/zoroikami/sgr-municipalidad-laserena/pull/13) se integraron a `main` el 10 de noviembre de 2026. El propietario autorizó el despliegue; esto no sustituye la revisión académica de un compañero. Las pruebas actuales son `tests_django` y las pruebas compartidas de RUT; las del servidor retirado están en `tests/legacy/`.
 
 GitHub Actions no pudo iniciar los últimos trabajos por un bloqueo de facturación de la cuenta. Los resultados locales no se presentan como resultados de CI. La revisión de un agente tampoco sustituye la revisión de un compañero.
 
@@ -219,8 +221,6 @@ Cada integrante debe aportar al menos un PR funcional con su autoría y revisió
 
 La entrega en la plataforma consiste en el enlace del repositorio y los nombres completos de todos los integrantes. No se exige un informe adicional. Los antecedentes de primera/segunda entrega disponibles se agrupan en `docs/antecedentes/` y en el historial de Git; no representan el estado operativo actual de Django.
 
-
-### Verificar el entorno antes de AWS
 
 ### Superadministrador y cuentas de revisión
 
