@@ -29,9 +29,9 @@ def accounts(db, tmp_path, settings):
     b = Delegacion.objects.create(codigo='DEL02', nombre='Las Compañías', direccion='Norte', comuna='La Serena')
     result = {}
     for name, role, scope, rut in [
-        ('admin', 'Administrador', a, '12345678-5'),
-        ('editor', 'Editor', a, '11111111-1'),
-        ('other', 'Lector', b, '22222222-2'),
+        ('admin', 'Delegado Municipal', a, '12345678-5'),
+        ('editor', 'Operador / Funcionario', a, '11111111-1'),
+        ('other', 'Consultor', b, '22222222-2'),
         ('cliente', 'Cliente', a, '33333333-3'),
     ]:
         user = User.objects.create_user(name, f'{name}@example.test', 'Valid-test-key-927!')
@@ -81,7 +81,7 @@ def test_own_profile_ignores_protected_fields(client, accounts):
     assert user.first_name == 'Camila'
     assert not user.is_superuser and not user.is_staff
     assert user.perfil.delegacion_id == accounts['a'].pk
-    assert list(user.groups.values_list('name', flat=True)) == ['Editor']
+    assert list(user.groups.values_list('name', flat=True)) == ['Operador / Funcionario']
 
 
 @pytest.mark.django_db
@@ -195,7 +195,7 @@ def test_admin_valid_edit_ignores_forged_scope_and_privileges(client, accounts):
     client.force_login(accounts['admin'])
     response = client.post(reverse('cuentas:usuario_editar', args=[accounts['editor'].pk]), {
         'username': 'editor', 'first_name': 'Camila', 'last_name': '', 'email': 'editor@example.test',
-        'rut': '11.111.111-1', 'role': 'Lector', 'is_active': 'on',
+        'rut': '11.111.111-1', 'role': 'Consultor', 'is_active': 'on',
         'delegacion': accounts['b'].pk, 'is_superuser': '1', 'is_staff': '1',
     })
     assert response.status_code == 302
@@ -203,7 +203,7 @@ def test_admin_valid_edit_ignores_forged_scope_and_privileges(client, accounts):
     assert not user.is_superuser and not user.is_staff
     assert user.perfil.delegacion_id == accounts['a'].pk
     assert user.perfil.rut == '11111111-1'
-    assert list(user.groups.values_list('name', flat=True)) == ['Lector']
+    assert list(user.groups.values_list('name', flat=True)) == ['Consultor']
 
 
 @pytest.mark.django_db
@@ -211,7 +211,7 @@ def test_standard_role_permissions_are_idempotent_and_scoped_to_business(account
     from cuentas.roles import configure_groups
     configure_groups()
     configure_groups()
-    assert Group.objects.filter(name__in=['Administrador', 'Editor', 'Lector', 'Cliente']).count() == 4
+    assert Group.objects.filter(name__in=['Delegado Municipal', 'Operador / Funcionario', 'Consultor', 'Cliente']).count() == 4
     assert accounts['admin'].has_perm('gestion.delete_atencion')
     assert accounts['editor'].has_perm('gestion.change_atencion')
     assert not accounts['editor'].has_perm('gestion.delete_atencion')
@@ -235,7 +235,7 @@ def test_admin_creation_validates_password_and_forces_own_delegation(client, acc
     client.force_login(accounts['admin'])
     data = {
         'username': 'new-editor', 'first_name': 'Camila', 'last_name': 'Rojas',
-        'email': 'new-editor@example.test', 'rut': '44.444.444-4', 'role': 'Editor',
+        'email': 'new-editor@example.test', 'rut': '44.444.444-4', 'role': 'Operador / Funcionario',
         'is_active': 'on', 'delegacion': accounts['b'].pk, 'is_staff': '1', 'is_superuser': '1',
         'new_password': '123',
     }
@@ -249,7 +249,7 @@ def test_admin_creation_validates_password_and_forces_own_delegation(client, acc
     assert user.check_password('Another-valid-key-379!')
     assert user.perfil.delegacion_id == accounts['a'].pk
     assert not user.is_staff and not user.is_superuser
-    assert list(user.groups.values_list('name', flat=True)) == ['Editor']
+    assert list(user.groups.values_list('name', flat=True)) == ['Operador / Funcionario']
 
 
 @pytest.mark.django_db
@@ -276,7 +276,7 @@ def test_private_photo_is_not_publicly_addressable(client, accounts):
 def test_role_editor_preloads_and_preserves_selected_group(client, accounts):
     superuser = User.objects.create_superuser('roles_support', 'support@example.test', 'Valid-test-key-927!')
     client.force_login(superuser)
-    group = Group.objects.get(name='Editor')
+    group = Group.objects.get(name='Operador / Funcionario')
     permissions = list(group.permissions.values_list('pk', flat=True))
     url = reverse('cuentas:roles')
     response = client.get(url, {'grupo': group.pk})

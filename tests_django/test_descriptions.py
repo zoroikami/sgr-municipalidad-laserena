@@ -21,7 +21,8 @@ def payload(mundo, modulo, description):
 @pytest.mark.parametrize('modulo,model,objkey', MODULES)
 @pytest.mark.parametrize('length,accepted', [(500, True), (501, False)])
 def test_create_description_boundary_without_browser(client, mundo, modulo, model, objkey, length, accepted):
-    client.force_login(mundo['users']['admin_a'])
+    client.force_login(mundo['users']['coordinador'])
+    client.post('/cuentas/delegacion/', {'delegacion': mundo['a'].pk})
     description = 'á' * length
     before = model.all_objects.count()
     response = client.post(reverse('gestion:crear', args=[modulo]), payload(mundo, modulo, description))
@@ -38,7 +39,8 @@ def test_create_description_boundary_without_browser(client, mundo, modulo, mode
 
 @pytest.mark.parametrize('modulo,model,objkey', MODULES)
 def test_edit_rejects_long_description_without_altering_saved_record(client, mundo, modulo, model, objkey):
-    client.force_login(mundo['users']['admin_a'])
+    client.force_login(mundo['users']['coordinador'])
+    client.post('/cuentas/delegacion/', {'delegacion': mundo['a'].pk})
     target = mundo[objkey]
     original_description = target.descripcion
     response = client.post(reverse('gestion:editar', args=[modulo, target.pk]),

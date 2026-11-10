@@ -19,7 +19,7 @@ def test_edit_and_archive_cannot_resurrect_record(mundo, modulo, objkey, form_cl
     target = mundo[objkey]
     editor = Client()
     admin = Client()
-    editor.force_login(mundo['users']['editor_a'])
+    editor.force_login(mundo['users']['admin_a' if modulo == 'metas' else 'editor_a'])
     admin.force_login(mundo['users']['admin_a'])
     entered_save = threading.Event()
     release_save = threading.Event()

@@ -2,9 +2,9 @@
 {% block content %}
 <section aria-labelledby="page-title">
   <div class="module-breadcrumb">Gestión municipal / Inicio</div>
-  <div class="page-heading"><div><h1 id="page-title">Gestión municipal</h1><p>Consulta y administra los registros de {{ request.user.perfil.delegacion.nombre }} según los permisos de tu cuenta.</p></div></div>
+  <div class="page-heading"><div><h1 id="page-title">Gestión municipal</h1><p>Consulta y administra los registros de {% if active_delegation %}{{ active_delegation.nombre }}{% elif can_switch_delegation %}todas las delegaciones{% else %}{{ request.user.perfil.delegacion.nombre }}{% endif %} según los permisos de tu cuenta.</p></div></div>
   <div class="welcome-panel"><strong>{{ user.get_full_name|default:user.username }}, bienvenido al SGR</strong><p>Tu espacio de trabajo reúne las atenciones ciudadanas y los mantenedores de tu delegación. Selecciona un módulo para comenzar.</p></div>
-  <h2>Registros de tu delegación</h2>
+  <h2>{% if active_delegation %}Registros de {{ active_delegation.nombre }}{% elif can_switch_delegation %}Registros de todas las delegaciones{% else %}Registros de tu delegación{% endif %}</h2>
   <div class="module-previews">
     {% for stat in stats %}
     <section class="module-preview" aria-labelledby="panel-{{ stat.modulo }}-title">

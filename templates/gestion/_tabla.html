@@ -1,7 +1,7 @@
 <div class="results-summary"><p>{{ page_obj.paginator.count }} registro{{ page_obj.paginator.count|pluralize:'s' }}{% if page_obj.paginator.count %} · Mostrando {{ page_obj.start_index }} a {{ page_obj.end_index }}{% endif %}</p><span>Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}</span></div>
 <div class="table-responsive" role="region" aria-label="Registros de {{ titulo }}" tabindex="0">
   <table class="table records-table sgr-data-table">
-    <caption class="visually-hidden">{{ titulo }} de tu delegación</caption>
+    <caption class="visually-hidden">{{ titulo }} {% if active_delegation %}de {{ active_delegation.nombre }}{% elif can_switch_delegation %}de todas las delegaciones{% else %}de tu delegación{% endif %}</caption>
     <thead><tr>{% for column in columns %}<th scope="col">{{ column.label }}</th>{% endfor %}<th scope="col">Acciones</th></tr></thead>
     <tbody>
       {% for row in rows %}<tr>

@@ -12,7 +12,8 @@ from PIL import Image, ImageOps, UnidentifiedImageError
 
 from cuentas.rut import RUT_INPUT_HELP, RutError, normalize_rut
 from .models import Perfil
-from .roles import ROLE_NAMES
+from .roles import LOCAL_ROLE_NAMES, ROLE_NAMES
+from gestion.delegation import active_delegation
 
 MAX_PHOTO_BYTES = 2 * 1024 * 1024
 
@@ -102,15 +103,25 @@ class ManagedUserForm(forms.ModelForm):
         self.actor = actor
         self.creating = self.instance.pk is None
         self.fields['new_password'].required = self.creating
+        if self.creating:
+            self.initial['role'] = 'Operador / Funcionario'
+        self.fields['role'].choices = [(name, name) for name in (ROLE_NAMES if actor.is_superuser else LOCAL_ROLE_NAMES)]
         if actor.is_superuser:
-            self.fields['delegacion'] = forms.ModelChoiceField(label='Delegación', queryset=Delegacion.objects.all())
+            selected = active_delegation(actor)
+            self.fields['delegacion'] = forms.ModelChoiceField(label='Delegación',
+                queryset=Delegacion.objects.filter(estado='Activo'), initial=selected,
+                disabled=selected is not None, required=False)
+            self.fields['rut'].required = False
         if not self.creating:
             self.initial['rut'] = self.instance.perfil.rut
-            self.initial['role'] = self.instance.groups.filter(name__in=ROLE_NAMES).values_list('name', flat=True).first()
+            self.initial['role'] = ('Superadministrador' if self.instance.is_superuser else
+                self.instance.groups.filter(name__in=ROLE_NAMES).values_list('name', flat=True).first())
             if actor.is_superuser:
                 self.initial['delegacion'] = self.instance.perfil.delegacion_id
 
     def clean_rut(self):
+        if not self.cleaned_data['rut'] and self.actor.is_superuser:
+            return None
         try:
             rut = normalize_rut(self.cleaned_data['rut'])
         except RutError as exc:
@@ -127,6 +138,13 @@ class ManagedUserForm(forms.ModelForm):
 
     def clean(self):
         data = super().clean()
+        if self.actor.is_superuser and not data.get('rut') and data.get('role') != 'Superadministrador':
+            self.add_error('rut', 'Ingresa el RUT de la cuenta municipal.')
+        if self.actor.is_superuser and not data.get('delegacion') and data.get('role') != 'Superadministrador':
+            self.add_error('delegacion', 'Selecciona una delegación para la cuenta municipal.')
+        if self.instance.pk == self.actor.pk and self.actor.is_superuser:
+            if not data.get('is_active') or data.get('role') != 'Superadministrador':
+                raise ValidationError('Conserva tu acceso de superadministrador activo al editar tu propia cuenta.')
         password = data.get('new_password')
         if password:
             candidate = User(username=data.get('username', ''), email=data.get('email', ''),
@@ -141,6 +159,8 @@ class ManagedUserForm(forms.ModelForm):
         if not commit:
             raise ValueError('Las cuentas y su ámbito deben guardarse juntos.')
         user = super().save(commit=False)
+        if self.actor.is_superuser:
+            user.is_superuser = user.is_staff = self.cleaned_data['role'] == 'Superadministrador'
         if self.cleaned_data.get('new_password'):
             user.set_password(self.cleaned_data['new_password'])
         user.save()

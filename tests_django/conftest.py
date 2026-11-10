@@ -14,9 +14,10 @@ def mundo(db):
     b = Delegacion.objects.create(codigo='DEL02', nombre='Las Compañías', direccion='Norte 1')
     users = {}
     for number, (alias, role, org) in enumerate([
-        ('admin_a', 'Administrador', a), ('editor_a', 'Editor', a),
-        ('lector_a', 'Lector', a), ('lector_b', 'Lector', b),
+        ('admin_a', 'Delegado Municipal', a), ('editor_a', 'Operador / Funcionario', a),
+        ('lector_a', 'Consultor', a), ('lector_b', 'Consultor', b),
         ('cliente_1', 'Cliente', a), ('cliente_2', 'Cliente', a),
+        ('coordinador', 'Coordinador', a),
     ], start=1):
         user = get_user_model().objects.create_user(alias, f'{alias}@example.test', 'Ensayo#Privado2026')
         user.groups.add(Group.objects.get(name=role))

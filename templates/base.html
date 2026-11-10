@@ -17,11 +17,27 @@
   {% if user.is_authenticated and not public_layout %}
   <header class="municipal-header sgr-topbar">
     <a class="municipal-brand topbar-left" href="{% url 'gestion:inicio' %}"><img class="topbar-logo" src="{% static 'municipal/logo-la-serena-horizontal.svg' %}" alt="Municipalidad de La Serena" width="240" height="67"></a>
+    {% if can_switch_delegation %}
+    <form class="topbar-delegacion-pill delegation-switcher" method="post" action="{% url 'cuentas:cambiar_delegacion' %}" aria-label="Cambiar delegación" data-delegation-switcher>
+      {% csrf_token %}<input type="hidden" name="next" value="{{ request.path }}">
+      {% include 'shared/icon.html' with name='pin' %}
+      <span class="topbar-delegacion-label">
+        <label class="visually-hidden" for="active-delegation">Delegación activa</label>
+        <select id="active-delegation" name="delegacion" aria-describedby="active-delegation-description">
+          <option value=""{% if not active_delegation %} selected{% endif %}>Todas las delegaciones</option>
+          {% for delegation in available_delegations %}<option value="{{ delegation.pk }}"{% if active_delegation.pk == delegation.pk %} selected{% endif %}>{{ delegation.nombre }}</option>{% endfor %}
+        </select>
+        <small id="active-delegation-description">{% if active_delegation %}{{ active_delegation.codigo }} · Delegación activa{% elif user.is_superuser %}Acceso global{% else %}Acceso comunal{% endif %}</small>
+      </span>
+      <button class="btn delegation-submit" type="submit">Cambiar</button>
+    </form>
+    {% else %}
     <div class="topbar-delegacion-pill" aria-label="Ámbito de acceso">
       {% include 'shared/icon.html' with name='pin' %}
       <span class="topbar-delegacion-label">{% if user.is_superuser %}<strong>Todas las delegaciones</strong><small>Acceso global</small>{% else %}<strong>{{ user.perfil.delegacion.nombre|default:'Sin delegación' }}</strong><small>{{ user.perfil.delegacion.codigo }} · Delegación activa</small>{% endif %}</span>
       {% include 'shared/icon.html' with name='lock' %}
     </div>
+    {% endif %}
     <div class="session-actions topbar-right">
       <a class="profile-link header-profile-button" href="{% url 'cuentas:perfil' %}" aria-label="Mi perfil"{% if request.resolver_match.url_name == 'perfil' %} aria-current="page"{% endif %}>
         <img class="profile-avatar header-user-avatar" src="{% if user.perfil.foto %}{% url 'cuentas:foto' user.pk %}{% else %}{% static 'municipal/avatar-default.svg' %}{% endif %}" width="44" height="44" alt="">

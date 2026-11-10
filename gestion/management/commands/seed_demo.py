@@ -16,9 +16,9 @@ from gestion.models import Atencion, Delegacion, ItemMeta, SubAtencion, TipoAten
 
 DELEGACIONES = [('DEL01', 'Centro'), ('DEL02', 'Las Compañías'), ('DEL03', 'La Pampa'),
                 ('DEL04', 'La Antena - La Florida'), ('DEL05', 'Rural'), ('DEL06', 'Avenida del Mar')]
-ACCOUNTS = [('admin_a', 'Administrador', 0, 'Keoni Vergara'),
-            ('editor_a', 'Editor', 0, 'Harold Concha'), ('lector_a', 'Lector', 0, 'Marcos Ortiz'),
-            ('lector_b', 'Lector', 1, 'Claudio Romo'),
+ACCOUNTS = [('admin_a', 'Delegado Municipal', 0, 'Keoni Vergara'),
+            ('editor_a', 'Operador / Funcionario', 0, 'Harold Concha'), ('lector_a', 'Consultor', 0, 'Marcos Ortiz'),
+            ('lector_b', 'Consultor', 1, 'Claudio Romo'),
             ('cliente_1', 'Cliente', 0, 'Javier Ahumada'), ('cliente_2', 'Cliente', 0, 'Jorge Cortes')]
 
 

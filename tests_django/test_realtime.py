@@ -64,6 +64,39 @@ async def test_existing_socket_is_closed_when_its_session_is_revoked(mundo, sess
     await socket.disconnect()
 
 
+async def test_superadmin_socket_uses_selected_scope_and_revalidates_scope_changes(mundo):
+    from channels.db import database_sync_to_async
+    from django.contrib.auth import get_user_model
+
+    @database_sync_to_async
+    def prepare():
+        user = get_user_model().objects.create_superuser('scoped_support', password='Scoped-test-key-921!')
+        client = Client()
+        client.force_login(user)
+        assert client.post('/cuentas/delegacion/', {'delegacion': mundo['a'].pk}).status_code == 302
+        headers = [(b'origin', b'http://testserver'),
+                   (b'cookie', f'sessionid={client.cookies["sessionid"].value}'.encode())]
+        return client, headers
+
+    client, headers = await prepare()
+    socket = await connection(headers)
+    assert (await socket.connect())[0]
+    layer = get_channel_layer()
+    await layer.group_send(group_for(mundo['b'].pk), {'type': 'tabla.cambio'})
+    assert await socket.receive_nothing(timeout=0.15)
+    await layer.group_send(group_for(mundo['a'].pk), {'type': 'tabla.cambio'})
+    assert await socket.receive_json_from() == {'type': 'tabla.cambio'}
+    await database_sync_to_async(client.post)('/cuentas/delegacion/', {'delegacion': mundo['b'].pk})
+    await layer.group_send(group_for(mundo['a'].pk), {'type': 'tabla.cambio'})
+    assert (await socket.receive_output())['type'] == 'websocket.close'
+    await socket.disconnect()
+    replacement = await connection(headers)
+    assert (await replacement.connect())[0]
+    await layer.group_send(group_for(mundo['b'].pk), {'type': 'tabla.cambio'})
+    assert await replacement.receive_json_from() == {'type': 'tabla.cambio'}
+    await replacement.disconnect()
+
+
 async def test_notification_is_emitted_after_commit_and_never_on_rollback(mundo):
     from channels.db import database_sync_to_async
     layer = get_channel_layer()

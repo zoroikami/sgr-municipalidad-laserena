@@ -16,6 +16,7 @@ from openpyxl import Workbook
 from openpyxl.cell import WriteOnlyCell
 
 from .access import authorize, delegation_id, is_cliente, scoped
+from .delegation import active_delegation, has_global_scope
 from .forms import FORMS, PortalDateFilterForm
 from .models import Atencion, Delegacion, ItemMeta, SubAtencion, TipoAtencion
 from .queries import MODULES, display_value, list_context, query_for, state_for
@@ -32,7 +33,7 @@ def module_config(modulo):
 def inicio(request):
     if is_cliente(request.user):
         return redirect('gestion:portal')
-    if not request.user.is_superuser:
+    if not has_global_scope(request.user):
         delegation_id(request.user)
     stats = []
     descriptions = {
@@ -78,7 +79,7 @@ def form_view(request, modulo, pk=None):
     config = module_config(modulo)
     model = config['model']
     authorize(request.user, model, 'change' if pk else 'add')
-    if modulo == 'delegaciones' and not pk and not request.user.is_superuser:
+    if modulo == 'delegaciones' and not pk and not has_global_scope(request.user):
         raise PermissionDenied('La creación de delegaciones corresponde a administración técnica.')
     with transaction.atomic():
         query = scoped(request.user, model)
@@ -217,7 +218,7 @@ def subatenciones(request):
 
 def own_records(user):
     if user.is_superuser:
-        return Atencion.objects.filter(cliente__isnull=False).select_related('tipo', 'subatencion')
+        return scoped(user, Atencion).filter(cliente__isnull=False).select_related('tipo', 'subatencion')
     if not is_cliente(user):
         raise PermissionDenied('Esta sección está disponible para cuentas de clientes.')
     return Atencion.objects.filter(cliente=user, delegacion_id=delegation_id(user)).select_related('tipo', 'subatencion')

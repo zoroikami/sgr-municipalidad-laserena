@@ -6,6 +6,7 @@ from urllib.parse import urlencode
 from cuentas.rut import format_rut
 
 from .access import scoped
+from .delegation import has_global_scope
 from .forms import AtencionFilterForm
 from .models import Atencion, Delegacion, ItemMeta, SubAtencion, TipoAtencion, ESTADOS, ESTADOS_ATENCION
 
@@ -120,7 +121,7 @@ def list_context(request, modulo):
         export_url = '' if invalid_filters else f'{export_url}?{urlencode(state)}'
     return {
         'modulo': modulo, 'titulo': config['title'], 'state': state, 'page_obj': page,
-        'columns': cols, 'rows': rows, 'can_add': can('add') and (modulo != 'delegaciones' or request.user.is_superuser),
+        'columns': cols, 'rows': rows, 'can_add': can('add') and (modulo != 'delegaciones' or has_global_scope(request.user)),
         'can_change': can('change'), 'can_delete': can('delete') and modulo != 'delegaciones',
         'filter_choices': ESTADOS_ATENCION if modulo == 'atenciones' else ESTADOS,
         'order_choices': [(key, sort_label(key)) for key in config['sort']],

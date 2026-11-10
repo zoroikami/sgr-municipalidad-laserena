@@ -1,23 +1,26 @@
 from django.contrib.auth.models import Group, Permission
 
-ROLE_NAMES = ('Administrador', 'Editor', 'Lector', 'Cliente')
+ROLE_NAMES = ('Superadministrador', 'Coordinador', 'Delegado Municipal', 'Operador / Funcionario', 'Consultor', 'Cliente')
+LOCAL_ROLE_NAMES = ('Delegado Municipal', 'Operador / Funcionario', 'Consultor', 'Cliente')
+BUSINESS_MODELS = ('delegacion', 'itemmeta', 'tipoatencion', 'subatencion', 'atencion')
+ROLE_RULES = {
+    # Technical access is granted through User.is_superuser, never a group name.
+    'Superadministrador': {},
+    'Coordinador': {model: ('view', 'add', 'change', 'delete') for model in BUSINESS_MODELS},
+    'Delegado Municipal': {model: ('view', 'add', 'change', 'delete') for model in ('itemmeta', 'atencion')},
+    'Operador / Funcionario': {'atencion': ('view', 'add', 'change')},
+    'Consultor': {model: ('view',) for model in BUSINESS_MODELS},
+    'Cliente': {},
+}
 
 
 def configure_groups():
-    """Reconcile the four municipal roles against model permissions, idempotently."""
-    actions = {
-        'Administrador': ('view', 'add', 'change', 'delete'),
-        'Editor': ('view', 'add', 'change'),
-        'Lector': ('view',),
-        'Cliente': (),
-    }
-    for name, allowed in actions.items():
+    """Install the original municipal roles plus the isolated citizen portal."""
+    for name, rules in ROLE_RULES.items():
         group, _ = Group.objects.get_or_create(name=name)
-        permissions = Permission.objects.filter(content_type__app_label='gestion').exclude(
-            content_type__model='secuencia'
-        )
-        selected = [p for p in permissions if p.codename.split('_', 1)[0] in allowed]
-        if name == 'Administrador':
+        codenames = [f'{action}_{model}' for model, actions in rules.items() for action in actions]
+        selected = list(Permission.objects.filter(content_type__app_label='gestion', codename__in=codenames))
+        if name == 'Delegado Municipal':
             selected.extend(Permission.objects.filter(content_type__app_label='cuentas',
                 codename__in=['view_cuentas', 'add_cuentas', 'change_cuentas']))
         group.permissions.set(selected)
@@ -29,6 +32,6 @@ def is_cliente(user):
 
 def can_manage_users(user):
     return user.is_authenticated and (user.is_superuser or (
-        not is_cliente(user) and user.groups.filter(name='Administrador').exists()
+        not is_cliente(user) and user.groups.filter(name='Delegado Municipal').exists()
         and user.has_perm('cuentas.view_cuentas') and hasattr(user, 'perfil')
     ))

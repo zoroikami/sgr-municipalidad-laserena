@@ -6,6 +6,7 @@ from django.contrib.sessions.backends.db import SessionStore
 from django.utils.crypto import constant_time_compare
 
 from .access import delegation_id, is_cliente
+from .delegation import SESSION_KEY, has_global_scope, session_delegation
 from .realtime import GLOBAL_SCOPE, group_for
 
 
@@ -18,8 +19,9 @@ def viewer_scope(user_id, session_key):
     if (str(session.get('_auth_user_id')) != str(user.pk)
             or not constant_time_compare(session.get('_auth_user_hash', ''), user.get_session_auth_hash())):
         return None
-    if user.is_superuser:
-        return GLOBAL_SCOPE
+    if has_global_scope(user):
+        selected = session_delegation(session)
+        return selected.pk if selected else GLOBAL_SCOPE
     try:
         return delegation_id(user)
     except PermissionDenied:

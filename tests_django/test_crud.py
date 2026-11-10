@@ -33,8 +33,8 @@ def test_other_scope_objects_hidden_everywhere(client, mundo, modulo, objkey):
     assert str(mundo[objkey]) not in response.content.decode()
 
 
-def test_editor_creates_meta_and_server_ignores_scope_code_quantity(client, mundo):
-    login(client, mundo, 'editor_a')
+def test_delegate_creates_meta_and_server_ignores_scope_code_quantity(client, mundo):
+    login(client, mundo, 'admin_a')
     response = client.post(reverse('gestion:crear', args=['metas']), {
         'nombre': 'Meta nueva', 'descripcion': 'Persistente', 'unidad_medida': 'Atenciones',
         'estado': 'Activo', 'meta_cantidad': -500, 'delegacion': mundo['b'].pk, 'codigo': 'HACK',
@@ -47,7 +47,7 @@ def test_editor_creates_meta_and_server_ignores_scope_code_quantity(client, mund
 
 
 def test_invalid_form_preserves_data_and_does_not_write(client, mundo):
-    login(client, mundo, 'editor_a')
+    login(client, mundo, 'admin_a')
     response = client.post(reverse('gestion:crear', args=['metas']), {
         'nombre': 'Valor conservado', 'unidad_medida': '', 'estado': 'Activo',
     })
@@ -115,7 +115,7 @@ def test_editor_cannot_archive_but_admin_can_and_get_never_mutates(client, mundo
 
 
 def test_edit_preserves_creation_timestamp(client, mundo):
-    login(client, mundo, 'editor_a')
+    login(client, mundo, 'admin_a')
     target = mundo['meta_a']
     created = target.created_at
     response = client.post(reverse('gestion:editar', args=['metas', target.pk]), {

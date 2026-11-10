@@ -73,7 +73,20 @@ El entorno local utiliza MySQL 8.4 en `127.0.0.1:3307`, Redis 7.4 en `127.0.0.1:
 
 Los dos CRUD evaluados son **Ítems y Metas** y **Atenciones ciudadanas**. Incluyen crear, listar, detalle, editar, archivar con `deleted_at`, búsqueda por varios campos, filtro de negocio, orden permitido, páginas 5/15/30 y exportación `.xlsx` de todos los resultados filtrados.
 
-También están disponibles los catálogos de tipos/subatenciones, la consulta y edición de la delegación propia y la gestión acotada de usuarios. El administrador A crea o edita cuentas únicamente en A y asigna los cuatro roles predefinidos; puede desactivarlas. La creación de delegaciones y el mantenimiento global de roles pertenecen al soporte técnico, mediante `/admin/` o su pantalla de permisos. Ninguna cuenta de revisión tiene acceso a Django Admin. Para crear un superusuario técnico adicional, utilizar `python manage.py createsuperuser`; no reemplaza al administrador A.
+Los roles municipales originales están restaurados: **Superadministrador, Coordinador, Delegado Municipal, Operador / Funcionario y Consultor**. Se conserva **Cliente** para el portal ciudadano. La migración `cuentas.0004` transforma Administrador → Delegado Municipal, Editor → Operador / Funcionario y Lector → Consultor, conservando cuentas y contraseñas.
+
+Superadministrador y Coordinador pueden elegir una delegación activa o Todas las delegaciones desde la cabecera. La selección se conserva por sesión y se aplica a inicio, consultas, formularios, catálogos, Excel y actualizaciones en tiempo real. Las cuentas locales conservan su delegación asignada. El cambio de ámbito limpia filtros de listados anteriores; no cambia el perfil ni los permisos de la cuenta.
+
+| Rol | Funciones y ámbito |
+| --- | --- |
+| Superadministrador | Todos los módulos, cuentas, roles y consola técnica. Puede asignar roles comunales y privilegios técnicos. |
+| Coordinador | Delegaciones, metas, catálogos y atenciones en ámbito comunal. Sin gestión de cuentas, roles ni Django Admin. |
+| Delegado Municipal | Metas, atenciones y cuentas de su delegación. Solo asigna roles locales. |
+| Operador / Funcionario | Registro y edición de atenciones de su delegación, sin archivado. |
+| Consultor | Consulta y exportación de módulos municipales de su delegación. |
+| Cliente | Portal con sus propias atenciones. |
+
+Ninguna cuenta municipal de revisión tiene acceso a Django Admin. Para crear un superusuario técnico adicional, utilizar `python manage.py createsuperuser`. El nombre del grupo Superadministrador por sí solo no concede privilegios técnicos.
 
 Para habilitar el acceso global del sistema municipal, crea la cuenta técnica después de aplicar las migraciones con `python manage.py createsuperuser --username superadmin`. Introduce una contraseña privada cuando Django la solicite. El superadministrador ve todas las delegaciones, elige la delegación al crear un registro y conserva la delegación original al editar. Su ámbito global se aplica a los listados, Excel y la actualización en tiempo real. Las cuentas municipales de prueba conservan sus restricciones.
 
@@ -85,7 +98,7 @@ El modelo implementado está documentado en [diagramas/modelos_django.md](diagra
 
 - Consultas, detalle, edición, archivado, relaciones, exportación y fragmentos de tabla limitados por delegación.
 - Clientes filtrados además por `cliente=request.user`; no acceden a funciones administrativas ni a fotos ajenas.
-- Permisos de Django por acción. Editor sin eliminación/archivado; lector sin escrituras. Cuenta sin permiso recibe 403; objeto ajeno o inexistente recibe 404.
+- Permisos de Django por acción. Operador sin eliminación/archivado ni mantenimiento de metas o catálogos; Consultor sin escrituras. Cuenta sin permiso recibe 403; objeto ajeno o inexistente recibe 404.
 - ModelForms con campos explícitos: el navegador no decide delegación, responsable, código, folio, privilegios ni cantidad de meta.
 - Nombres duplicados por delegación rechazados; cantidades no negativas; nuevas metas con cantidad automática 100; las existentes conservan su cantidad.
 - Tipo y subatención activos de la misma delegación y relación tipo/subatención coherente; cliente vinculado de la misma delegación con rol Cliente.
@@ -121,10 +134,10 @@ A = Centro (`DEL01`); B = Las Compañías (`DEL02`). Todos los correos iniciales
 
 | Alias | Rol / ámbito | Responsabilidad y acciones permitidas | Restricciones | Recorrido y resultado esperado |
 | --- | --- | --- | --- | --- |
-| `admin_a` | Administrador A | Gestionar atenciones, metas, catálogos y cuentas de A; consultar/exportar, crear/editar/archivar | Sin B, permisos globales, privilegios técnicos ni Django Admin | Login → ambos CRUD → crear/editar → cancelar SweetAlert sin cambios → confirmar archivado → registro excluido de listado/Excel |
-| `editor_a` | Editor A | Registrar y actualizar atención y metas de Centro | Sin archivado/eliminación, usuarios ni B | Login → editar atención → guardar → lector A cambia sin F5 → intentar POST de archivado y recibir 403 |
-| `lector_a` | Lector A | Consultar detalle y exportar datos de A | Sin escrituras ni B | Login → buscar/filtrar/ordenar/paginar → abrir detalle → regresar conserva estado → intento de creación devuelve 403 |
-| `lector_b` | Lector B | Consultar y exportar datos de Las Compañías | Sin escrituras ni A | Abrir listado en otro perfil → editor A guarda → no recibe evento ni datos de A; URL ajena devuelve 404 |
+| `admin_a` | Delegado Municipal A | Gestionar atenciones, metas y cuentas de A; consultar/exportar, crear/editar/archivar | Sin B, mantenimiento de catálogos, permisos globales, privilegios técnicos ni Django Admin | Login → ambos CRUD → crear/editar → cancelar SweetAlert sin cambios → confirmar archivado → registro excluido de listado/Excel |
+| `editor_a` | Operador / Funcionario A | Registrar y actualizar atenciones de Centro | Sin metas, catálogos, archivado/eliminación, usuarios ni B | Login → editar atención → guardar → consultor A cambia sin F5 → intentar POST de archivado y recibir 403 |
+| `lector_a` | Consultor A | Consultar detalle y exportar datos de A | Sin escrituras ni B | Login → buscar/filtrar/ordenar/paginar → abrir detalle → regresar conserva estado → intento de creación devuelve 403 |
+| `lector_b` | Consultor B | Consultar y exportar datos de Las Compañías | Sin escrituras ni A | Abrir listado en otro perfil → operador A guarda → no recibe evento ni datos de A; URL ajena devuelve 404 |
 | `cliente_1` | Cliente / propietario 1 en A | Consultar sus 30 atenciones, detalle y perfil/foto propios | Sin administración, datos ni foto del Cliente 2 | Login → Mis atenciones → detalle propio → Croppr/guardar/recargar → persiste recorte → detalle del Cliente 2 devuelve 404 |
 | `cliente_2` | Cliente / propietario 2 en A | Consultar otras 30 atenciones, detalle y perfil/foto propios | Sin administración, datos ni foto del Cliente 1 | Login en sesión independiente → datos distintos → detalle del Cliente 1 devuelve 404 → perfil solo modifica su cuenta |
 
@@ -179,7 +192,10 @@ python tests_browser/check_flows.py
 python tests_browser/check_design.py
 python tests_browser/check_paneles.py
 python tests_browser/check_usability.py
+python tests_browser/check_delegation_roles.py
 ```
+
+`check_delegation_roles.py` requiere también `.private/superadmin.json`, generado por `python manage.py provision_superadmin`. Comprueba cambios de delegación, roles históricos, restricciones locales y alineación de la casilla Cuenta activa a cuatro anchos, sin guardar cambios de negocio.
 
 El recorrido `check_flows.py` usa seis sesiones independientes, comprueba cambios WebSocket solo en A, filtros, cancelación de SweetAlert, errores dentro del modal, navegación, portal, foto, correo SMTP, token de un uso y cambio/logout. Modifica y restaura un nombre ficticio, guarda una foto de prueba en Cliente 1 y restaura su contraseña privada. Ejecutarlo sobre datos de demostración. Las capturas locales se escriben en `output/browser/`, excluido de Git.
 
@@ -232,10 +248,10 @@ La entrega en la plataforma consiste en el enlace del repositorio y los nombres 
 
 | Usuario | Nombre | Rol / ámbito |
 | --- | --- | --- |
-| admin_a | Keoni Vergara | Administrador / Centro |
-| editor_a | Harold Concha | Editor / Centro |
-| lector_a | Marcos Ortiz | Lector / Centro |
-| lector_b | Claudio Romo | Lector / Las Compañías |
+| admin_a | Keoni Vergara | Delegado Municipal / Centro |
+| editor_a | Harold Concha | Operador / Funcionario / Centro |
+| lector_a | Marcos Ortiz | Consultor / Centro |
+| lector_b | Claudio Romo | Consultor / Las Compañías |
 | cliente_1 | Javier Ahumada | Cliente / registros propios |
 | cliente_2 | Jorge Cortes | Cliente / registros propios |
 

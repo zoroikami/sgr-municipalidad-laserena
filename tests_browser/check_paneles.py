@@ -27,12 +27,12 @@ def run():
         for width in [320, 375, 768, 1280]:
             page.set_viewport_size({'width': width, 'height': 900})
             panels = page.locator('.module-previews')
-            expect(panels.locator('.module-preview-footer a')).to_have_count(4)
-            expect(panels.get_by_role('table')).to_have_count(4)
+            expect(panels.locator('.module-preview-footer a')).to_have_count(2)
+            expect(panels.get_by_role('table')).to_have_count(2)
             assert page.evaluate('document.documentElement.scrollWidth <= innerWidth')
             page.screenshot(path=str(OUTPUT / f'inicio-{width}.png'), full_page=True)
 
-        for modulo in ['atenciones', 'metas', 'tipos', 'subatenciones']:
+        for modulo in ['atenciones', 'metas']:
             page.goto(BASE + '/')
             card = page.locator('.module-previews').locator(f'a[href="/gestion/{modulo}/"]')
             card.focus()
@@ -42,7 +42,7 @@ def run():
         page.locator('.module-previews .record-key').first.click()
         page.wait_for_url(re.compile(re.escape(BASE) + r'/gestion/atenciones/\d+/'))
 
-        for modulo in ['metas', 'atenciones', 'tipos', 'subatenciones']:
+        for modulo in ['metas', 'atenciones']:
             page.goto(BASE + f'/gestion/{modulo}/crear/')
             field = page.locator('[name=descripcion]')
             expect(field).to_have_attribute('maxlength', '500')

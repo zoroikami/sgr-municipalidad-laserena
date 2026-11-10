@@ -4,6 +4,7 @@ from django.db.models import Q
 from cuentas.rut import RUT_INPUT_HELP
 
 from .access import delegation_id
+from .delegation import active_delegation, has_global_scope
 from .models import Atencion, Delegacion, ItemMeta, SubAtencion, TipoAtencion
 
 
@@ -29,13 +30,13 @@ class AtencionFilterForm(forms.Form):
         # Include archived assignments so that archiving a last record keeps the filter valid.
         assigned = Atencion.all_objects.all()
         accounts = get_user_model().objects.all()
-        if not user.is_superuser:
-            org = delegation_id(user)
+        if not has_global_scope(user) or active_delegation(user) is not None:
+            org = active_delegation(user) if has_global_scope(user) else delegation_id(user)
             assigned = assigned.filter(delegacion_id=org)
-            accounts = accounts.filter(Q(perfil__delegacion_id=org) | Q(is_superuser=True))
+            accounts = accounts.filter(Q(perfil__delegacion_id=org) | Q(is_superuser=True) | Q(groups__name='Coordinador'))
         self.fields['responsable'].queryset = accounts.filter(
             pk__in=assigned.order_by().values('responsable_id'),
-        ).order_by('first_name', 'last_name', 'username')
+        ).distinct().order_by('first_name', 'last_name', 'username')
         self.fields['responsable'].label_from_instance = lambda account: account.get_full_name() or account.username
 
     def clean(self):
@@ -52,11 +53,12 @@ class ScopedModelForm(forms.ModelForm):
         self.user = user
         super().__init__(*args, **kwargs)
         self.org_id = None
-        if user.is_superuser:
-            self.org_id = getattr(self.instance, 'delegacion_id', None)
+        if has_global_scope(user):
+            self.org_id = getattr(self.instance, 'delegacion_id', None) or active_delegation(user)
             if hasattr(self.instance, 'delegacion_id') and not self.instance.pk:
                 self.fields['delegacion'] = forms.ModelChoiceField(
-                    label='Delegación', queryset=Delegacion.objects.filter(estado='Activo'))
+                    label='Delegación', queryset=Delegacion.objects.filter(estado='Activo'),
+                    initial=self.org_id, disabled=self.org_id is not None)
                 self.order_fields(['delegacion'])
         else:
             self.org_id = delegation_id(user)
@@ -84,7 +86,7 @@ class ScopedModelForm(forms.ModelForm):
         if name:
             matches = self._meta.model.all_objects.filter(nombre__iexact=name).exclude(pk=self.instance.pk)
             if self._meta.model is Delegacion:
-                matches = matches if self.user.is_superuser else matches.filter(pk=self.org_id)
+                matches = matches if has_global_scope(self.user) else matches.filter(pk=self.org_id)
             else:
                 matches = matches.filter(delegacion_id=self.org_id)
             if matches.exists():
