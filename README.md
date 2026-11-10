@@ -106,7 +106,7 @@ python manage.py seed_demo
 
 Los clientes 1 y 2 tienen 30 atenciones distintas cada uno dentro de las 300 de Centro. Las semillas incluyen nombres ficticios, fechas de creación variadas, distintos estados, unidades y servicios. No se cuentan usuarios, perfiles, grupos, permisos, sesiones ni secuencias en los 2.286 registros.
 
-Se crean seis cuentas activas de revisión y cuatro responsables ficticios inactivos, sin contraseña utilizable, para las otras delegaciones. Ejecutar de nuevo no duplica registros, no reinicia contraseñas y no sobrescribe ediciones o fotos existentes. Los códigos de las semillas llevan `DEMO` para no colisionar con los códigos automáticos de operaciones nuevas.
+Se crean seis cuentas activas de revisión y cuatro responsables ficticios inactivos, sin contraseña utilizable, para las otras delegaciones. Ejecutar de nuevo no duplica registros, no reinicia contraseñas y no sobrescribe ediciones o fotos existentes. Los códigos usan los formatos originales `DEL01`, `IT001`, `TA001`, `SA001` y `ATN-2026-0001`, con correlativos globales por sección y anuales en atenciones. La migración conserva el identificador previo como referencia interna y clave estable de semillas; incluye archivados al asignar números y mantiene los IDs y relaciones existentes.
 
 ### Cuentas, responsabilidades y recorridos
 

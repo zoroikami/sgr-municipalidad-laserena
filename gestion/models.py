@@ -2,7 +2,8 @@
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator
-from django.db import models, transaction
+from django.db import connection, models, transaction
+from django.db.models.functions import Cast, Substr
 from django.utils import timezone
 
 
@@ -15,14 +16,25 @@ class Secuencia(models.Model):
     valor = models.PositiveBigIntegerField(default=0)
 
     @classmethod
-    def siguiente(cls, prefijo):
+    def siguiente(cls, prefijo, *, model, field='codigo', width=3):
         # Unique prefix and a row lock serialize allocations across ASGI workers.
         with transaction.atomic():
-            cls.objects.get_or_create(prefijo=prefijo)
+            # Upsert takes an exclusive lock even on the first concurrent use.
+            # get_or_create can leave duplicate-insert shared locks that deadlock
+            # when several workers subsequently upgrade to SELECT FOR UPDATE.
+            table = connection.ops.quote_name(cls._meta.db_table)
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    f'INSERT INTO {table} (prefijo, valor) VALUES (%s, 0) '
+                    'ON DUPLICATE KEY UPDATE prefijo = %s', [prefijo, prefijo])
             row = cls.objects.select_for_update().get(prefijo=prefijo)
-            row.valor += 1
+            # Include archived and explicitly imported codes, even with a stale counter.
+            highest = model.all_objects.filter(**{f'{field}__regex': f'^{prefijo}[0-9]+$'}).aggregate(
+                number=models.Max(Cast(Substr(field, len(prefijo) + 1), models.PositiveBigIntegerField()))
+            )['number'] or 0
+            row.valor = max(row.valor, highest) + 1
             row.save(update_fields=['valor'])
-            return f'{prefijo}{row.valor:06d}'
+            return f'{prefijo}{row.valor:0{width}d}'
 
 
 class ActiveManager(models.Manager):
@@ -32,6 +44,7 @@ class ActiveManager(models.Manager):
 
 class Registro(models.Model):
     codigo = models.CharField('Código', max_length=30, unique=True, blank=True, editable=False)
+    codigo_anterior = models.CharField(max_length=30, unique=True, null=True, blank=True, editable=False)
     nombre = models.CharField('Nombre', max_length=140)
     estado = models.CharField('Estado', max_length=20, choices=ESTADOS, default='Activo')
     created_at = models.DateTimeField('Fecha de creación', default=timezone.now, editable=False)
@@ -40,6 +53,7 @@ class Registro(models.Model):
     objects = ActiveManager()
     all_objects = models.Manager()
     prefijo = ''
+    ancho_codigo = 3
 
     class Meta:
         abstract = True
@@ -50,12 +64,13 @@ class Registro(models.Model):
 
     def save(self, *args, **kwargs):
         if not self.codigo:
-            self.codigo = Secuencia.siguiente(self.prefijo)
+            self.codigo = Secuencia.siguiente(self.prefijo, model=type(self), width=self.ancho_codigo)
         return super().save(*args, **kwargs)
 
 
 class Delegacion(Registro):
     prefijo = 'DEL'
+    ancho_codigo = 2
     direccion = models.CharField('Dirección', max_length=200)
     comuna = models.CharField('Comuna', max_length=100, default='La Serena')
 
@@ -112,6 +127,7 @@ class ItemMeta(RegistroDelegacion):
 
 class Atencion(models.Model):
     folio = models.CharField('Folio', max_length=35, unique=True, blank=True, editable=False)
+    folio_anterior = models.CharField(max_length=35, unique=True, null=True, blank=True, editable=False)
     delegacion = models.ForeignKey(Delegacion, on_delete=models.PROTECT)
     tipo = models.ForeignKey(TipoAtencion, verbose_name='Tipo de atención', on_delete=models.PROTECT)
     subatencion = models.ForeignKey(SubAtencion, verbose_name='Subatención', on_delete=models.PROTECT)
@@ -161,5 +177,6 @@ class Atencion(models.Model):
 
     def save(self, *args, **kwargs):
         if not self.folio:
-            self.folio = Secuencia.siguiente(f'ATN-{timezone.localdate().year}-')
+            year = timezone.localtime(self.created_at).year if timezone.is_aware(self.created_at) else self.created_at.year
+            self.folio = Secuencia.siguiente(f'ATN-{year}-', model=type(self), field='folio', width=4)
         return super().save(*args, **kwargs)
