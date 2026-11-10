@@ -16,3 +16,4 @@ Este directorio centraliza la documentación, especificaciones y artefactos gene
   - `EVALUACION_3_PROPUESTA.md`: Propuesta de arquitectura y migración técnica a Django 5.2.
   - `PREEVALUACION_III.md`: Registro de la preevaluación individual del CRUD en Django.
 - **[superpowers/](superpowers/)**: Planes de ingeniería y especificaciones de desarrollo asistido.
+
