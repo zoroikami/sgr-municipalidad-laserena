@@ -2,7 +2,7 @@ services:
   web:
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: deploy/Dockerfile
     env_file: .env
     environment:
       DJANGO_DEBUG: "false"
