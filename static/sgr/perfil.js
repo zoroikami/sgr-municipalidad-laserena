@@ -10,12 +10,21 @@
   const status = document.querySelector('#crop-status');
   const save = document.querySelector('#profile-save');
   const apply = document.querySelector('#crop-apply');
+  const choose = document.querySelector('#profile-photo-select');
+  const filename = document.querySelector('#photo-file-name');
   let cropper = null;
   let original = null;
   let sourceURL = null;
   let previewURL = null;
   let finalFile = null;
   let sequence = 0;
+
+  if (choose) {
+    input.hidden = true;
+    input.tabIndex = -1;
+    choose.hidden = false;
+    choose.addEventListener('click', () => input.click());
+  }
 
   function releaseSource() {
     if (cropper) cropper.destroy();
@@ -36,6 +45,7 @@
     previewPanel.hidden = true;
     save.disabled = false;
     status.textContent = 'Se conservará tu foto actual.';
+    if (filename) filename.textContent = '';
   }
 
   input.addEventListener('change', () => {
@@ -52,6 +62,7 @@
       return;
     }
     save.disabled = true;
+    if (filename) filename.textContent = file.name;
     sourceURL = URL.createObjectURL(file);
     original = new Image();
     const image = original;
@@ -143,11 +154,15 @@
       releaseSource();
       save.disabled = false;
       status.textContent = 'Recorte listo. Guarda tu perfil para aplicar la nueva foto.';
-      save.focus();
+      previewPanel.tabIndex = -1;
+      previewPanel.focus();
     }, 'image/png');
   });
 
-  document.querySelector('#crop-cancel').addEventListener('click', cancel);
+  document.querySelector('#crop-cancel').addEventListener('click', () => {
+    cancel();
+    choose?.focus();
+  });
   form.addEventListener('submit', event => {
     if (!panel.hidden || (input.files.length && !finalFile)) {
       event.preventDefault();

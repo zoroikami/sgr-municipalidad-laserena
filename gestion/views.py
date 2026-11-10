@@ -45,8 +45,14 @@ def inicio(request):
     for module, description in descriptions.items():
         config = MODULES[module]
         if request.user.has_perm(f'gestion.view_{config["model"]._meta.model_name}'):
+            query = scoped(request.user, config['model'])
+            code_field = 'folio' if module == 'atenciones' else 'codigo'
+            name_field = 'solicitante_nombre' if module == 'atenciones' else 'nombre'
+            preview = [{'codigo': row[code_field], 'nombre': row[name_field], 'estado': row['estado'],
+                        'url': reverse('gestion:detalle', args=[module, row['pk']])}
+                       for row in query.order_by('-created_at', '-pk').values('pk', code_field, name_field, 'estado')[:3]]
             stats.append({'modulo': module, 'titulo': config['title'], 'descripcion': description,
-                          'total': scoped(request.user, config['model']).count(),
+                          'total': query.count(), 'preview': preview,
                           'url': reverse('gestion:listado', args=[module])})
     return render(request, 'gestion/inicio.html', {'titulo': 'Gestión municipal', 'stats': stats})
 

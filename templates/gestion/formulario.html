@@ -16,7 +16,7 @@
           <div class="field-errors" id="{{ field.auto_id }}_errors">{% if field.errors %}{{ field.errors }}{% endif %}</div>
         </div>{% endfor %}
         {% if modulo == 'atenciones' %}<p id="subatencion-status" class="field-help" role="status" aria-live="polite"></p>{% endif %}
-        <div class="form-actions"><button class="btn btn-primary" type="submit">{% if obj %}Guardar cambios{% else %}Crear registro{% endif %}</button><a class="btn btn-outline-secondary" href="{{ return_url }}">Cancelar</a></div>
+        <div class="form-actions"><button class="btn btn-primary btn-save" type="submit">{% if obj %}Guardar cambios{% else %}Crear registro{% endif %}</button><a class="btn btn-outline-secondary" href="{{ return_url }}">Cancelar</a></div>
       </form>
     </div>
   </div></div>

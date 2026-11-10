@@ -1,6 +1,7 @@
 """Exercise panel navigation and description counters on the local demo app."""
 import json
 import os
+import re
 from pathlib import Path
 
 from playwright.sync_api import expect, sync_playwright
@@ -25,20 +26,21 @@ def run():
 
         for width in [320, 375, 768, 1280]:
             page.set_viewport_size({'width': width, 'height': 900})
-            panels = page.get_by_role('navigation', name='Paneles de tu delegación')
-            expect(panels.get_by_role('link')).to_have_count(4)
+            panels = page.locator('.module-previews')
+            expect(panels.locator('.module-preview-footer a')).to_have_count(4)
+            expect(panels.get_by_role('table')).to_have_count(4)
             assert page.evaluate('document.documentElement.scrollWidth <= innerWidth')
             page.screenshot(path=str(OUTPUT / f'inicio-{width}.png'), full_page=True)
 
         for modulo in ['atenciones', 'metas', 'tipos', 'subatenciones']:
             page.goto(BASE + '/')
-            card = page.get_by_role('navigation', name='Paneles de tu delegación').locator(f'a[href="/gestion/{modulo}/"]')
+            card = page.locator('.module-previews').locator(f'a[href="/gestion/{modulo}/"]')
             card.focus()
             card.press('Enter')
             page.wait_for_url(BASE + f'/gestion/{modulo}/')
         page.goto(BASE + '/')
-        page.get_by_role('navigation', name='Paneles de tu delegación').locator('a').first.click(position={'x': 8, 'y': 8})
-        page.wait_for_url(BASE + '/gestion/atenciones/')
+        page.locator('.module-previews .record-key').first.click()
+        page.wait_for_url(re.compile(re.escape(BASE) + r'/gestion/atenciones/\d+/'))
 
         for modulo in ['metas', 'atenciones', 'tipos', 'subatenciones']:
             page.goto(BASE + f'/gestion/{modulo}/crear/')
@@ -55,7 +57,7 @@ def run():
             expect(counter).to_have_text('19 / 500')
         page.screenshot(path=str(OUTPUT / 'descripcion.png'), full_page=True)
         browser.close()
-    print('Panels: full-card click, Enter navigation, responsive layouts and live 500-character counters passed.')
+    print('Panels: mini tables, record detail links, Enter navigation, responsive layouts and live 500-character counters passed.')
 
 
 if __name__ == '__main__':

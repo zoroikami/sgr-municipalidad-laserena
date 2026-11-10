@@ -1,5 +1,6 @@
 from django import forms
 from django.contrib.auth import get_user_model
+from rut import RUT_INPUT_HELP
 
 from .access import delegation_id
 from .models import Atencion, Delegacion, ItemMeta, SubAtencion, TipoAtencion
@@ -82,7 +83,8 @@ class AtencionForm(ScopedModelForm):
         self.fields['cliente'].queryset = get_user_model().objects.filter(
             perfil__delegacion_id=self.org_id, groups__name='Cliente', is_active=True).distinct()
         self.fields['cliente'].label_from_instance = lambda user: user.get_full_name() or user.username
-        self.fields['solicitante_rut'].help_text = 'Ingresa un RUT válido con su dígito verificador.'
+        self.fields['solicitante_rut'].help_text = RUT_INPUT_HELP
+        self.fields['solicitante_rut'].widget.attrs.update({'placeholder': '12345678-5', 'spellcheck': 'false'})
 
 
 FORMS = {'metas': ItemMetaForm, 'atenciones': AtencionForm, 'tipos': TipoAtencionForm,

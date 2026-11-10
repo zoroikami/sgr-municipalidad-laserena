@@ -2,6 +2,16 @@
   {
     "date": "2026-11-10",
     "family": "Product",
+    "macro": "municipal record previews and bounded photo editor",
+    "theme": "Existing municipal identity with consistent green save actions",
+    "direction": "minimal-modern",
+    "display": "Native system sans-serif (existing brand requirement)",
+    "nav": "Permission-aware mini tables with record details and full-list links",
+    "brief": "User-requested mini table restoration, compact photo selection and bounded Croppr preview, canonical RUT input with readable display, uniform save controls. Real scoped records and existing brand preserved."
+  },
+  {
+    "date": "2026-11-10",
+    "family": "Product",
     "macro": "municipal section shortcuts",
     "theme": "Existing municipal wine and red identity",
     "direction": "minimal-modern",

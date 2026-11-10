@@ -3,6 +3,7 @@ from django.core.paginator import Paginator
 from django.db.models import Q
 from django.urls import reverse
 from urllib.parse import urlencode
+from rut import format_rut
 
 from .access import scoped
 from .models import Atencion, Delegacion, ItemMeta, SubAtencion, TipoAtencion, ESTADOS, ESTADOS_ATENCION
@@ -113,6 +114,8 @@ def display_value(obj, key):
         value = getattr(value, part, '') if value else ''
     if isinstance(value, datetime):
         return timezone.localtime(value).strftime('%d-%m-%Y %H:%M')
+    if key in ('rut', 'solicitante_rut'):
+        return format_rut(value)
     return str(value) if value is not None else ''
 
 
