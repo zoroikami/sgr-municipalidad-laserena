@@ -86,9 +86,29 @@ def usuario_form(request, pk=None):
 def roles(request):
     if not request.user.is_superuser or not request.user.has_perm('auth.change_group'):
         raise PermissionDenied
-    form = GroupPermissionsForm(request.POST or None)
+    groups = list(Group.objects.prefetch_related('permissions').order_by('name'))
+    selected = request.POST.get('group') if request.method == 'POST' else request.GET.get('grupo')
+    active_group = next((g for g in groups if str(g.pk) == selected), None)
+    if selected is None and groups:
+        active_group = groups[0]
+    initial = {'group': active_group, 'permissions': active_group.permissions.all()} if active_group else {}
+    form = GroupPermissionsForm(request.POST if request.method == 'POST' else None, initial=initial)
     if request.method == 'POST' and form.is_valid():
         form.cleaned_data['group'].permissions.set(form.cleaned_data['permissions'])
         messages.success(request, 'Los permisos del grupo se guardaron.')
-        return redirect('cuentas:roles')
-    return render(request, 'cuentas/roles.html', {'form': form, 'grupos': Group.objects.prefetch_related('permissions').order_by('name'), 'titulo': 'Roles y permisos'})
+        from django.urls import reverse
+        return redirect(reverse('cuentas:roles') + '?grupo=' + str(form.cleaned_data['group'].pk))
+    sections = {}
+    actions = {'view': 'Consultar', 'add': 'Crear', 'change': 'Editar', 'delete': 'Eliminar'}
+    for permission, widget in zip(form.fields['permissions'].queryset, form['permissions']):
+        ct = permission.content_type
+        model = ct.model_class()
+        label = str(model._meta.verbose_name).capitalize() if model else ct.model
+        account_permission = ct.app_label == 'cuentas' and permission.codename.endswith('_cuentas')
+        key = (ct.app_label, 'cuentas' if account_permission else ct.model)
+        section = sections.setdefault(key, {'name': 'Cuentas de la delegación' if account_permission else label, 'app': ct.app_label, 'items': []})
+        section['items'].append({'widget': widget, 'label': actions.get(permission.codename.split('_', 1)[0], permission.name)})
+    return render(request, 'cuentas/roles.html', {'form': form, 'grupos': groups,
+        'active_group': active_group, 'permission_sections': sorted(sections.values(),
+            key=lambda section: ({'gestion': 0, 'cuentas': 1}.get(section['app'], 2), section['name'])),
+        'titulo': 'Roles y permisos'})

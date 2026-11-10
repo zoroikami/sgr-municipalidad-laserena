@@ -270,3 +270,23 @@ def test_private_photo_is_not_publicly_addressable(client, accounts):
     assert 'test.png' not in profile.foto.name
     with pytest.raises(ValueError):
         _ = profile.foto.url
+
+
+@pytest.mark.django_db
+def test_role_editor_preloads_and_preserves_selected_group(client, accounts):
+    superuser = User.objects.create_superuser('roles_support', 'support@example.test', 'Valid-test-key-927!')
+    client.force_login(superuser)
+    group = Group.objects.get(name='Editor')
+    permissions = list(group.permissions.values_list('pk', flat=True))
+    url = reverse('cuentas:roles')
+    response = client.get(url, {'grupo': group.pk})
+    assert response.status_code == 200
+    assert response.context['active_group'] == group
+    assert set(response.context['form']['permissions'].value()) == set(permissions)
+    response = client.post(url, {'group': group.pk, 'permissions': permissions})
+    assert response.status_code == 302
+    assert response['Location'] == f'{url}?grupo={group.pk}'
+    assert set(group.permissions.values_list('pk', flat=True)) == set(permissions)
+    response = client.post(url, {'group': group.pk, 'permissions': []})
+    assert response.status_code == 302
+    assert not group.permissions.exists()
