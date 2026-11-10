@@ -4,7 +4,7 @@
 <section aria-labelledby="page-title"{% if modulo == 'atenciones' %} data-realtime-table data-table-url="{% url 'gestion:tabla' modulo %}"{% endif %}>
   <div class="module-breadcrumb"><a href="{% url 'gestion:inicio' %}">Gestión municipal</a> / {{ titulo }}</div>
   <div class="page-heading">
-    <div><h1 id="page-title">{{ titulo }}</h1><p class="text-muted">Consulta los registros de tu delegación.</p></div>
+    <div><h1 id="page-title">{{ titulo }}</h1><p class="text-muted">{% if user.is_superuser %}Consulta los registros de todas las delegaciones.{% else %}Consulta los registros de tu delegación.{% endif %}</p></div>
     <div class="heading-actions">
       {% if export_url %}<a class="btn btn-outline-secondary btn-export-excel" href="{{ export_url }}"><img class="excel-icon" src="{% static 'municipal/excel.svg' %}" width="20" height="20" alt="">Exportar Excel</a>{% endif %}
       {% if can_add %}<a class="btn btn-primary" href="{% url 'gestion:crear' modulo %}">{% include 'shared/icon.html' with name='plus' %}Crear registro</a>{% endif %}

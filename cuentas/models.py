@@ -16,8 +16,8 @@ def photo_upload_path(instance, filename):
 
 class Perfil(models.Model):
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='perfil')
-    delegacion = models.ForeignKey('gestion.Delegacion', on_delete=models.PROTECT)
-    rut = models.CharField('RUT', max_length=12, unique=True)
+    delegacion = models.ForeignKey('gestion.Delegacion', on_delete=models.PROTECT, blank=True, null=True)
+    rut = models.CharField('RUT', max_length=12, unique=True, blank=True, null=True)
     foto = models.ImageField('Foto', upload_to=photo_upload_path, storage=private_photo_storage, blank=True)
 
     class Meta:
@@ -29,13 +29,18 @@ class Perfil(models.Model):
 
     def clean(self):
         super().clean()
+        global_access = self.user_id is not None and self.user.is_superuser
+        if not global_access and not self.delegacion_id:
+            raise ValidationError({'delegacion': 'Selecciona una delegación.'})
+        if not self.rut and global_access:
+            return
         try:
             self.rut = normalize_rut(self.rut)
         except RutError as exc:
             raise ValidationError({'rut': str(exc)}) from exc
 
     def save(self, *args, **kwargs):
-        self.rut = normalize_rut(self.rut)
+        self.rut = None if self.user.is_superuser and not self.rut else normalize_rut(self.rut)
         super().save(*args, **kwargs)
 
     def __str__(self):

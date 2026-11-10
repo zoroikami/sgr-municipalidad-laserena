@@ -11,23 +11,34 @@ def technician():
     return get_user_model().objects.create_superuser('soporte_prueba', 'soporte@example.test', 'Soporte#Prueba2026!')
 
 
-def test_unscoped_technician_is_not_authenticated_through_municipal_login(client, technician):
+def test_superuser_without_delegation_signs_in_and_sees_all_delegations(client, technician, mundo):
     response = client.post(reverse('cuentas:login'), {'username': technician.username, 'password': 'Soporte#Prueba2026!'})
-    assert response.status_code == 200
-    assert response.context['form'].non_field_errors()
-    assert 'delegación' in str(response.context['form'].non_field_errors())
-    assert '_auth_user_id' not in client.session
-
-
-def test_existing_technical_session_returns_to_public_municipal_login(client, technician):
-    client.force_login(technician)
-    response = client.get(reverse('gestion:inicio'))
     assert response.status_code == 302
-    assert response['Location'] == reverse('cuentas:login')
-    login = client.get(response['Location'])
-    assert login.status_code == 200
-    assert 'sgr-public' in login.content.decode()
-    assert '<aside' not in login.content.decode()
+    assert response['Location'] == reverse('gestion:inicio')
+    home = client.get(response['Location'])
+    assert home.status_code == 200
+    assert 'Todas las delegaciones' in home.content.decode()
+    for module in ('atenciones', 'metas', 'tipos', 'subatenciones', 'delegaciones'):
+        assert client.get(reverse('gestion:listado', args=[module])).context['page_obj'].paginator.count >= 2
+    for route in ('usuarios', 'roles', 'perfil'):
+        assert client.get(reverse('cuentas:' + route)).status_code == 200
+
+
+def test_superuser_can_create_an_attention_in_an_explicit_delegation(client, technician, mundo):
+    client.force_login(technician)
+    url = reverse('gestion:crear', args=['atenciones'])
+    fields = {
+        'delegacion': mundo['b'].pk, 'tipo': mundo['tipo_b'].pk,
+        'subatencion': mundo['sub_b'].pk, 'solicitante_nombre': 'Registro global',
+        'solicitante_rut': '12.345.678-5', 'descripcion': 'Prueba', 'estado': 'Ingresada',
+    }
+    bad = client.post(url, fields | {'subatencion': mundo['sub_a'].pk})
+    assert 'subatencion' in bad.context['form'].errors
+    response = client.post(url, fields)
+    assert response.status_code == 302
+    from gestion.models import Atencion
+    record = Atencion.objects.get(solicitante_nombre='Registro global')
+    assert record.delegacion_id == mundo['b'].pk and record.responsable_id == technician.pk
 
 
 def test_technical_console_remains_available_at_its_explicit_address(client, technician):

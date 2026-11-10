@@ -30,12 +30,10 @@ def module_config(modulo):
 
 @login_required
 def inicio(request):
-    if request.user.is_superuser and not hasattr(request.user, 'perfil'):
-        messages.info(request, 'Esta sesión es de soporte técnico. Ingresa con una cuenta municipal que tenga una delegación asignada.')
-        return redirect('cuentas:login')
     if is_cliente(request.user):
         return redirect('gestion:portal')
-    delegation_id(request.user)
+    if not request.user.is_superuser:
+        delegation_id(request.user)
     stats = []
     descriptions = {
         'atenciones': 'Consulta las solicitudes ciudadanas y revisa su estado de atención.',
@@ -80,7 +78,7 @@ def form_view(request, modulo, pk=None):
     config = module_config(modulo)
     model = config['model']
     authorize(request.user, model, 'change' if pk else 'add')
-    if modulo == 'delegaciones' and not pk:
+    if modulo == 'delegaciones' and not pk and not request.user.is_superuser:
         raise PermissionDenied('La creación de delegaciones corresponde a administración técnica.')
     with transaction.atomic():
         query = scoped(request.user, model)

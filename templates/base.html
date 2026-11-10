@@ -17,9 +17,9 @@
   {% if user.is_authenticated and not public_layout %}
   <header class="municipal-header sgr-topbar">
     <a class="municipal-brand topbar-left" href="{% url 'gestion:inicio' %}"><img class="topbar-logo" src="{% static 'municipal/logo-la-serena-horizontal.svg' %}" alt="Municipalidad de La Serena" width="240" height="67"></a>
-    <div class="topbar-delegacion-pill" aria-label="Delegación asignada a tu cuenta">
+    <div class="topbar-delegacion-pill" aria-label="Ámbito de acceso">
       {% include 'shared/icon.html' with name='pin' %}
-      <span class="topbar-delegacion-label"><strong>{{ user.perfil.delegacion.nombre|default:'Sin delegación' }}</strong><small>{{ user.perfil.delegacion.codigo }} · Delegación activa</small></span>
+      <span class="topbar-delegacion-label">{% if user.is_superuser %}<strong>Todas las delegaciones</strong><small>Acceso global</small>{% else %}<strong>{{ user.perfil.delegacion.nombre|default:'Sin delegación' }}</strong><small>{{ user.perfil.delegacion.codigo }} · Delegación activa</small>{% endif %}</span>
       {% include 'shared/icon.html' with name='lock' %}
     </div>
     <div class="session-actions topbar-right">

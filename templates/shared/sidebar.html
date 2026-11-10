@@ -16,5 +16,5 @@
       {% if perms.gestion.view_subatencion %}<a class="nav-link-btn" href="{% url 'gestion:listado' 'subatenciones' %}"{% if modulo == 'subatenciones' %} aria-current="page"{% endif %}>{% include 'shared/icon.html' with name='subatenciones' %}<span>Subatenciones</span></a>{% endif %}
     {% endif %}
   </nav>
-  <div class="sidebar-footer-note"><strong>Sistema de Gestión de Resultados</strong><span>Ilustre Municipalidad de La Serena</span><small>{{ user.perfil.delegacion.nombre }}</small></div>
+  <div class="sidebar-footer-note"><strong>Sistema de Gestión de Resultados</strong><span>Ilustre Municipalidad de La Serena</span><small>{% if user.is_superuser %}Todas las delegaciones{% else %}{{ user.perfil.delegacion.nombre }}{% endif %}</small></div>
 </aside>

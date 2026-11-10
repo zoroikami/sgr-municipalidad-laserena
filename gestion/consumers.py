@@ -5,19 +5,21 @@ from django.core.exceptions import PermissionDenied
 from django.contrib.sessions.backends.db import SessionStore
 from django.utils.crypto import constant_time_compare
 
-from .access import delegation_id
-from .realtime import group_for
+from .access import delegation_id, is_cliente
+from .realtime import GLOBAL_SCOPE, group_for
 
 
 @database_sync_to_async
 def viewer_scope(user_id, session_key):
     user = get_user_model().objects.filter(pk=user_id, is_active=True).first()
-    if not user or user.groups.filter(name='Cliente').exists() or not user.has_perm('gestion.view_atencion'):
+    if not user or is_cliente(user) or not user.has_perm('gestion.view_atencion'):
         return None
     session = SessionStore(session_key=session_key).load() if session_key else {}
     if (str(session.get('_auth_user_id')) != str(user.pk)
             or not constant_time_compare(session.get('_auth_user_hash', ''), user.get_session_auth_hash())):
         return None
+    if user.is_superuser:
+        return GLOBAL_SCOPE
     try:
         return delegation_id(user)
     except PermissionDenied:

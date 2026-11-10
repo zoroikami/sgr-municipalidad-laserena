@@ -7,7 +7,7 @@ from channels.testing import WebsocketCommunicator
 from django.db import transaction
 from django.test import Client
 
-from gestion.realtime import group_for, notify_after_commit
+from gestion.realtime import GLOBAL_SCOPE, group_for, notify_after_commit
 
 pytestmark = pytest.mark.django_db(transaction=True)
 
@@ -68,7 +68,9 @@ async def test_notification_is_emitted_after_commit_and_never_on_rollback(mundo)
     from channels.db import database_sync_to_async
     layer = get_channel_layer()
     channel = await layer.new_channel()
+    global_channel = await layer.new_channel()
     await layer.group_add(group_for(mundo['a'].pk), channel)
+    await layer.group_add(group_for(GLOBAL_SCOPE), global_channel)
 
     @database_sync_to_async
     def commit():
@@ -84,7 +86,9 @@ async def test_notification_is_emitted_after_commit_and_never_on_rollback(mundo)
     await commit()
     result = await layer.receive(channel)
     assert result == {'type': 'tabla.cambio'}
+    assert await layer.receive(global_channel) == {'type': 'tabla.cambio'}
     await rollback()
     with pytest.raises(asyncio.TimeoutError):
         await asyncio.wait_for(layer.receive(channel), timeout=0.15)
     await layer.group_discard(group_for(mundo['a'].pk), channel)
+    await layer.group_discard(group_for(GLOBAL_SCOPE), global_channel)

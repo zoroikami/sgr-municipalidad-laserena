@@ -1,4 +1,4 @@
-"""Real Croppr regression: repeated keyboard adjustments must remain on-image.
+"""Real Croppr regression: resizing and dragging must remain on-image.
 
 Run with .venv/bin/python tests_browser/check_crop.py after installing Chromium.
 No server or real accounts are needed for this library/UI integration check.
@@ -12,6 +12,25 @@ from playwright.sync_api import sync_playwright
 ROOT = Path(__file__).resolve().parents[1]
 
 
+def shrink_and_move_crop_left(page):
+    image = page.locator('#crop-panel .croppr-image').bounding_box()
+    handles = [handle.bounding_box() for handle in page.locator('#crop-panel .croppr-handle').all()]
+    corner = max(handles, key=lambda box: box['x'] + box['y'])
+    x = corner['x'] + corner['width'] / 2
+    y = corner['y'] + corner['height'] / 2
+    page.mouse.move(x, y)
+    page.mouse.down()
+    page.mouse.move(x - image['height'] * 0.45, y - image['height'] * 0.45, steps=10)
+    page.mouse.up()
+    region = page.locator('#crop-panel .croppr-region').bounding_box()
+    x = region['x'] + region['width'] / 2
+    y = region['y'] + region['height'] / 2
+    page.mouse.move(x, y)
+    page.mouse.down()
+    page.mouse.move(image['x'] + 1, y, steps=10)
+    page.mouse.up()
+
+
 def run():
     image = BytesIO()
     Image.new('RGB', (640, 480), '#c41230').save(image, 'PNG')
@@ -21,12 +40,6 @@ def run():
         page.set_content('''<style>img {max-width:400px} #crop-panel {width:400px}</style>
         <form id="profile-form"><input type="file" name="foto">
           <section id="crop-panel" hidden><img id="crop-source">
-            <button type="button" data-crop-move="left">Left</button>
-            <button type="button" data-crop-move="right">Right</button>
-            <button type="button" data-crop-move="up">Up</button>
-            <button type="button" data-crop-move="down">Down</button>
-            <button type="button" data-crop-scale="0.9">Shrink</button>
-            <button type="button" data-crop-scale="1.1">Enlarge</button>
             <button type="button" id="crop-apply">Apply</button>
             <button type="button" id="crop-cancel">Cancel</button>
           </section><section id="crop-preview-panel" hidden><img id="crop-preview"></section>
@@ -40,18 +53,18 @@ def run():
         page.add_script_tag(path=str(ROOT / 'static/sgr/perfil.js'))
         page.locator('input[name=foto]').set_input_files({'name': 'source.png', 'mimeType': 'image/png', 'buffer': image.getvalue()})
         page.wait_for_function('window.observedCrop && !document.querySelector("#crop-apply").disabled')
-        page.locator('[data-crop-move=left]').press('Enter')
-        for selector in ['[data-crop-move=left]', '[data-crop-move=up]', '[data-crop-move=right]', '[data-crop-move=down]', '[data-crop-scale="1.1"]', '[data-crop-scale="0.9"]']:
-            page.locator(selector).evaluate('(button) => {for(let i=0;i<100;i++) button.click();}')
-            box = page.evaluate('window.observedCrop.getValue("real")')
-            assert box['x'] >= 0 and box['y'] >= 0, box
-            assert box['width'] >= 1 and box['height'] >= 1, box
-            assert box['x'] + box['width'] <= 641 and box['y'] + box['height'] <= 481, box
+        original = page.evaluate('window.observedCrop.getValue("real")')
+        shrink_and_move_crop_left(page)
+        box = page.evaluate('window.observedCrop.getValue("real")')
+        assert box['x'] < original['x'] and box['width'] < original['width'], box
+        assert box['x'] >= 0 and box['y'] >= 0, box
+        assert box['width'] >= 1 and box['height'] >= 1, box
+        assert box['x'] + box['width'] <= 641 and box['y'] + box['height'] <= 481, box
         page.locator('#crop-apply').click()
         page.wait_for_function('!document.querySelector("#crop-preview-panel").hidden')
         assert page.locator('input[name=foto]').evaluate('(input) => input.files[0].size') > 0
         browser.close()
-    print('Croppr: keyboard bounds, minimum size and final file passed.')
+    print('Croppr: pointer movement, resize bounds and final file passed.')
 
 
 if __name__ == '__main__':

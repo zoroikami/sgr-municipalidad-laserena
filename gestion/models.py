@@ -174,7 +174,9 @@ class Atencion(models.Model):
             errors['subatencion'] = 'La subatención no corresponde al tipo seleccionado.'
         for field in ['cliente', 'responsable']:
             user = getattr(self, field, None) if getattr(self, f'{field}_id', None) else None
-            if user and (not hasattr(user, 'perfil') or user.perfil.delegacion_id != self.delegacion_id):
+            if field == 'responsable' and user and user.is_superuser:
+                continue
+            if self.delegacion_id and user and (not hasattr(user, 'perfil') or user.perfil.delegacion_id != self.delegacion_id):
                 errors[field] = 'La cuenta debe pertenecer a tu delegación.'
         if self.cliente_id and (not self.cliente.is_active or not self.cliente.groups.filter(name='Cliente').exists()):
             errors['cliente'] = 'Selecciona una cuenta activa con rol Cliente.'

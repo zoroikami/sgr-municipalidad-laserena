@@ -90,35 +90,6 @@
     image.src = sourceURL;
   });
 
-  function adjustCrop(dx = 0, dy = 0, scale = 1) {
-    if (!cropper) return;
-    const bounds = cropper.imageEl.getBoundingClientRect();
-    if (!bounds.width || !bounds.height) return;
-    const box = cropper.getValue('raw');
-    const maximum = Math.min(bounds.width, bounds.height);
-    const side = Math.min(maximum, Math.max(Math.min(16, maximum), box.width * scale));
-    const x = Math.max(0, Math.min(bounds.width - side, box.x + (box.width - side) / 2 + dx));
-    const y = Math.max(0, Math.min(bounds.height - side, box.y + (box.height - side) / 2 + dy));
-    // Croppr's public move/scale methods do not enforce pointer-drag constraints.
-    cropper.resizeTo(side, side, [0, 0]);
-    cropper.moveTo(x, y);
-  }
-
-  form.querySelectorAll('[data-crop-move]').forEach(button => {
-    button.addEventListener('click', () => {
-      if (!cropper) return;
-      const direction = button.dataset.cropMove;
-      const step = 10;
-      adjustCrop(direction === 'left' ? -step : direction === 'right' ? step : 0,
-        direction === 'up' ? -step : direction === 'down' ? step : 0);
-    });
-  });
-  form.querySelectorAll('[data-crop-scale]').forEach(button => {
-    button.addEventListener('click', () => {
-      adjustCrop(0, 0, Number(button.dataset.cropScale));
-    });
-  });
-
   apply.addEventListener('click', () => {
     if (!cropper || !original) return;
     const generation = sequence;

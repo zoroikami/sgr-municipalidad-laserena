@@ -16,6 +16,7 @@ from urllib.request import urlopen
 
 from PIL import Image, ImageDraw
 from playwright.sync_api import sync_playwright, expect
+from check_crop import shrink_and_move_crop_left
 
 ROOT = Path(__file__).resolve().parents[1]
 BASE = os.environ.get('SGR_BASE_URL', 'http://127.0.0.1:8001')
@@ -160,8 +161,8 @@ def run():
         source.save(raw, 'PNG')
         one.locator('[name=foto]').set_input_files({'name': 'recorte.png', 'mimeType': 'image/png', 'buffer': raw.getvalue()})
         expect(one.locator('#crop-apply')).to_be_enabled()
-        one.locator('[data-crop-scale="0.9"]').evaluate('(button)=>{for(let i=0;i<4;i++)button.click()}')
-        one.locator('[data-crop-move=left]').evaluate('(button)=>{for(let i=0;i<100;i++)button.click()}')
+        expect(one.locator('[data-crop-move], [data-crop-scale]')).to_have_count(0)
+        shrink_and_move_crop_left(one)
         one.locator('#crop-apply').click()
         expect(one.locator('#crop-preview-panel')).to_be_visible()
         one.locator('#profile-save').click()
