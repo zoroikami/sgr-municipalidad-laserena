@@ -75,6 +75,31 @@
           onInitialize: () => {
             status.textContent = 'Ajusta el recorte y selecciona Usar este recorte.';
             apply.disabled = false;
+            const region = panel.querySelector('.croppr-region');
+            region.tabIndex = 0;
+            region.setAttribute('role', 'group');
+            region.setAttribute('aria-label', 'Área de recorte de la foto');
+            region.setAttribute('aria-describedby', 'crop-keyboard-help');
+            region.addEventListener('keydown', event => {
+              if (!cropper) return;
+              const box = cropper.getValue('raw');
+              const bounds = panel.querySelector('.croppr-image').getBoundingClientRect();
+              const step = event.shiftKey ? 10 : 1;
+              const directions = { ArrowLeft: [-step, 0], ArrowRight: [step, 0], ArrowUp: [0, -step], ArrowDown: [0, step] };
+              if (directions[event.key]) {
+                event.preventDefault();
+                const [dx, dy] = directions[event.key];
+                cropper.moveTo(Math.max(0, Math.min(bounds.width - box.width, box.x + dx)),
+                  Math.max(0, Math.min(bounds.height - box.height, box.y + dy)));
+              } else if (['+', '=', '-', '_'].includes(event.key)) {
+                event.preventDefault();
+                const delta = ['+', '='].includes(event.key) ? step : -step;
+                const side = Math.max(1, Math.min(box.width + delta, bounds.width - box.x, bounds.height - box.y));
+                cropper.resizeTo(side, side, [0, 0]);
+              } else return;
+              const value = cropper.getValue('real');
+              status.textContent = `Recorte: ${Math.round(value.width)} por ${Math.round(value.height)} píxeles. Selecciona Usar este recorte para continuar.`;
+            });
           }
         });
       };

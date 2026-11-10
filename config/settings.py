@@ -24,8 +24,12 @@ SECRET_KEY = required('DJANGO_SECRET_KEY')
 DEBUG = enabled('DJANGO_DEBUG')
 ALLOWED_HOSTS = [x.strip() for x in required('DJANGO_ALLOWED_HOSTS').split(',') if x.strip()]
 CSRF_TRUSTED_ORIGINS = [x.strip() for x in os.environ.get('CSRF_TRUSTED_ORIGINS', '').split(',') if x.strip()]
-# Fallback flexible para desarrollo local
-DB_ENGINE = os.environ.get('DB_ENGINE', 'django.db.backends.sqlite3' if not os.environ.get('DB_USER') or os.environ.get('USE_SQLITE') == 'true' else 'django.db.backends.mysql')
+# SQLite is an explicit development option; production must use MySQL.
+DB_ENGINE = os.environ.get('DB_ENGINE', 'django.db.backends.sqlite3' if enabled('USE_SQLITE') else 'django.db.backends.mysql')
+if DB_ENGINE not in ('django.db.backends.mysql', 'django.db.backends.sqlite3'):
+    raise ImproperlyConfigured('DB_ENGINE debe ser MySQL o SQLite de desarrollo.')
+if DB_ENGINE == 'django.db.backends.sqlite3' and not DEBUG:
+    raise ImproperlyConfigured('SQLite solo está permitido con DJANGO_DEBUG=true. Configura MySQL para producción.')
 
 if DB_ENGINE == 'django.db.backends.sqlite3':
     DATABASES = {
@@ -45,29 +49,16 @@ else:
         'TEST': {'NAME': 'test_' + required('DB_NAME')},
     }}
 
-# Channels / Redis opcional en desarrollo local
-try:
-    import channels
-    import channels_redis
-    INSTALLED_APPS_CHANNELS = ['channels']
-    CHANNEL_LAYERS = {'default': {
-        'BACKEND': 'channels_redis.core.RedisChannelLayer',
-        'CONFIG': {'hosts': [os.environ.get('REDIS_URL', 'redis://127.0.0.1:6380/0')]},
-    }}
-except ImportError:
-    INSTALLED_APPS_CHANNELS = []
-    CHANNEL_LAYERS = {}
+CHANNEL_LAYERS = {'default': {
+    'BACKEND': 'channels_redis.core.RedisChannelLayer',
+    'CONFIG': {'hosts': [os.environ.get('REDIS_URL', 'redis://127.0.0.1:6380/0')]},
+}}
 
-try:
-    import daphne
-    INSTALLED_APPS_DAPHNE = ['daphne']
-except ImportError:
-    INSTALLED_APPS_DAPHNE = []
-
-INSTALLED_APPS = INSTALLED_APPS_DAPHNE + [
+INSTALLED_APPS = ['daphne',
     'django.contrib.admin', 'django.contrib.auth', 'django.contrib.contenttypes',
     'django.contrib.sessions', 'django.contrib.messages', 'django.contrib.staticfiles',
-] + INSTALLED_APPS_CHANNELS + ['cuentas', 'gestion']
+    'channels', 'cuentas', 'gestion',
+]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',

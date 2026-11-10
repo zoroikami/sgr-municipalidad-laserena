@@ -6,6 +6,8 @@ services:
     env_file: .env
     environment:
       DJANGO_DEBUG: "false"
+      DB_ENGINE: django.db.backends.mysql
+      USE_SQLITE: "false"
       DB_HOST: mysql
       DB_PORT: "3306"
       REDIS_URL: redis://redis:6379/0

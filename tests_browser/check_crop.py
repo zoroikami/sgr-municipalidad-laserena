@@ -60,6 +60,18 @@ def run():
         assert box['x'] >= 0 and box['y'] >= 0, box
         assert box['width'] >= 1 and box['height'] >= 1, box
         assert box['x'] + box['width'] <= 641 and box['y'] + box['height'] <= 481, box
+        region = page.locator('#crop-panel .croppr-region')
+        region.focus()
+        before = page.evaluate('window.observedCrop.getValue("real")')
+        region.press('ArrowRight')
+        region.press('-')
+        after = page.evaluate('window.observedCrop.getValue("real")')
+        assert after['x'] > before['x'] and after['width'] < before['width'], (before, after)
+        for _ in range(30):
+            region.press('Shift+ArrowLeft')
+            region.press('Shift+-')
+        box = page.evaluate('window.observedCrop.getValue("real")')
+        assert box['x'] >= 0 and box['width'] >= 1, box
         page.locator('#crop-apply').click()
         page.wait_for_function('!document.querySelector("#crop-preview-panel").hidden')
         assert page.locator('input[name=foto]').evaluate('(input) => input.files[0].size') > 0

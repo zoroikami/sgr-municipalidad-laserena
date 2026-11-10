@@ -31,6 +31,7 @@ backup_file=".private/backups/mysql-$(date -u +%Y%m%dT%H%M%SZ).sql"
 (umask 077; "${compose[@]}" exec -T mysql sh -c 'MYSQL_PWD="$MYSQL_PASSWORD" mysqldump --single-transaction --no-tablespaces -u"$MYSQL_USER" "$MYSQL_DATABASE"' > "$backup_file")
 "${compose[@]}" run --rm web python manage.py migrate --noinput
 "${compose[@]}" run --rm --user "$(id -u):$(id -g)" -v "$PWD/.private:/private" web python manage.py seed_demo --credentials-file /private/cuentas-demo.json
+"${compose[@]}" run --rm web python manage.py verify_environment --demo --production
 "${compose[@]}" run --rm web python manage.py collectstatic --noinput
 "${compose[@]}" up -d web nginx
 curl --fail --silent --show-error --retry 5 --retry-delay 2 "$public_origin/api/health/"
