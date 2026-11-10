@@ -1,5 +1,15 @@
 [
   {
+    "date": "2026-11-06",
+    "family": "Product",
+    "macro": "municipal register workspace",
+    "theme": "Existing municipal cream and wine palette",
+    "direction": "editorial-sober",
+    "display": "Native system sans-serif (existing brand requirement)",
+    "nav": "Permission-aware delegation sidebar",
+    "brief": "Django municipal records: real scoped totals, flat tables, Bootstrap modal forms, private profile photos and explicit realtime state. Existing app and brand retained per approved brief; product surface rotation exempt."
+  },
+  {
     "date": "2026-10-13",
     "family": "Product",
     "macro": "municipal workspace refinement",

@@ -1,152 +1,122 @@
-"""Un ModelForm por mantenedor, reutilizado al crear y editar."""
 from django import forms
 from django.contrib.auth import get_user_model
-from django.contrib.auth.forms import AuthenticationForm
-from django.contrib.auth.password_validation import validate_password
-from django.core.exceptions import ValidationError
-from django.db.models import Q
-from rut import normalize_rut, RutError
-from .models import Delegacion, Rol, Usuario, ItemMeta, TipoAtencion, SubAtencion, Atencion
+
+from .access import delegation_id
+from .models import Atencion, Delegacion, ItemMeta, SubAtencion, TipoAtencion
 
 
-class AccesoForm(AuthenticationForm):
-    username = forms.CharField(label='Usuario, correo o RUT')
+class AtencionFilterForm(forms.Form):
+    responsable = forms.ModelChoiceField(
+        label='Responsable', required=False, queryset=get_user_model().objects.none(),
+        empty_label='Todos los responsables', widget=forms.Select(attrs={'class': 'form-select'}),
+        error_messages={'invalid_choice': 'Selecciona un responsable de tu delegación.'},
+    )
+    desde = forms.DateField(
+        label='Desde', required=False, input_formats=['%Y-%m-%d'],
+        widget=forms.DateInput(format='%Y-%m-%d', attrs={'type': 'date', 'class': 'form-control'}),
+        error_messages={'invalid': 'Ingresa una fecha Desde válida.'},
+    )
+    hasta = forms.DateField(
+        label='Hasta', required=False, input_formats=['%Y-%m-%d'],
+        widget=forms.DateInput(format='%Y-%m-%d', attrs={'type': 'date', 'class': 'form-control'}),
+        error_messages={'invalid': 'Ingresa una fecha Hasta válida.'},
+    )
+
+    def __init__(self, *args, user, **kwargs):
+        super().__init__(*args, **kwargs)
+        org = delegation_id(user)
+        # Include archived assignments so that archiving a last record keeps the filter valid.
+        assigned = Atencion.all_objects.filter(delegacion_id=org).order_by().values('responsable_id')
+        self.fields['responsable'].queryset = get_user_model().objects.filter(
+            pk__in=assigned, perfil__delegacion_id=org,
+        ).order_by('first_name', 'last_name', 'username')
+        self.fields['responsable'].label_from_instance = lambda account: account.get_full_name() or account.username
 
     def clean(self):
-        identifier = self.cleaned_data.get('username', '').strip()
-        try:
-            rut = normalize_rut(identifier)
-        except RutError:
-            rut = identifier
-        user = get_user_model().objects.filter(Q(username__iexact=identifier) | Q(email__iexact=identifier) | Q(rut__iexact=rut)).first()
-        if user:
-            self.cleaned_data['username'] = user.username
-        return super().clean()
-
-    def confirm_login_allowed(self, user):
-        super().confirm_login_allowed(user)
-        if user.estado != 'Activo':
-            raise ValidationError('La cuenta está inactiva o suspendida.')
+        dates = super().clean()
+        start = dates.get('desde')
+        end = dates.get('hasta')
+        if start and end and end < start:
+            self.add_error('hasta', 'La fecha Hasta debe ser igual o posterior a la fecha Desde.')
+        return dates
 
 
-class CatalogoForm(forms.ModelForm):
-    """Estilos Bootstrap y validación del nombre en un único lugar."""
-    def __init__(self, *args, user=None, **kwargs):
-        self.actor = user
+class ScopedModelForm(forms.ModelForm):
+    def __init__(self, *args, user, **kwargs):
+        self.user = user
+        self.org_id = delegation_id(user)
         super().__init__(*args, **kwargs)
+        if hasattr(self.instance, 'delegacion_id'):
+            self.instance.delegacion_id = self.org_id
         for name, field in self.fields.items():
-            field.widget.attrs['class'] = 'form-select' if isinstance(field.widget, forms.Select) else 'form-control'
-            if name in ('descripcion',):
-                field.widget.attrs['rows'] = 3
-            if name == 'estado':
-                active = 'Activa' if self._meta.model in (Delegacion, SubAtencion) else 'Activo'
-                inactive = 'Inactiva' if active == 'Activa' else 'Inactivo'
-                self.fields[name] = forms.ChoiceField(label='Estado', choices=[(active, active), (inactive, inactive)], widget=forms.Select(attrs={'class':'form-select'}))
+            field.widget.attrs.setdefault('class', 'form-select' if isinstance(field.widget, forms.Select) else 'form-control')
+            field.widget.attrs.setdefault('aria-describedby', f'id_{name}_help id_{name}_errors')
 
     def clean_nombre(self):
-        nombre = self.cleaned_data['nombre'].strip()
-        if len(nombre) < 3:
-            raise ValidationError('Ingrese un nombre de al menos 3 caracteres.')
-        return nombre
+        name = self.cleaned_data['nombre'].strip()
+        query = self._meta.model.all_objects.filter(nombre__iexact=name)
+        if self._meta.model is Delegacion:
+            query = query.filter(pk=self.org_id)
+        else:
+            query = query.filter(delegacion_id=self.org_id)
+        if self.instance.pk:
+            query = query.exclude(pk=self.instance.pk)
+        if query.exists():
+            raise forms.ValidationError('Ya existe un registro con este nombre en tu delegación, incluido el archivo.')
+        return name
 
 
-class DelegacionForm(CatalogoForm):
-    class Meta:
-        model = Delegacion
-        fields = ['nombre', 'direccion', 'comuna', 'estado']
-        labels = {'nombre':'Nombre', 'direccion':'Dirección', 'comuna':'Comuna'}
+class ItemMetaForm(ScopedModelForm):
+    meta_cantidad = forms.IntegerField(label='Cantidad de meta', disabled=True, initial=100,
+                                     help_text='Se asigna automáticamente. Las metas existentes conservan su cantidad.')
 
-
-class RolForm(CatalogoForm):
-    class Meta:
-        model = Rol
-        fields = ['nombre', 'descripcion', 'permisos', 'alcance', 'estado']
-        labels = {'descripcion':'Descripción', 'permisos':'Permisos', 'alcance':'Alcance'}
-        widgets = {'permisos':forms.Select(choices=[('total','Administración total'), ('coordinacion','Coordinación'), ('delegacion','Delegación'), ('operador','Operador'), ('lectura','Solo lectura')])}
-
-
-class ItemMetaForm(CatalogoForm):
     class Meta:
         model = ItemMeta
         fields = ['nombre', 'descripcion', 'unidad_medida', 'meta_cantidad', 'estado']
-        labels = {'descripcion':'Descripción', 'unidad_medida':'Unidad de medida', 'meta_cantidad':'Meta (cantidad)'}
 
 
-class TipoAtencionForm(CatalogoForm):
+class TipoAtencionForm(ScopedModelForm):
     class Meta:
         model = TipoAtencion
         fields = ['nombre', 'descripcion', 'estado']
-        labels = {'descripcion':'Descripción'}
 
 
-class SubAtencionForm(CatalogoForm):
+class SubAtencionForm(ScopedModelForm):
     class Meta:
         model = SubAtencion
-        fields = ['nombre', 'tipo', 'estado']
-        labels = {'tipo':'Tipo de atención'}
-
-
-class UsuarioForm(CatalogoForm):
-    password = forms.CharField(label='Contraseña', required=False, strip=False, widget=forms.PasswordInput, help_text='Al crear, ingrese una contraseña de al menos 8 caracteres. Al editar, déjela vacía para conservar la actual.')
-
-    class Meta:
-        model = Usuario
-        fields = ['rut', 'nombre', 'email', 'rol', 'delegacion', 'estado']
-        labels = {'rut':'RUT', 'nombre':'Nombre completo', 'email':'Correo electrónico', 'rol':'Rol', 'delegacion':'Delegación'}
-        widgets = {'rut':forms.TextInput(attrs={'data-rut':'', 'maxlength':12, 'placeholder':'12.345.678-5', 'aria-describedby':'id_rut_feedback id_rut_helptext'})}
-        help_texts = {'rut':'Incluye siempre el dígito verificador (número o K). Ejemplo: 12.345.678-5.'}
+        fields = ['nombre', 'tipo', 'descripcion', 'estado']
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        for name in ('rut', 'rol', 'delegacion'):
-            self.fields[name].required = True
-        self.fields['password'].required = not self.instance.pk
-        if self.actor and not self.actor.is_superuser and self.actor.rol_id not in ('ROL01', 'ROL02') and not (self.actor.rol and self.actor.rol.permisos == 'total'):
-            self.fields['rol'].queryset = Rol.objects.filter(
-                codigo__in=['ROL04', 'ROL05']).exclude(permisos='total')
-            self.fields['delegacion'].queryset = Delegacion.objects.filter(codigo=self.actor.delegacion_id)
-
-    def clean_rut(self):
-        try:
-            return normalize_rut(self.cleaned_data['rut'])
-        except RutError as exc:
-            raise ValidationError(str(exc)) from exc
-
-    def clean_email(self):
-        email = self.cleaned_data['email'].strip().lower()
-        if Usuario.objects.filter(email__iexact=email).exclude(pk=self.instance.pk).exists():
-            raise ValidationError('Ya existe un usuario con este correo.')
-        return email
-
-    def clean(self):
-        cleaned = super().clean()
-        password = cleaned.get('password')
-        if password:
-            validate_password(password, self.instance)
-        return cleaned
-
-    def save(self, commit=True):
-        user = super().save(commit=False)
-        if not user.pk:
-            user.username = user.email
-        if self.cleaned_data.get('password'):
-            user.set_password(self.cleaned_data['password'])
-        if commit:
-            user.save()
-            self.save_m2m()
-        return user
+        self.fields['tipo'].queryset = TipoAtencion.objects.filter(delegacion_id=self.org_id, estado='Activo')
 
 
-class AtencionForm(forms.ModelForm):
+class DelegacionForm(ScopedModelForm):
+    class Meta:
+        model = Delegacion
+        fields = ['nombre', 'direccion', 'comuna', 'estado']
+
+
+class AtencionForm(ScopedModelForm):
     class Meta:
         model = Atencion
-        fields = ['folio', 'solicitante_rut', 'solicitante_nombre', 'delegacion', 'tipo', 'subtipo', 'descripcion', 'responsable_nombre']
+        fields = ['solicitante_nombre', 'solicitante_rut', 'tipo', 'subatencion', 'cliente', 'descripcion', 'estado']
 
-    def clean_solicitante_rut(self):
-        rut = self.cleaned_data.get('solicitante_rut')
-        if rut:
-            try:
-                return normalize_rut(rut)
-            except RutError as err:
-                raise forms.ValidationError(str(err))
-        return rut
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if not self.instance.pk:
+            self.instance.responsable = self.user
+        self.fields['tipo'].queryset = TipoAtencion.objects.filter(delegacion_id=self.org_id, estado='Activo')
+        subquery = SubAtencion.objects.filter(delegacion_id=self.org_id, estado='Activo', tipo__estado='Activo', tipo__deleted_at__isnull=True)
+        selected_type = self.data.get('tipo') if self.is_bound else self.initial.get('tipo')
+        if selected_type and str(selected_type).isdigit():
+            subquery = subquery.filter(tipo_id=selected_type)
+        self.fields['subatencion'].queryset = subquery
+        self.fields['cliente'].queryset = get_user_model().objects.filter(
+            perfil__delegacion_id=self.org_id, groups__name='Cliente', is_active=True).distinct()
+        self.fields['cliente'].label_from_instance = lambda user: user.get_full_name() or user.username
+        self.fields['solicitante_rut'].help_text = 'Ingresa un RUT válido con su dígito verificador.'
+
+
+FORMS = {'metas': ItemMetaForm, 'atenciones': AtencionForm, 'tipos': TipoAtencionForm,
+         'subatenciones': SubAtencionForm, 'delegaciones': DelegacionForm}

@@ -1,0 +1,17 @@
+.git
+.venv
+.env
+.env.*
+.private
+deploy/tls
+.superpowers
+__pycache__
+*.pyc
+.pytest_cache
+media
+staticfiles
+database
+*.db
+*.pdf
+*.pptx
+output

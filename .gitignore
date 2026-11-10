@@ -46,11 +46,21 @@ scratch/
 .tempmediaStorage/
 *.db
 *.sqlite3
-# Configuración privada y variantes locales; solo se publica la plantilla.
 .env
+.env.local
+
+# Django runtime, uploads and private demo credentials
+media/
+staticfiles/
+.private/
+.pytest_cache/
+.coverage
 .env.*
 !.env.example
+deploy/tls/
 
-# Django
-staticfiles/
-media/
+# Material docente / diapositivas de clases
+unidad1/
+unidad2/
+
+output/browser/

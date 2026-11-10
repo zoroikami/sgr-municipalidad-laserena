@@ -1,0 +1,11 @@
+{% extends 'base.html' %}
+{% block title %}Roles y permisos | SGR{% endblock %}
+{% block content %}
+<section aria-labelledby="account-title">
+  <h1 id="account-title">Roles y permisos</h1>
+  <p>Selecciona el grupo y el conjunto completo de permisos que quieres asignar.</p>
+  <form method="post">{% csrf_token %}{% include 'cuentas/_fields.html' %}<button class="btn btn-primary" type="submit">Guardar permisos</button></form>
+  <h2 class="mt-4">Permisos vigentes</h2>
+  {% for group in grupos %}<details><summary>{{ group.name }}</summary><ul>{% for permission in group.permissions.all %}<li>{{ permission }}</li>{% empty %}<li>Sin permisos de gestión.</li>{% endfor %}</ul></details>{% endfor %}
+</section>
+{% endblock %}
