@@ -149,5 +149,18 @@ class AtencionForm(ScopedModelForm):
         self.fields['solicitante_rut'].widget.attrs.update({'placeholder': '12345678-5', 'spellcheck': 'false'})
 
 
+class PortalDateFilterForm(forms.Form):
+    desde = forms.DateField(label='Desde', required=False,
+        widget=forms.DateInput(format='%Y-%m-%d', attrs={'type': 'date', 'class': 'form-control'}))
+    hasta = forms.DateField(label='Hasta', required=False,
+        widget=forms.DateInput(format='%Y-%m-%d', attrs={'type': 'date', 'class': 'form-control'}))
+
+    def clean(self):
+        data = super().clean()
+        if data.get('desde') and data.get('hasta') and data['desde'] > data['hasta']:
+            self.add_error('hasta', 'La fecha final debe ser igual o posterior a la inicial.')
+        return data
+
+
 FORMS = {'metas': ItemMetaForm, 'atenciones': AtencionForm, 'tipos': TipoAtencionForm,
          'subatenciones': SubAtencionForm, 'delegaciones': DelegacionForm}

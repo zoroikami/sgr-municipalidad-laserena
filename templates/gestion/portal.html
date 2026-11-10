@@ -3,12 +3,21 @@
 <section aria-labelledby="page-title">
   <div class="module-breadcrumb">Portal ciudadano / {% if user.is_superuser %}Todos los clientes{% else %}Mis atenciones{% endif %}</div>
   <div class="page-heading"><div><h1 id="page-title">{{ titulo }}</h1><p>{% if user.is_superuser %}Consulta las atenciones de todos los clientes y delegaciones con tu acceso de superadministrador.{% else %}Consulta el estado y los antecedentes de las atenciones asociadas a tu cuenta.{% endif %}</p></div></div>
+  <form method="get" class="row g-3 mb-3" aria-label="Filtrar por fecha de creación">
+    {% for field in filter_form %}
+    <div class="col-sm-4"><label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>{{ field }}
+      {% for error in field.errors %}<p class="text-danger" role="alert">{{ error }}</p>{% endfor %}
+    </div>
+    {% endfor %}
+    <div class="col-sm-4 align-self-end"><button class="btn btn-primary" type="submit">Filtrar</button> <a class="btn btn-outline-secondary" href="{% url 'gestion:portal' %}">Limpiar</a></div>
+    <p class="form-text">Fechas de creación inclusivas, según la hora de Chile.</p>
+  </form>
   <div class="table-card">
   <p class="portal-count">{{ page_obj.paginator.count }} {% if page_obj.paginator.count == 1 %}atención{% else %}atenciones{% endif %}</p>
   <div class="table-responsive" tabindex="0" role="region" aria-label="Mis atenciones"><table class="table records-table"><caption class="visually-hidden">Atenciones asociadas a tu cuenta</caption><thead><tr><th scope="col">Folio</th><th scope="col">Solicitante</th><th scope="col">Estado</th><th scope="col">Creación</th><th scope="col">Acción</th></tr></thead><tbody>
-    {% for atencion in page_obj %}<tr><td><a class="record-key" href="{% url 'gestion:portal_detalle' atencion.pk %}">{{ atencion.folio }}</a></td><td class="record-name">{{ atencion.solicitante_nombre }}</td><td><span class="badge-status {{ atencion.estado|slugify }}">{{ atencion.estado }}</span></td><td>{{ atencion.created_at|date:'d-m-Y H:i' }}</td><td><div class="row-actions"><a class="action-link view" href="{% url 'gestion:portal_detalle' atencion.pk %}" aria-label="Ver atención {{ atencion.folio }}">{% include 'shared/icon.html' with name='view' %}Ver detalle</a></div></td></tr>{% empty %}<tr><td class="empty-state" colspan="5"><strong>Aún no tienes atenciones asociadas.</strong><p>Cuando la municipalidad registre una atención a tu nombre, podrás consultarla aquí.</p></td></tr>{% endfor %}
+    {% for atencion in page_obj %}<tr><td><a class="record-key" href="{% url 'gestion:portal_detalle' atencion.pk %}">{{ atencion.folio }}</a></td><td class="record-name">{{ atencion.solicitante_nombre }}</td><td><span class="badge-status {{ atencion.estado|slugify }}">{{ atencion.estado }}</span></td><td>{{ atencion.created_at|date:'d-m-Y H:i' }}</td><td><div class="row-actions"><a class="action-link view" href="{% url 'gestion:portal_detalle' atencion.pk %}" aria-label="Ver atención {{ atencion.folio }}">{% include 'shared/icon.html' with name='view' %}Ver detalle</a></div></td></tr>{% empty %}<tr><td class="empty-state" colspan="5"><strong>No hay atenciones para mostrar.</strong><p>Revisa el rango de fechas o limpia los filtros para consultar tus atenciones.</p></td></tr>{% endfor %}
   </tbody></table></div>
-  {% if page_obj.paginator.num_pages > 1 %}<nav class="portal-pagination" aria-label="Páginas de mis atenciones">{% if page_obj.has_previous %}<a class="btn btn-outline-secondary" href="?pagina={{ page_obj.previous_page_number }}">Anterior</a>{% endif %}<span>Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}</span>{% if page_obj.has_next %}<a class="btn btn-outline-secondary" href="?pagina={{ page_obj.next_page_number }}">Siguiente</a>{% endif %}</nav>{% endif %}
+  {% if page_obj.paginator.num_pages > 1 %}<nav class="portal-pagination" aria-label="Páginas de mis atenciones">{% if page_obj.has_previous %}<a class="btn btn-outline-secondary" href="{% querystring pagina=page_obj.previous_page_number %}">Anterior</a>{% endif %}<span>Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}</span>{% if page_obj.has_next %}<a class="btn btn-outline-secondary" href="{% querystring pagina=page_obj.next_page_number %}">Siguiente</a>{% endif %}</nav>{% endif %}
   </div>
 </section>
 {% endblock %}

@@ -16,7 +16,7 @@ from openpyxl import Workbook
 from openpyxl.cell import WriteOnlyCell
 
 from .access import authorize, delegation_id, is_cliente, scoped
-from .forms import FORMS
+from .forms import FORMS, PortalDateFilterForm
 from .models import Atencion, Delegacion, ItemMeta, SubAtencion, TipoAtencion
 from .queries import MODULES, display_value, list_context, query_for, state_for
 from .realtime import notify_after_commit
@@ -228,9 +228,18 @@ def own_records(user):
 def portal(request):
     from django.core.paginator import Paginator
     query = own_records(request.user)
+    filter_form = PortalDateFilterForm(request.GET)
+    if filter_form.is_valid():
+        if filter_form.cleaned_data['desde']:
+            query = query.filter(created_at__date__gte=filter_form.cleaned_data['desde'])
+        if filter_form.cleaned_data['hasta']:
+            query = query.filter(created_at__date__lte=filter_form.cleaned_data['hasta'])
+    else:
+        query = query.none()
     page = Paginator(query, 15).get_page(request.GET.get('pagina'))
     return render(request, 'gestion/portal.html', {
-        'titulo': 'Portal ciudadano' if request.user.is_superuser else 'Mis atenciones', 'page_obj': page})
+        'titulo': 'Portal ciudadano' if request.user.is_superuser else 'Mis atenciones',
+        'page_obj': page, 'filter_form': filter_form})
 
 
 @login_required
