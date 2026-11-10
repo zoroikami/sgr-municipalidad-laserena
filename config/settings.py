@@ -24,11 +24,51 @@ SECRET_KEY = required('DJANGO_SECRET_KEY')
 DEBUG = enabled('DJANGO_DEBUG')
 ALLOWED_HOSTS = [x.strip() for x in required('DJANGO_ALLOWED_HOSTS').split(',') if x.strip()]
 CSRF_TRUSTED_ORIGINS = [x.strip() for x in os.environ.get('CSRF_TRUSTED_ORIGINS', '').split(',') if x.strip()]
-INSTALLED_APPS = [
-    'daphne', 'django.contrib.admin', 'django.contrib.auth', 'django.contrib.contenttypes',
+# Fallback flexible para desarrollo local
+DB_ENGINE = os.environ.get('DB_ENGINE', 'django.db.backends.sqlite3' if not os.environ.get('DB_USER') or os.environ.get('USE_SQLITE') == 'true' else 'django.db.backends.mysql')
+
+if DB_ENGINE == 'django.db.backends.sqlite3':
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
+    }
+else:
+    DATABASES = {'default': {
+        'ENGINE': 'django.db.backends.mysql', 'NAME': required('DB_NAME'),
+        'USER': required('DB_USER'), 'PASSWORD': required('DB_PASSWORD'),
+        'HOST': os.environ.get('DB_HOST', '127.0.0.1'),
+        'PORT': os.environ.get('DB_PORT', '3306'), 'CONN_MAX_AGE': 0,
+        'OPTIONS': {'charset': 'utf8mb4', 'isolation_level': 'read committed',
+                    'init_command': "SET sql_mode='STRICT_TRANS_TABLES'"},
+        'TEST': {'NAME': 'test_' + required('DB_NAME')},
+    }}
+
+# Channels / Redis opcional en desarrollo local
+try:
+    import channels
+    import channels_redis
+    INSTALLED_APPS_CHANNELS = ['channels']
+    CHANNEL_LAYERS = {'default': {
+        'BACKEND': 'channels_redis.core.RedisChannelLayer',
+        'CONFIG': {'hosts': [os.environ.get('REDIS_URL', 'redis://127.0.0.1:6380/0')]},
+    }}
+except ImportError:
+    INSTALLED_APPS_CHANNELS = []
+    CHANNEL_LAYERS = {}
+
+try:
+    import daphne
+    INSTALLED_APPS_DAPHNE = ['daphne']
+except ImportError:
+    INSTALLED_APPS_DAPHNE = []
+
+INSTALLED_APPS = INSTALLED_APPS_DAPHNE + [
+    'django.contrib.admin', 'django.contrib.auth', 'django.contrib.contenttypes',
     'django.contrib.sessions', 'django.contrib.messages', 'django.contrib.staticfiles',
-    'channels', 'cuentas', 'gestion',
-]
+] + INSTALLED_APPS_CHANNELS + ['cuentas', 'gestion']
+
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -51,19 +91,6 @@ TEMPLATES = [{
 }]
 WSGI_APPLICATION = 'config.wsgi.application'
 ASGI_APPLICATION = 'config.asgi.application'
-DATABASES = {'default': {
-    'ENGINE': 'django.db.backends.mysql', 'NAME': required('DB_NAME'),
-    'USER': required('DB_USER'), 'PASSWORD': required('DB_PASSWORD'),
-    'HOST': os.environ.get('DB_HOST', '127.0.0.1'),
-    'PORT': os.environ.get('DB_PORT', '3306'), 'CONN_MAX_AGE': 0,
-    'OPTIONS': {'charset': 'utf8mb4', 'isolation_level': 'read committed',
-                'init_command': "SET sql_mode='STRICT_TRANS_TABLES'"},
-    'TEST': {'NAME': 'test_' + required('DB_NAME')},
-}}
-CHANNEL_LAYERS = {'default': {
-    'BACKEND': 'channels_redis.core.RedisChannelLayer',
-    'CONFIG': {'hosts': [required('REDIS_URL')]},
-}}
 AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
     {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator', 'OPTIONS': {'min_length': 10}},
