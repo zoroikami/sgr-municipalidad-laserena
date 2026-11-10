@@ -7,7 +7,7 @@ domain="${1:?Indica el dominio público del certificado}"
 docker run --rm \
   -v "$PWD/.private/letsencrypt:/etc/letsencrypt" \
   -v "$PWD/.private/acme:/var/www/acme" \
-  certbot/certbot:v5.1.0 renew --quiet --webroot -w /var/www/acme
+  certbot/certbot:v5.1.0 renew --quiet --cert-name "$domain" --webroot -w /var/www/acme
 install -m 644 ".private/letsencrypt/live/$domain/fullchain.pem" deploy/tls/fullchain.pem
 install -m 600 ".private/letsencrypt/live/$domain/privkey.pem" deploy/tls/privkey.pem
 docker compose -f compose.yaml -f deploy/compose.production.yaml exec -T nginx nginx -t
