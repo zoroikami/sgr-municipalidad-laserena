@@ -18,7 +18,14 @@ Aplicación: [http://127.0.0.1:8001](http://127.0.0.1:8001). Buzón SMTP local: 
 
 Las seis credenciales de prueba se guardan exclusivamente en `.private/cuentas-demo.json`, con permisos `600` y fuera de Git. Entregarlas al docente por un medio privado. No existen accesos automáticos ni botones para cambiar de cuenta.
 
-**Estado de AWS:** todavía no se ha identificado una instancia ni una dirección pública para esta migración. No se acredita despliegue AWS con las pruebas locales. Se requiere registrar aquí la URL verificada, recurso EC2 y commit de `main` desplegado después de la integración y la revisión real.
+**Estado del Despliegue en AWS (Operativo):**
+- **Instancia EC2:** `i-0a5533ede6cc60b7e` (Amazon Linux 2023, `us-east-1`)
+- **Acceso Web Seguro:** [https://ec2-98-92-223-78.compute-1.amazonaws.com](https://ec2-98-92-223-78.compute-1.amazonaws.com) (o `https://98.92.223.78`)
+- **Verificación de Salud:** `curl -k https://ec2-98-92-223-78.compute-1.amazonaws.com/api/health/`
+- **Commit Desplegado:** `86a709b96842afb72fb6d735720a1e752910cadf` (rama `main`)
+- **Stack en Producción:** Docker Compose con MySQL 8.4, Redis 7.4, Daphne ASGI (Python 3.11) y Nginx con proxy SSL y WebSocket.
+- **Datos y Semillas:** 2.286 registros de negocio distribuidos territorialmente (6 delegaciones, 30 tipos, 90 subatenciones, 360 metas y 1.800 atenciones).
+- **Cuentas Demostrativas:** 6 cuentas configuradas y protegidas según roles (`admin_a`, `editor_a`, `lector_a`, `lector_b`, `cliente_1`, `cliente_2`). Credenciales almacenadas de forma segura en `.private/cuentas-demo.json`.
 
 ## Instalación desde cero
 
