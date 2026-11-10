@@ -45,8 +45,8 @@
     --action-edit-ink: #713f12;
     --action-edit-border: #fde68a;
     --action-edit-pressed: #fcd34d;
-    --action-delete-bg: #fee2e2;
-    --action-delete-border: #fecaca;
+    --action-delete-bg: #fecaca;
+    --action-delete-border: #fca5a5;
     --chrome-on-brand: color-mix(in srgb, var(--brand-white) 14%, transparent);
     --chrome-on-brand-hover: color-mix(in srgb, var(--brand-white) 22%, transparent);
     --chrome-on-brand-border: color-mix(in srgb, var(--brand-white) 30%, transparent);
@@ -233,3 +233,15 @@ button, a, select { touch-action: manipulation; }
 @media (prefers-reduced-transparency: reduce) {
     .navbar, .top-navbar { background: var(--brand-white); backdrop-filter: none; }
 }
+
+/* El mismo login original también presenta errores de validación de Django. */
+.auth-login-errors {
+    padding: var(--space-md);
+    margin-bottom: var(--space-lg);
+    border: 1px solid var(--brand-border);
+    border-radius: var(--radius-sm);
+    background: var(--brand-soft);
+    color: var(--primary-dark);
+    font-size: var(--type-small);
+}
+.auth-login-errors ul { margin: 0; padding: 0; list-style: none; }

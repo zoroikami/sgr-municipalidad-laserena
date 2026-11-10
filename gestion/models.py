@@ -24,9 +24,15 @@ class Secuencia(models.Model):
             # when several workers subsequently upgrade to SELECT FOR UPDATE.
             table = connection.ops.quote_name(cls._meta.db_table)
             with connection.cursor() as cursor:
-                cursor.execute(
-                    f'INSERT INTO {table} (prefijo, valor) VALUES (%s, 0) '
-                    'ON DUPLICATE KEY UPDATE prefijo = %s', [prefijo, prefijo])
+                if connection.vendor == 'sqlite':
+                    # Local development uses SQLite; acquire its write lock first.
+                    cursor.execute(
+                        f'INSERT INTO {table} (prefijo, valor) VALUES (%s, 0) '
+                        'ON CONFLICT(prefijo) DO UPDATE SET prefijo = excluded.prefijo', [prefijo])
+                else:
+                    cursor.execute(
+                        f'INSERT INTO {table} (prefijo, valor) VALUES (%s, 0) '
+                        'ON DUPLICATE KEY UPDATE prefijo = %s', [prefijo, prefijo])
             row = cls.objects.select_for_update().get(prefijo=prefijo)
             # Include archived and explicitly imported codes, even with a stale counter.
             highest = model.all_objects.filter(**{f'{field}__regex': f'^{prefijo}[0-9]+$'}).aggregate(
@@ -154,7 +160,7 @@ class Atencion(models.Model):
         return f'{self.folio} · {self.solicitante_nombre}'
 
     def clean(self):
-        from rut import normalize_rut, RutError
+        from cuentas.rut import normalize_rut, RutError
         errors = {}
         try:
             self.solicitante_rut = normalize_rut(self.solicitante_rut)

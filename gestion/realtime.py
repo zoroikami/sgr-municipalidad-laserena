@@ -1,8 +1,6 @@
 import logging
 from functools import partial
 
-from asgiref.sync import async_to_sync
-from channels.layers import get_channel_layer
 from django.db import transaction
 
 logger = logging.getLogger(__name__)
@@ -13,8 +11,15 @@ def group_for(delegacion_id):
 
 
 def emit_change(delegacion_id):
-    async_to_sync(get_channel_layer().group_send)(
-        group_for(delegacion_id), {'type': 'tabla.cambio'})
+    try:
+        from asgiref.sync import async_to_sync
+        from channels.layers import get_channel_layer
+        layer = get_channel_layer()
+        if layer:
+            async_to_sync(layer.group_send)(
+                group_for(delegacion_id), {'type': 'tabla.cambio'})
+    except Exception:
+        pass
 
 
 def notify_after_commit(delegacion_id):

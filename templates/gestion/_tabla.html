@@ -11,7 +11,7 @@
           {% if can_change %}<a class="action-link edit" href="{% url 'gestion:editar' modulo row.obj.pk %}" aria-label="Editar {{ row.obj }}">Editar</a>{% endif %}
           {% if can_delete %}<form class="archive-form" action="{% url 'gestion:archivar' modulo row.obj.pk %}" method="post" data-record="{{ row.obj }}">{% csrf_token %}<button class="archive-button action-link delete" type="submit" aria-label="Archivar {{ row.obj }}">Archivar</button></form>{% endif %}
         </div></td>
-      </tr>{% empty %}<tr><td class="empty-state" colspan="{{ columns|length|add:'1' }}">{% if state.q or state.estado or state.tipo %}<strong>No hay registros que coincidan con los filtros.</strong><p>Prueba otra búsqueda o limpia los filtros para ver los registros disponibles.</p>{% else %}<strong>Aún no hay registros en esta sección.</strong><p>{% if can_add %}Selecciona Crear registro para ingresar el primero.{% else %}Los registros de tu delegación aparecerán aquí cuando estén disponibles.{% endif %}</p>{% endif %}</td></tr>{% endfor %}
+      </tr>{% empty %}<tr><td class="empty-state" colspan="{{ columns|length|add:'1' }}">{% if invalid_filters %}<strong>Corrige los filtros para consultar las atenciones.</strong>{% elif state.q or state.estado or state.tipo or state.responsable or state.desde or state.hasta %}<strong>No hay registros que coincidan con los filtros.</strong><p>Prueba otra búsqueda o limpia los filtros para ver los registros disponibles.</p>{% else %}<strong>Aún no hay registros en esta sección.</strong><p>{% if can_add %}Selecciona Crear registro para ingresar el primero.{% else %}Los registros de tu delegación aparecerán aquí cuando estén disponibles.{% endif %}</p>{% endif %}</td></tr>{% endfor %}
     </tbody>
   </table>
 </div>

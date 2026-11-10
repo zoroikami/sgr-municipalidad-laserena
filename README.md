@@ -72,6 +72,8 @@ Los dos CRUD evaluados son **Ítems y Metas** y **Atenciones ciudadanas**. Inclu
 
 También están disponibles los catálogos de tipos/subatenciones, la consulta y edición de la delegación propia y la gestión acotada de usuarios. El administrador A crea o edita cuentas únicamente en A y asigna los cuatro roles predefinidos; puede desactivarlas. La creación de delegaciones y el mantenimiento global de roles pertenecen al soporte técnico, mediante `/admin/` o su pantalla de permisos. Ninguna cuenta de revisión tiene acceso a Django Admin. Para crear un superusuario técnico adicional, utilizar `python manage.py createsuperuser`; no reemplaza al administrador A.
 
+La [preevaluación III](https://github.com/zoroikami/sgr-municipalidad-laserena/tree/c61d311bd513c9ea59334ff29c172342649c5cd3) se conserva en Git con su configuración y migraciones SQLite. Para instalar esta entrega, ejecuta las migraciones de `config.settings` sobre una base MySQL nueva y conserva un respaldo independiente si tienes datos de la preevaluación. El prototipo anterior y sus pruebas históricas se mantienen juntos.
+
 El modelo implementado está documentado en [diagramas/modelos_django.md](diagramas/modelos_django.md), con [fuente Mermaid](diagramas/modelos_django.mmd). Los diagramas MySQL anteriores corresponden a la primera entrega, no a estas migraciones.
 
 ### Reglas aplicadas en servidor
@@ -171,7 +173,7 @@ python tests_browser/check_flows.py
 
 El segundo recorrido usa seis sesiones independientes, comprueba cambios WebSocket solo en A, filtros, cancelación de SweetAlert, errores dentro del modal, navegación, portal, foto, correo SMTP, token de un uso y cambio/logout. Modifica y restaura un nombre ficticio, guarda una foto de prueba en Cliente 1 y restaura su contraseña privada. Ejecutarlo sobre datos de demostración. Las capturas locales se escriben en `output/browser/`, excluido de Git.
 
-Las pruebas controladas de 400/500 viven exclusivamente en `tests_django/error_urls.py` con `DEBUG=False`; no hay rutas de producción para forzar fallos. Ver [docs/EVALUACION_3_ESTADO.md](docs/EVALUACION_3_ESTADO.md) para resultados y límites verificados.
+Las pruebas controladas de 400/500 viven exclusivamente en `tests_django/error_urls.py` con `DEBUG=False`; no hay rutas de producción para forzar fallos. Ver [docs/evaluacion3/EVALUACION_3_ESTADO.md](docs/evaluacion3/EVALUACION_3_ESTADO.md) para resultados y límites verificados.
 
 ## AWS: preparación y puesta en marcha
 

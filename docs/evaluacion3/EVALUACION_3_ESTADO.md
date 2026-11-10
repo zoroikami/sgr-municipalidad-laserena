@@ -136,3 +136,24 @@ del PR #5 corresponde a la migración inicial, no a los commits posteriores.
 
 Estos pendientes impiden afirmar cumplimiento total de la evaluación o asignar
 puntaje. No se generó ni inventó una evidencia de despliegue AWS.
+
+## Integración del PR #12 — 10 de noviembre de 2026
+
+- Se integró `main` (`ec5d780`) conservando el diseño y los flujos municipales
+  de la rama feature, los filtros por responsable/fechas y la reorganización
+  de archivos de `main`. Los imports de RUT apuntan ahora a `cuentas.rut`.
+- La exportación no aparece cuando los filtros son inválidos. Se conserva la
+  eliminación de `.firma/log.json` y el traslado de esta documentación.
+- La asignación de códigos admite el SQLite local de `main` sin cambiar el
+  bloqueo de filas usado en MySQL. Las pruebas históricas del servidor eliminado
+  quedan documentadas en `tests/legacy/`; las suites actuales siguen activas.
+- Validación local: 84 pruebas Django aprobadas en MySQL 8.4 (83 en la ejecución
+  completa y la prueba de fechas al repetirla tras cargar las zonas horarias
+  de la base temporal), más 2 pruebas Python y 2 Node de RUT. Los checks de
+  despliegue y de migraciones también pasan. En Windows, el test de semillas
+  comprueba bits POSIX únicamente cuando el sistema operativo los implementa.
+- Las pruebas locales de Channels usaron `InMemoryChannelLayer`; esto no
+  acredita la integración con Redis. El workflow conserva MySQL y Redis reales.
+- Actions sigue bloqueado externamente: el run `42757170651` no ejecutó pasos
+  porque GitHub informó que la cuenta está bloqueada por facturación. Resolver
+  los conflictos no elimina ese bloqueo; requiere intervención del propietario.

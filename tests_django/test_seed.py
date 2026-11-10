@@ -19,7 +19,9 @@ def test_seed_has_required_distribution_six_private_accounts_and_is_idempotent(t
     assert get_user_model().objects.filter(is_superuser=True).count() == 0
     credentials = json.loads(path.read_text())
     assert len(credentials) == 6
-    assert os.stat(path).st_mode & 0o777 == 0o600
+    # Windows reports synthetic mode bits, not POSIX owner/group permissions.
+    if os.name == 'posix':
+        assert os.stat(path).st_mode & 0o777 == 0o600
     before = get_user_model().objects.get(username='editor_a').password
     for account in credentials:
         user = get_user_model().objects.get(username=account['usuario'])
