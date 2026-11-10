@@ -1,14 +1,12 @@
-{% extends 'base.html' %}
+{% extends 'cuentas/auth_base.html' %}
 {% block title %}Iniciar sesión | SGR{% endblock %}
-{% block content %}
-<section class="account-section" aria-labelledby="account-title">
-  <h1 id="account-title">Iniciar sesión</h1>
-  <p>Ingresa con tu cuenta del Sistema de Gestión de Resultados.</p>
+{% block auth_heading %}Iniciar sesión{% endblock %}
+{% block auth_description %}<p class="auth-desc">Accede con tu cuenta institucional.</p>{% endblock %}
+{% block auth_content %}
   <form method="post">
     {% csrf_token %}{% include 'cuentas/_fields.html' %}
     <input type="hidden" name="next" value="{{ next }}">
     <button class="btn btn-primary" type="submit">Ingresar</button>
   </form>
-  <p class="mt-3"><a href="{% url 'cuentas:password_reset' %}">Recuperar contraseña</a></p>
-</section>
+  <p class="auth-link-row"><a class="auth-link" href="{% url 'cuentas:password_reset' %}">Recuperar contraseña</a></p>
 {% endblock %}

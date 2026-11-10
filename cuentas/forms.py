@@ -10,7 +10,7 @@ from django.core.files.base import ContentFile
 from django.db.models import Q
 from PIL import Image, ImageOps, UnidentifiedImageError
 
-from cuentas.rut import RutError, normalize_rut
+from cuentas.rut import RUT_INPUT_HELP, RutError, normalize_rut
 from .models import Perfil
 from .roles import ROLE_NAMES
 
@@ -85,7 +85,8 @@ class ProfileForm(forms.ModelForm):
 
 class ManagedUserForm(forms.ModelForm):
     email = forms.EmailField(label='Correo electrónico')
-    rut = forms.CharField(label='RUT', max_length=20)
+    rut = forms.CharField(label='RUT', max_length=20, help_text=RUT_INPUT_HELP,
+                         widget=forms.TextInput(attrs={'placeholder': '12345678-5', 'spellcheck': 'false'}))
     role = forms.ChoiceField(label='Rol', choices=[(name, name) for name in ROLE_NAMES])
     new_password = forms.CharField(label='Contraseña inicial', required=False,
         widget=forms.PasswordInput, help_text='Obligatoria para una cuenta nueva. Al editar, déjala vacía para conservar la contraseña.')

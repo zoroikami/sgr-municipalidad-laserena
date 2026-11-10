@@ -1,11 +1,14 @@
 {% extends 'base.html' %}
 {% block content %}
 <section aria-labelledby="page-title">
+  <div class="module-breadcrumb">Portal ciudadano / Mis atenciones</div>
   <div class="page-heading"><div><h1 id="page-title">Mis atenciones</h1><p>Consulta el estado y los antecedentes de las atenciones asociadas a tu cuenta.</p></div></div>
-  <p>{{ page_obj.paginator.count }} {% if page_obj.paginator.count == 1 %}atención{% else %}atenciones{% endif %}</p>
+  <div class="table-card">
+  <p class="portal-count">{{ page_obj.paginator.count }} {% if page_obj.paginator.count == 1 %}atención{% else %}atenciones{% endif %}</p>
   <div class="table-responsive" tabindex="0" role="region" aria-label="Mis atenciones"><table class="table records-table"><caption class="visually-hidden">Atenciones asociadas a tu cuenta</caption><thead><tr><th scope="col">Folio</th><th scope="col">Solicitante</th><th scope="col">Estado</th><th scope="col">Creación</th><th scope="col">Acción</th></tr></thead><tbody>
-    {% for atencion in page_obj %}<tr><td><a class="record-key" href="{% url 'gestion:portal_detalle' atencion.pk %}">{{ atencion.folio }}</a></td><td>{{ atencion.solicitante_nombre }}</td><td>{{ atencion.estado }}</td><td>{{ atencion.created_at|date:'d-m-Y H:i' }}</td><td><a href="{% url 'gestion:portal_detalle' atencion.pk %}" aria-label="Ver atención {{ atencion.folio }}">Ver detalle</a></td></tr>{% empty %}<tr><td class="empty-state" colspan="5"><strong>Aún no tienes atenciones asociadas.</strong><p>Cuando la municipalidad registre una atención a tu nombre, podrás consultarla aquí.</p></td></tr>{% endfor %}
+    {% for atencion in page_obj %}<tr><td><a class="record-key" href="{% url 'gestion:portal_detalle' atencion.pk %}">{{ atencion.folio }}</a></td><td class="record-name">{{ atencion.solicitante_nombre }}</td><td><span class="badge-status {{ atencion.estado|slugify }}">{{ atencion.estado }}</span></td><td>{{ atencion.created_at|date:'d-m-Y H:i' }}</td><td><div class="row-actions"><a class="action-link view" href="{% url 'gestion:portal_detalle' atencion.pk %}" aria-label="Ver atención {{ atencion.folio }}">{% include 'shared/icon.html' with name='view' %}Ver detalle</a></div></td></tr>{% empty %}<tr><td class="empty-state" colspan="5"><strong>Aún no tienes atenciones asociadas.</strong><p>Cuando la municipalidad registre una atención a tu nombre, podrás consultarla aquí.</p></td></tr>{% endfor %}
   </tbody></table></div>
   {% if page_obj.paginator.num_pages > 1 %}<nav class="portal-pagination" aria-label="Páginas de mis atenciones">{% if page_obj.has_previous %}<a class="btn btn-outline-secondary" href="?pagina={{ page_obj.previous_page_number }}">Anterior</a>{% endif %}<span>Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}</span>{% if page_obj.has_next %}<a class="btn btn-outline-secondary" href="?pagina={{ page_obj.next_page_number }}">Siguiente</a>{% endif %}</nav>{% endif %}
+  </div>
 </section>
 {% endblock %}

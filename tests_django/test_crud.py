@@ -251,6 +251,7 @@ def test_invalid_attention_date_range_keeps_previous_session_and_rejects_export(
     assert result.context['filter_form'].errors
     assert result.context['page_obj'].paginator.count == 0
     assert not result.context['export_url']
+    assert b'btn-export-excel' not in result.content
     assert client.get(reverse('gestion:exportar', args=args), invalid).status_code == 400
     assert client.get(url).context['state']['desde'] == '2026-11-01'
     cleared = client.get(url, {'desde': '', 'hasta': ''})

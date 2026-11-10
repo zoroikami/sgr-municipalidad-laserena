@@ -1,0 +1,20 @@
+<aside class="workspace-sidebar sgr-sidebar">
+  <nav class="module-nav sidebar-navigation" aria-label="Navegación principal">
+    {% if is_cliente %}
+      <div class="sidebar-category">Portal ciudadano</div>
+      <a class="nav-link-btn" href="{% url 'gestion:portal' %}"{% if request.resolver_match.app_name == 'gestion' %} aria-current="page"{% endif %}>{% include 'shared/icon.html' with name='atenciones' %}<span>Mis atenciones</span></a>
+    {% else %}
+      <div class="sidebar-category">Gestión municipal</div>
+      <a class="nav-link-btn" href="{% url 'gestion:inicio' %}"{% if request.resolver_match.url_name == 'inicio' %} aria-current="page"{% endif %}>{% include 'shared/icon.html' with name='home' %}<span>Inicio</span></a>
+      {% if perms.gestion.view_atencion %}<a class="nav-link-btn" href="{% url 'gestion:listado' 'atenciones' %}"{% if modulo == 'atenciones' %} aria-current="page"{% endif %}>{% include 'shared/icon.html' with name='atenciones' %}<span>Atenciones ciudadanas</span></a>{% endif %}
+      <div class="sidebar-category">Mantenedores del sistema</div>
+      {% if perms.gestion.view_delegacion %}<a class="nav-link-btn" href="{% url 'gestion:listado' 'delegaciones' %}"{% if modulo == 'delegaciones' %} aria-current="page"{% endif %}>{% include 'shared/icon.html' with name='delegaciones' %}<span>Delegaciones</span></a>{% endif %}
+      {% if user.is_superuser %}<a class="nav-link-btn" href="{% url 'cuentas:roles' %}"{% if request.resolver_match.url_name == 'roles' %} aria-current="page"{% endif %}>{% include 'shared/icon.html' with name='shield' %}<span>Roles y permisos</span></a>{% endif %}
+      {% if user.is_superuser or role_label == 'Administrador' %}<a class="nav-link-btn" href="{% url 'cuentas:usuarios' %}"{% if request.resolver_match.url_name == 'usuarios' or request.resolver_match.url_name == 'usuario_crear' or request.resolver_match.url_name == 'usuario_editar' %} aria-current="page"{% endif %}>{% include 'shared/icon.html' with name='users' %}<span>Usuarios</span></a>{% endif %}
+      {% if perms.gestion.view_itemmeta %}<a class="nav-link-btn" href="{% url 'gestion:listado' 'metas' %}"{% if modulo == 'metas' %} aria-current="page"{% endif %}>{% include 'shared/icon.html' with name='metas' %}<span>Ítems y metas</span></a>{% endif %}
+      {% if perms.gestion.view_tipoatencion %}<a class="nav-link-btn" href="{% url 'gestion:listado' 'tipos' %}"{% if modulo == 'tipos' %} aria-current="page"{% endif %}>{% include 'shared/icon.html' with name='tipos' %}<span>Tipos de atención</span></a>{% endif %}
+      {% if perms.gestion.view_subatencion %}<a class="nav-link-btn" href="{% url 'gestion:listado' 'subatenciones' %}"{% if modulo == 'subatenciones' %} aria-current="page"{% endif %}>{% include 'shared/icon.html' with name='subatenciones' %}<span>Subatenciones</span></a>{% endif %}
+    {% endif %}
+  </nav>
+  <div class="sidebar-footer-note"><strong>Sistema de Gestión de Resultados</strong><span>Ilustre Municipalidad de La Serena</span><small>{% if user.is_superuser %}Todas las delegaciones{% else %}{{ user.perfil.delegacion.nombre }}{% endif %}</small></div>
+</aside>

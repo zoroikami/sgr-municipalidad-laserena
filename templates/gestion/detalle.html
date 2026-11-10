@@ -6,6 +6,6 @@
     {% if can_change %}<a class="btn btn-primary" href="{% url 'gestion:editar' modulo obj.pk %}">Editar registro</a>{% endif %}
     {% if can_delete %}<form class="archive-form" method="post" action="{% url 'gestion:archivar' modulo obj.pk %}" data-record="{{ obj }}">{% csrf_token %}<button class="btn btn-outline-danger" type="submit">Archivar registro</button></form>{% endif %}
   </div></div>
-  <dl class="record-details">{% for detail in details %}<div><dt>{{ detail.label }}</dt><dd>{{ detail.value|default:'Sin dato'|linebreaksbr }}</dd></div>{% endfor %}</dl>
+  <dl class="record-details content-panel">{% for detail in details %}<div><dt>{{ detail.label }}</dt><dd>{{ detail.value|default:'Sin dato'|linebreaksbr }}</dd></div>{% endfor %}</dl>
 </section>
 {% endblock %}

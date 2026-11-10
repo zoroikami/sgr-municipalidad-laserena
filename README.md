@@ -72,6 +72,8 @@ Los dos CRUD evaluados son **Ítems y Metas** y **Atenciones ciudadanas**. Inclu
 
 También están disponibles los catálogos de tipos/subatenciones, la consulta y edición de la delegación propia y la gestión acotada de usuarios. El administrador A crea o edita cuentas únicamente en A y asigna los cuatro roles predefinidos; puede desactivarlas. La creación de delegaciones y el mantenimiento global de roles pertenecen al soporte técnico, mediante `/admin/` o su pantalla de permisos. Ninguna cuenta de revisión tiene acceso a Django Admin. Para crear un superusuario técnico adicional, utilizar `python manage.py createsuperuser`; no reemplaza al administrador A.
 
+Para habilitar el acceso global del sistema municipal, crea la cuenta técnica después de aplicar las migraciones con `python manage.py createsuperuser --username superadmin`. Introduce una contraseña privada cuando Django la solicite. El superadministrador ve todas las delegaciones, elige la delegación al crear un registro y conserva la delegación original al editar. Su ámbito global se aplica a los listados, Excel y la actualización en tiempo real. Las cuentas municipales de prueba conservan sus restricciones.
+
 La [preevaluación III](https://github.com/zoroikami/sgr-municipalidad-laserena/tree/c61d311bd513c9ea59334ff29c172342649c5cd3) se conserva en Git con su configuración y migraciones SQLite. Para instalar esta entrega, ejecuta las migraciones de `config.settings` sobre una base MySQL nueva y conserva un respaldo independiente si tienes datos de la preevaluación. El prototipo anterior y sus pruebas históricas se mantienen juntos.
 
 El modelo implementado está documentado en [diagramas/modelos_django.md](diagramas/modelos_django.md), con [fuente Mermaid](diagramas/modelos_django.mmd). Los diagramas MySQL anteriores corresponden a la primera entrega, no a estas migraciones.
@@ -108,7 +110,7 @@ python manage.py seed_demo
 
 Los clientes 1 y 2 tienen 30 atenciones distintas cada uno dentro de las 300 de Centro. Las semillas incluyen nombres ficticios, fechas de creación variadas, distintos estados, unidades y servicios. No se cuentan usuarios, perfiles, grupos, permisos, sesiones ni secuencias en los 2.286 registros.
 
-Se crean seis cuentas activas de revisión y cuatro responsables ficticios inactivos, sin contraseña utilizable, para las otras delegaciones. Ejecutar de nuevo no duplica registros, no reinicia contraseñas y no sobrescribe ediciones o fotos existentes. Los códigos de las semillas llevan `DEMO` para no colisionar con los códigos automáticos de operaciones nuevas.
+Se crean seis cuentas activas de revisión y cuatro responsables ficticios inactivos, sin contraseña utilizable, para las otras delegaciones. Ejecutar de nuevo no duplica registros, no reinicia contraseñas y no sobrescribe ediciones o fotos existentes. Los códigos usan los formatos originales `DEL01`, `IT001`, `TA001`, `SA001` y `ATN-2026-0001`, con correlativos globales por sección y anuales en atenciones. La migración conserva el identificador previo como referencia interna y clave estable de semillas; incluye archivados al asignar números y mantiene los IDs y relaciones existentes.
 
 ### Cuentas, responsabilidades y recorridos
 
@@ -206,6 +208,8 @@ La base SQLite anterior no se modifica ni se importa automáticamente: el nuevo 
 ## Git y entrega académica
 
 Desarrollo en `feature/SGR-evaluacion3-django`; integrar mediante Pull Request revisado por otro integrante, sin commits ni push directos a `main`. La CI declarada en `.github/workflows/django.yml` ejecuta las pruebas con MySQL/Redis y conserva las pruebas históricas. La revisión de un agente no sustituye la revisión de un compañero requerida por la pauta.
+
+El [PR #5 · migración Django y evaluación III](https://github.com/zoroikami/sgr-municipalidad-laserena/pull/5) fue integrado el 10 de noviembre de 2026. Los ajustes posteriores de interfaz, códigos, perfil e ingreso municipal se mantienen en `feature/SGR-evaluacion3-django` para su revisión e integración. La última verificación local aprobó 80 pruebas Django y los recorridos de navegador; las 70 pruebas históricas se verificaron en la migración inicial. El run remoto original no inició pasos por un bloqueo de facturación reportado por GitHub; ese resultado no acredita pruebas remotas de los cambios posteriores.
 
 Cada integrante debe aportar al menos un PR funcional con su autoría y revisión reales. Este trabajo no crea aportes ni revisiones ficticias y no reescribe el historial previo.
 

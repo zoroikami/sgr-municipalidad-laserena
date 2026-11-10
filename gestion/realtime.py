@@ -4,6 +4,7 @@ from functools import partial
 from django.db import transaction
 
 logger = logging.getLogger(__name__)
+GLOBAL_SCOPE = 'global'
 
 
 def group_for(delegacion_id):
@@ -16,10 +17,12 @@ def emit_change(delegacion_id):
         from channels.layers import get_channel_layer
         layer = get_channel_layer()
         if layer:
-            async_to_sync(layer.group_send)(
-                group_for(delegacion_id), {'type': 'tabla.cambio'})
+            for scope in (delegacion_id, GLOBAL_SCOPE):
+                async_to_sync(layer.group_send)(group_for(scope), {'type': 'tabla.cambio'})
+    except ImportError:
+        return
     except Exception:
-        pass
+        logger.exception('No se pudo notificar el cambio de atenciones.')
 
 
 def notify_after_commit(delegacion_id):

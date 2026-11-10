@@ -15,12 +15,15 @@ from .roles import can_manage_users
 @login_required
 @require_http_methods(['GET', 'POST'])
 def perfil(request):
-    profile = get_object_or_404(Perfil.objects.select_related('delegacion'), user=request.user)
+    profiles = Perfil.objects.select_related('delegacion')
+    profile = profiles.filter(user=request.user).first() if request.user.is_superuser else get_object_or_404(profiles, user=request.user)
     form = ProfileForm(request.POST or None, request.FILES or None, instance=request.user)
     if request.method == 'POST' and form.is_valid():
         with transaction.atomic():
             form.save()
             if form.cleaned_data.get('foto'):
+                if profile is None:
+                    profile, _ = Perfil.objects.get_or_create(user=request.user)
                 previous = profile.foto.name
                 profile.foto = form.cleaned_data['foto']
                 profile.save(update_fields=['foto'])
@@ -51,9 +54,9 @@ def foto(request, pk):
 def managed_users(actor):
     if not can_manage_users(actor):
         raise PermissionDenied
-    users = User.objects.select_related('perfil__delegacion').prefetch_related('groups').filter(perfil__isnull=False)
+    users = User.objects.select_related('perfil__delegacion').prefetch_related('groups').filter(perfil__isnull=False, is_superuser=False)
     if not actor.is_superuser:
-        users = users.filter(perfil__delegacion=actor.perfil.delegacion, is_superuser=False, is_staff=False)
+        users = users.filter(perfil__delegacion=actor.perfil.delegacion, is_staff=False)
     return users.order_by('username')
 
 

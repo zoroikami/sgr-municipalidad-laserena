@@ -1,32 +1,40 @@
-{% extends 'base.html' %}{% load static %}
+{% extends 'base.html' %}{% load static rut_tags %}
 {% block title %}Mi perfil | SGR{% endblock %}
 {% block extra_css %}<link rel="stylesheet" href="{% static 'vendor/croppr-2.3.1.min.css' %}">{% endblock %}
 {% block content %}
-<section class="account-section" aria-labelledby="account-title">
+<div class="module-breadcrumb">Mi cuenta / Perfil</div>
+<section class="account-section content-panel" aria-labelledby="account-title">
   <h1 id="account-title">Mi perfil</h1>
-  <dl><dt>RUT</dt><dd>{{ perfil.rut }}</dd><dt>Delegación</dt><dd>{{ perfil.delegacion.nombre }}</dd></dl>
-  {% if perfil.foto %}<img id="current-photo" src="{% url 'cuentas:foto' request.user.pk %}" width="128" height="128" alt="Tu foto de perfil actual">{% endif %}
+  <p class="text-muted">Actualiza tus datos de contacto y tu foto de perfil.</p>
   <form method="post" enctype="multipart/form-data" id="profile-form">
-    {% csrf_token %}{% include 'cuentas/_fields.html' %}
-    <div id="crop-panel" hidden>
-      <p>Selecciona el área de la foto que quieres conservar.</p>
-      <img id="crop-source" class="img-fluid" alt="Imagen que estás recortando">
-      <div class="mt-3 d-flex flex-wrap gap-2" role="group" aria-label="Ajustar recorte con el teclado">
-        <button type="button" class="btn btn-outline-secondary" data-crop-move="left">Mover a la izquierda</button>
-        <button type="button" class="btn btn-outline-secondary" data-crop-move="right">Mover a la derecha</button>
-        <button type="button" class="btn btn-outline-secondary" data-crop-move="up">Mover arriba</button>
-        <button type="button" class="btn btn-outline-secondary" data-crop-move="down">Mover abajo</button>
-        <button type="button" class="btn btn-outline-secondary" data-crop-scale="0.9">Reducir área</button>
-        <button type="button" class="btn btn-outline-secondary" data-crop-scale="1.1">Ampliar área</button>
-      </div>
-      <div class="mt-3 d-flex flex-wrap gap-2">
-        <button type="button" class="btn btn-secondary" id="crop-apply">Usar este recorte</button>
-        <button type="button" class="btn btn-outline-secondary" id="crop-cancel">Cancelar foto</button>
+    {% csrf_token %}
+    <div class="profile-photo-editor">
+      {% if perfil.foto %}<img id="current-photo" src="{% url 'cuentas:foto' request.user.pk %}" width="96" height="96" alt="Tu foto de perfil actual">{% else %}<img class="profile-placeholder" src="{% static 'municipal/avatar-default.svg' %}" width="96" height="96" alt="Sin foto de perfil">{% endif %}
+      <div class="form-field photo-upload-control">
+        <label for="{{ form.foto.id_for_label }}">Foto de perfil</label>
+        {{ form.foto }}
+        <button type="button" class="btn btn-outline-secondary" id="profile-photo-select" aria-controls="{{ form.foto.id_for_label }}" hidden>Elegir foto</button>
+        <small class="field-help" id="{{ form.foto.auto_id }}_helptext">JPEG o PNG de hasta 2 MiB. Podrás ajustar el recorte antes de guardar.</small>
+        <span id="photo-file-name" class="photo-file-name" role="status"></span>
+        {% if form.foto.errors %}<div class="field-errors" id="{{ form.foto.auto_id }}_error" role="alert">{{ form.foto.errors }}</div>{% endif %}
       </div>
     </div>
-    <figure id="crop-preview-panel" hidden><img id="crop-preview" width="128" height="128" alt="Vista previa del recorte que se guardará"><figcaption>Vista previa de tu nueva foto.</figcaption></figure>
+    <div id="crop-panel" hidden>
+      <h2>Ajusta tu foto</h2>
+      <p class="field-help">Arrastra el recuadro para moverlo o tira de una esquina para cambiar su tamaño.</p>
+      <div class="crop-workspace">
+        <div class="crop-viewport"><img id="crop-source" alt="Imagen que estás recortando"></div>
+        <div class="crop-tools">
+          <button type="button" class="btn btn-primary btn-save" id="crop-apply">Usar este recorte</button>
+          <button type="button" class="btn btn-outline-secondary" id="crop-cancel">Cancelar foto</button>
+        </div>
+      </div>
+    </div>
+    <figure id="crop-preview-panel" hidden><img id="crop-preview" width="96" height="96" alt="Vista previa del recorte que se guardará"><figcaption>Tu nueva foto está lista. Guarda el perfil para aplicar el cambio.</figcaption></figure>
     <p id="crop-status" role="status" aria-live="polite"></p>
-    <div class="d-flex flex-wrap gap-2"><button class="btn btn-primary" type="submit" id="profile-save">Guardar perfil</button><a class="btn btn-outline-secondary" href="{% url 'cuentas:password_change' %}">Cambiar contraseña</a></div>
+    <dl class="profile-readonly"><div><dt>Usuario</dt><dd>{{ user.username }}</dd></div><div><dt>RUT</dt><dd>{{ perfil.rut|rut_formateado|default:"—" }}</dd></div><div><dt>Delegación</dt><dd>{% if user.is_superuser %}Todas las delegaciones{% else %}{{ perfil.delegacion.nombre }}{% endif %}</dd></div><div><dt>Rol</dt><dd>{{ role_label }}</dd></div></dl>
+    {% include 'cuentas/_fields.html' with exclude_field='foto' %}
+    <div class="form-actions"><button class="btn btn-primary btn-save" type="submit" id="profile-save">Guardar perfil</button><a class="btn btn-outline-secondary" href="{% url 'cuentas:password_change' %}">Cambiar contraseña</a></div>
   </form>
 </section>
 {% endblock %}

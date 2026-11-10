@@ -30,16 +30,28 @@ def module_config(modulo):
 
 @login_required
 def inicio(request):
-    if request.user.is_superuser and not hasattr(request.user, 'perfil'):
-        return redirect('admin:index')
     if is_cliente(request.user):
         return redirect('gestion:portal')
-    delegation_id(request.user)
+    if not request.user.is_superuser:
+        delegation_id(request.user)
     stats = []
-    for module in ['atenciones', 'metas', 'tipos', 'subatenciones']:
+    descriptions = {
+        'atenciones': 'Consulta las solicitudes ciudadanas y revisa su estado de atención.',
+        'metas': 'Revisa los objetivos y las metas de tu delegación.',
+        'tipos': 'Consulta las categorías de servicios para la atención ciudadana.',
+        'subatenciones': 'Encuentra las prestaciones asociadas a cada tipo de atención.',
+    }
+    for module, description in descriptions.items():
         config = MODULES[module]
         if request.user.has_perm(f'gestion.view_{config["model"]._meta.model_name}'):
-            stats.append({'titulo': config['title'], 'total': scoped(request.user, config['model']).count(),
+            query = scoped(request.user, config['model'])
+            code_field = 'folio' if module == 'atenciones' else 'codigo'
+            name_field = 'solicitante_nombre' if module == 'atenciones' else 'nombre'
+            preview = [{'codigo': row[code_field], 'nombre': row[name_field], 'estado': row['estado'],
+                        'url': reverse('gestion:detalle', args=[module, row['pk']])}
+                       for row in query.order_by('-created_at', '-pk').values('pk', code_field, name_field, 'estado')[:3]]
+            stats.append({'modulo': module, 'titulo': config['title'], 'descripcion': description,
+                          'total': query.count(), 'preview': preview,
                           'url': reverse('gestion:listado', args=[module])})
     return render(request, 'gestion/inicio.html', {'titulo': 'Gestión municipal', 'stats': stats})
 
@@ -66,7 +78,7 @@ def form_view(request, modulo, pk=None):
     config = module_config(modulo)
     model = config['model']
     authorize(request.user, model, 'change' if pk else 'add')
-    if modulo == 'delegaciones' and not pk:
+    if modulo == 'delegaciones' and not pk and not request.user.is_superuser:
         raise PermissionDenied('La creación de delegaciones corresponde a administración técnica.')
     with transaction.atomic():
         query = scoped(request.user, model)

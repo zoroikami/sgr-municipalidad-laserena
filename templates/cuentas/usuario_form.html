@@ -1,8 +1,8 @@
 {% extends 'base.html' %}
 {% block title %}{{ titulo }} | SGR{% endblock %}
 {% block content %}
-<section class="account-section" aria-labelledby="account-title">
+<section class="account-section content-panel" aria-labelledby="account-title">
   <h1 id="account-title">{{ titulo }}</h1>
-  <form method="post">{% csrf_token %}{% include 'cuentas/_fields.html' %}<div class="d-flex flex-wrap gap-2"><button class="btn btn-primary" type="submit">Guardar usuario</button><a class="btn btn-outline-secondary" href="{% url 'cuentas:usuarios' %}">Cancelar</a></div></form>
+  <form method="post">{% csrf_token %}{% include 'cuentas/_fields.html' %}<div class="d-flex flex-wrap gap-2"><button class="btn btn-primary btn-save" type="submit">Guardar usuario</button><a class="btn btn-outline-secondary" href="{% url 'cuentas:usuarios' %}">Cancelar</a></div></form>
 </section>
 {% endblock %}

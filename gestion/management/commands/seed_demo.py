@@ -77,17 +77,17 @@ class Command(BaseCommand):
             services = ['Social', 'Salud', 'Educación', 'Servicios urbanos', 'Seguridad ciudadana']
             units = ['Atenciones', 'Visitas', 'Gestiones', 'Operativos']
             for d, org in enumerate(orgs, start=1):
-                types = [TipoAtencion.all_objects.get_or_create(codigo=f'TA-DEMO-{d:02}-{i:02}', defaults={
+                types = [TipoAtencion.all_objects.get_or_create(codigo_anterior=f'TA-DEMO-{d:02}-{i:02}', defaults={
                     'delegacion': org, 'nombre': label, 'descripcion': f'Catálogo ficticio para revisión de {org.nombre}',
                     'created_at': anchor - datetime.timedelta(days=180 + i)})[0] for i, label in enumerate(services)]
                 subs = []
                 for i in range(15):
-                    sub, _ = SubAtencion.all_objects.get_or_create(codigo=f'SA-DEMO-{d:02}-{i:02}', defaults={
+                    sub, _ = SubAtencion.all_objects.get_or_create(codigo_anterior=f'SA-DEMO-{d:02}-{i:02}', defaults={
                         'delegacion': org, 'tipo': types[i // 3], 'nombre': f'{services[i // 3]}: gestión {i % 3 + 1}',
                         'created_at': anchor - datetime.timedelta(days=170 + i)})
                     subs.append(sub)
                 for i in range(60):
-                    ItemMeta.all_objects.get_or_create(codigo=f'IT-DEMO-{d:02}-{i:03}', defaults={
+                    ItemMeta.all_objects.get_or_create(codigo_anterior=f'IT-DEMO-{d:02}-{i:03}', defaults={
                         'delegacion': org, 'nombre': f'{services[i % 5]}: meta territorial {i + 1:02}',
                         'descripcion': f'Meta ficticia del sector {i % 12 + 1} de {org.nombre}',
                         'unidad_medida': units[i % len(units)], 'meta_cantidad': 100,
@@ -108,7 +108,7 @@ class Command(BaseCommand):
                             responsible.set_unusable_password()
                             responsible.save(update_fields=['password'])
                         Perfil.objects.get_or_create(user=responsible, defaults={'delegacion': org, 'rut': fictitious_rut(23000000 + d)})
-                    Atencion.all_objects.get_or_create(folio=f'ATN-2026-DEMO-{d:02}-{i:04}', defaults={
+                    Atencion.all_objects.get_or_create(folio_anterior=f'ATN-2026-DEMO-{d:02}-{i:04}', defaults={
                         'delegacion': org, 'tipo': sub.tipo, 'subatencion': sub, 'cliente': owner,
                         'responsable': responsible,
                         'solicitante_rut': owner.perfil.rut if owner else fictitious_rut(24000000 + d * 1000 + i),

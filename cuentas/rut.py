@@ -1,7 +1,8 @@
 """Chilean RUT syntax/check-digit validation (modulo 11), not registry lookup."""
 import re
 
-RUT_ERROR = 'Ingresa un RUT chileno válido con su dígito verificador (ej.: 12.345.678-5).'
+RUT_INPUT_HELP = 'Ingresa el RUT sin puntos y con guion, por ejemplo: 12345678-5.'
+RUT_ERROR = 'Ingresa un RUT chileno válido con su dígito verificador (ej.: 12345678-5).'
 
 
 class RutError(ValueError):
@@ -32,3 +33,12 @@ def is_valid_rut(value):
         return True
     except RutError:
         return False
+
+
+def format_rut(value):
+    """Present a validated RUT; storage and form editing remain canonical."""
+    try:
+        body, digit = normalize_rut(value).split('-')
+    except RutError:
+        return value or ''
+    return f'{int(body):,}'.replace(',', '.') + '-' + digit

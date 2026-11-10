@@ -10,12 +10,21 @@
   const status = document.querySelector('#crop-status');
   const save = document.querySelector('#profile-save');
   const apply = document.querySelector('#crop-apply');
+  const choose = document.querySelector('#profile-photo-select');
+  const filename = document.querySelector('#photo-file-name');
   let cropper = null;
   let original = null;
   let sourceURL = null;
   let previewURL = null;
   let finalFile = null;
   let sequence = 0;
+
+  if (choose) {
+    input.hidden = true;
+    input.tabIndex = -1;
+    choose.hidden = false;
+    choose.addEventListener('click', () => input.click());
+  }
 
   function releaseSource() {
     if (cropper) cropper.destroy();
@@ -36,6 +45,7 @@
     previewPanel.hidden = true;
     save.disabled = false;
     status.textContent = 'Se conservará tu foto actual.';
+    if (filename) filename.textContent = '';
   }
 
   input.addEventListener('change', () => {
@@ -52,6 +62,7 @@
       return;
     }
     save.disabled = true;
+    if (filename) filename.textContent = file.name;
     sourceURL = URL.createObjectURL(file);
     original = new Image();
     const image = original;
@@ -77,35 +88,6 @@
     };
     apply.disabled = true;
     image.src = sourceURL;
-  });
-
-  function adjustCrop(dx = 0, dy = 0, scale = 1) {
-    if (!cropper) return;
-    const bounds = cropper.imageEl.getBoundingClientRect();
-    if (!bounds.width || !bounds.height) return;
-    const box = cropper.getValue('raw');
-    const maximum = Math.min(bounds.width, bounds.height);
-    const side = Math.min(maximum, Math.max(Math.min(16, maximum), box.width * scale));
-    const x = Math.max(0, Math.min(bounds.width - side, box.x + (box.width - side) / 2 + dx));
-    const y = Math.max(0, Math.min(bounds.height - side, box.y + (box.height - side) / 2 + dy));
-    // Croppr's public move/scale methods do not enforce pointer-drag constraints.
-    cropper.resizeTo(side, side, [0, 0]);
-    cropper.moveTo(x, y);
-  }
-
-  form.querySelectorAll('[data-crop-move]').forEach(button => {
-    button.addEventListener('click', () => {
-      if (!cropper) return;
-      const direction = button.dataset.cropMove;
-      const step = 10;
-      adjustCrop(direction === 'left' ? -step : direction === 'right' ? step : 0,
-        direction === 'up' ? -step : direction === 'down' ? step : 0);
-    });
-  });
-  form.querySelectorAll('[data-crop-scale]').forEach(button => {
-    button.addEventListener('click', () => {
-      adjustCrop(0, 0, Number(button.dataset.cropScale));
-    });
   });
 
   apply.addEventListener('click', () => {
@@ -143,11 +125,15 @@
       releaseSource();
       save.disabled = false;
       status.textContent = 'Recorte listo. Guarda tu perfil para aplicar la nueva foto.';
-      save.focus();
+      previewPanel.tabIndex = -1;
+      previewPanel.focus();
     }, 'image/png');
   });
 
-  document.querySelector('#crop-cancel').addEventListener('click', cancel);
+  document.querySelector('#crop-cancel').addEventListener('click', () => {
+    cancel();
+    choose?.focus();
+  });
   form.addEventListener('submit', event => {
     if (!panel.hidden || (input.files.length && !finalFile)) {
       event.preventDefault();

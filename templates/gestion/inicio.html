@@ -1,9 +1,25 @@
 {% extends 'base.html' %}
 {% block content %}
 <section aria-labelledby="page-title">
+  <div class="module-breadcrumb">Gestión municipal / Inicio</div>
   <div class="page-heading"><div><h1 id="page-title">Gestión municipal</h1><p>Consulta y administra los registros de {{ request.user.perfil.delegacion.nombre }} según los permisos de tu cuenta.</p></div></div>
+  <div class="welcome-panel"><strong>{{ user.get_full_name|default:user.username }}, bienvenido al SGR</strong><p>Tu espacio de trabajo reúne las atenciones ciudadanas y los mantenedores de tu delegación. Selecciona un módulo para comenzar.</p></div>
   <h2>Registros de tu delegación</h2>
-  <dl class="module-summary">{% for stat in stats %}<div><dt><a href="{{ stat.url }}">{{ stat.titulo }}</a></dt><dd>{{ stat.total }}</dd></div>{% empty %}<p>Tu cuenta aún no tiene secciones de consulta asignadas.</p>{% endfor %}</dl>
+  <div class="module-previews">
+    {% for stat in stats %}
+    <section class="module-preview" aria-labelledby="panel-{{ stat.modulo }}-title">
+      <div class="module-preview-heading"><h3 id="panel-{{ stat.modulo }}-title">{% include 'shared/icon.html' with name=stat.modulo %}{{ stat.titulo }}</h3><span class="module-preview-total">{{ stat.total }} registro{{ stat.total|pluralize:'s' }}</span></div>
+      <div class="table-responsive" tabindex="0" role="region" aria-label="Registros recientes de {{ stat.titulo }}">
+        <table class="table mini-table">
+          <caption class="visually-hidden">Últimos registros de {{ stat.titulo }}</caption>
+          <thead><tr><th scope="col">{% if stat.modulo == 'atenciones' %}Folio{% else %}Código{% endif %}</th><th scope="col">{% if stat.modulo == 'atenciones' %}Solicitante{% else %}Nombre{% endif %}</th><th scope="col">Estado</th></tr></thead>
+          <tbody>{% for row in stat.preview %}<tr><td><a class="record-key" href="{{ row.url }}">{{ row.codigo }}</a></td><td class="mini-record-name">{{ row.nombre }}</td><td><span class="badge-status {{ row.estado|slugify }}">{{ row.estado }}</span></td></tr>{% empty %}<tr><td class="mini-empty" colspan="3">Aún no hay registros en esta sección.</td></tr>{% endfor %}</tbody>
+        </table>
+      </div>
+      <div class="module-preview-footer"><small>Últimos registros disponibles</small><a href="{{ stat.url }}" aria-label="Ver todos los registros de {{ stat.titulo }}">Ver todos {% include 'shared/icon.html' with name='arrow' %}</a></div>
+    </section>
+    {% empty %}<p>Tu cuenta aún no tiene secciones de consulta asignadas.</p>{% endfor %}
+  </div>
   <p class="text-muted">Los totales corresponden a registros disponibles y excluyen los archivados.</p>
 </section>
 {% endblock %}

@@ -1,9 +1,13 @@
 {% if form.non_field_errors %}<div class="alert alert-danger" role="alert">{{ form.non_field_errors }}</div>{% endif %}
 {% for field in form %}
+{% if field.name != exclude_field %}
 <div class="mb-3 form-field">
   {{ field.label_tag }}
-  {{ field }}
+  {% if field.field.widget.input_type == 'password' %}
+  <div class="input-password-wrapper">{{ field }}<button type="button" class="btn-toggle-password" data-password-target="{{ field.id_for_label }}" aria-controls="{{ field.id_for_label }}" aria-label="Mostrar contraseña" aria-pressed="false" hidden>Mostrar</button></div>
+  {% else %}{{ field }}{% endif %}
   {% if field.help_text %}<div class="form-text" id="{{ field.auto_id }}_helptext">{{ field.help_text|safe }}</div>{% endif %}
   {% if field.errors %}<div class="field-errors" id="{{ field.auto_id }}_error" role="alert">{{ field.errors }}</div>{% endif %}
 </div>
+{% endif %}
 {% endfor %}
