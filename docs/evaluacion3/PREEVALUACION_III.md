@@ -35,7 +35,7 @@ Para cada listado: `nuevo/` crea, `<id>/editar/` edita y `<id>/eliminar/` confir
 2. Elegir un mantenedor por integrante. Mostrar listado, crear un registro propio, recargar y explicar cómo persiste en la base.
 3. Enviar un formulario inválido y observar el mismo modal abierto con errores del servidor. Corregir y guardar.
 4. Editar el registro. Explicar que `UpdateView` carga una instancia y reutiliza el mismo `ModelForm` que `CreateView`.
-5. Cancelar una eliminación y comprobar que el registro permanece. Volver a eliminar, confirmar SweetAlert2 y explicar el POST con `{% csrf_token %}` y la `DeleteView`.
+5. Cancelar una eliminación y comprobar que el registro permanece. Volver a eliminar, confirmar SweetAlert2 y explicar el POST con `{% raw %}{% csrf_token %}{% endraw %}` y la `DeleteView`.
 6. Buscar por nombre/código (usuarios también por correo/RUT), filtrar por estado, elegir orden ascendente o descendente y recorrer páginas. Mostrar `q`, `estado`, `order`, `page_size` y `page` en la URL y cómo se conservan después de guardar. Usuarios y subatenciones tienen filtro adicional por delegación/tipo. Elegir 5, 15 o 30 registros, recargar y comprobar que el tamaño se conserva en sesión por mantenedor.
 7. Con un usuario de lectura, intentar la URL directa de crear, editar o eliminar. El servidor devuelve 403 aunque se escriba manualmente la URL. Un usuario sin sesión es enviado al login.
 
@@ -48,7 +48,7 @@ Para demostrar paginación con cinco filas hacen falta al menos seis registros q
 | Ejecución local y login (5 pts) | Django, autenticación, sesión, retorno a `next` | `manage.py`, `sgr/settings.py`, `sgr/urls.py`, `gestion/forms.py:AccesoForm`, `gestion/crud_views.py:AccesoView` |
 | CRUD completo (15 pts) | Clases específicas, ModelForm y ORM | `gestion/models.py`, `gestion/forms.py`, `gestion/crud_views.py`, `gestion/urls.py` |
 | Bootstrap + SweetAlert2 (8 pts) | Modal compartido; confirmación y POST de eliminación | `gestion/templates/gestion/_form_modal.html`, `list.html`, `confirm_delete.html`, `gestion/static/gestion/crud.js` |
-| Buscador, filtro y paginación (12 pts) | Consulta `Q`, filtros y `Paginator` con parámetros conservados; tamaños 5/15/30 y orden permitido | `CrudAccessMixin.filtered_queryset`, `get_page_size`, `get_ordering`, `query_parameters`, `get_context_data`, `{% querystring query_params %}` en `list.html` |
+| Buscador, filtro y paginación (12 pts) | Consulta `Q`, filtros y `Paginator` con parámetros conservados; tamaños 5/15/30 y orden permitido | `CrudAccessMixin.filtered_queryset`, `get_page_size`, `get_ordering`, `query_parameters`, `get_context_data`, `{% raw %}{% querystring query_params %}{% endraw %}` en `list.html` |
 
 El puntaje depende también de que cada integrante explique el código y demuestre los flujos. La implementación y las pruebas no reemplazan esa defensa individual.
 

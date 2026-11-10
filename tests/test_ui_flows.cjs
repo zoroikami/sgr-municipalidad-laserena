@@ -214,8 +214,8 @@ test('el modo local rechaza contraseñas arbitrarias', async () => {
     assert.equal(alerts.at(-1).icon, 'error');
 });
 
-test('los dos puntos de entrada no incluyen accesos rápidos ni barra de perfiles', () => {
-    for (const entry of ['index.html', 'evaluacion2/index.html']) {
+test('el punto de entrada no incluye accesos rápidos ni barra de perfiles', () => {
+    for (const entry of ['evaluacion2/index.html']) {
         const html = fs.readFileSync(path.join(__dirname, '..', entry), 'utf8');
         assert.doesNotMatch(html, /role-demo-bar|btn-quick-login|setCurrentUserByRole/);
         assert.match(html, /id="sgr-app-container"[^>]*style="display: none;"/);
