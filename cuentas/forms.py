@@ -175,3 +175,15 @@ class GroupPermissionsForm(forms.Form):
     permissions = forms.ModelMultipleChoiceField(label='Permisos', required=False,
         queryset=Permission.objects.select_related('content_type').order_by('content_type__app_label', 'codename'),
         widget=forms.CheckboxSelectMultiple)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        selected = self.data.get(self.add_prefix('group')) if self.is_bound else self.initial.get('group')
+        try:
+            group = self.fields['group'].clean(selected)
+        except ValidationError:
+            group = None
+        if group is not None and group.name == 'Cliente':
+            # Limit both the displayed options and forged POST values at validation time.
+            self.fields['permissions'].queryset = self.fields['permissions'].queryset.filter(
+                content_type__app_label='gestion', content_type__model='atencion', codename='view_atencion')

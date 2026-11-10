@@ -216,7 +216,7 @@ def test_standard_role_permissions_are_idempotent_and_scoped_to_business(account
     assert accounts['editor'].has_perm('gestion.change_atencion')
     assert not accounts['editor'].has_perm('gestion.delete_atencion')
     assert not accounts['other'].has_perm('gestion.add_atencion')
-    assert not accounts['cliente'].has_perm('gestion.view_atencion')
+    assert accounts['cliente'].has_perm('gestion.view_atencion')
     assert not accounts['admin'].has_perm('auth.change_user')
 
 

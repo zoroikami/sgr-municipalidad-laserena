@@ -84,7 +84,7 @@ Superadministrador y Coordinador pueden elegir una delegación activa o Todas la
 | Delegado Municipal | Metas, atenciones y cuentas de su delegación. Solo asigna roles locales. |
 | Operador / Funcionario | Registro y edición de atenciones de su delegación, sin archivado. |
 | Consultor | Consulta y exportación de módulos municipales de su delegación. |
-| Cliente | Portal con sus propias atenciones. |
+| Cliente | Solo lectura de sus propias atenciones. En Roles únicamente se ofrece Consultar atenciones; no admite permisos de escritura ni consulta de otros módulos. |
 
 Ninguna cuenta municipal de revisión tiene acceso a Django Admin. Para crear un superusuario técnico adicional, utilizar `python manage.py createsuperuser`. El nombre del grupo Superadministrador por sí solo no concede privilegios técnicos.
 
@@ -193,9 +193,12 @@ python tests_browser/check_design.py
 python tests_browser/check_paneles.py
 python tests_browser/check_usability.py
 python tests_browser/check_delegation_roles.py
+python tests_browser/check_client_readonly.py
 ```
 
 `check_delegation_roles.py` requiere también `.private/superadmin.json`, generado por `python manage.py provision_superadmin`. Comprueba cambios de delegación, roles históricos, restricciones locales y alineación de la casilla Cuenta activa a cuatro anchos, sin guardar cambios de negocio.
+
+`check_client_readonly.py` verifica que Roles solo ofrece Consultar para Cliente y que dos clientes de la misma delegación no pueden abrir las atenciones del otro. La migración `cuentas.0005` asigna únicamente `gestion.view_atencion` al grupo Cliente, sin cambiar cuentas ni contraseñas. Revocar ese permiso desde Roles impide consultar el portal.
 
 El recorrido `check_flows.py` usa seis sesiones independientes, comprueba cambios WebSocket solo en A, filtros, cancelación de SweetAlert, errores dentro del modal, navegación, portal, foto, correo SMTP, token de un uso y cambio/logout. Modifica y restaura un nombre ficticio, guarda una foto de prueba en Cliente 1 y restaura su contraseña privada. Ejecutarlo sobre datos de demostración. Las capturas locales se escriben en `output/browser/`, excluido de Git.
 
