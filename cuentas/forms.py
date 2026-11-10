@@ -10,7 +10,7 @@ from django.core.files.base import ContentFile
 from django.db.models import Q
 from PIL import Image, ImageOps, UnidentifiedImageError
 
-from rut import RutError, normalize_rut
+from cuentas.rut import RutError, normalize_rut
 from .models import Perfil
 from .roles import ROLE_NAMES
 

@@ -5,7 +5,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
-from rut import normalize_rut, is_valid_rut, RutError
+from cuentas.rut import normalize_rut, is_valid_rut, RutError
 
 
 class RutTests(unittest.TestCase):

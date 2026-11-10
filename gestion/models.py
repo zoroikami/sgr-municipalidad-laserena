@@ -138,7 +138,7 @@ class Atencion(models.Model):
         return f'{self.folio} · {self.solicitante_nombre}'
 
     def clean(self):
-        from rut import normalize_rut, RutError
+        from cuentas.rut import normalize_rut, RutError
         errors = {}
         try:
             self.solicitante_rut = normalize_rut(self.solicitante_rut)
