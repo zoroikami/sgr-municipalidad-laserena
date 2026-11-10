@@ -12,6 +12,7 @@ Aplicación desplegada desde `main`: merge del PR #13 (`8f189c8807c1d0051ab7dc6e
 - Siete sesiones: seis cuentas nombradas y un superadministrador independiente con todos los ámbitos, módulos, gestión de roles y portal ciudadano.
 - Recorrido real en navegador: WebSocket A/B, filtros, modal inválido, cancelación SweetAlert, layouts 375/768/1280, aislamiento de clientes, foto recortada persistente y privada.
 - Recuperación enviada mediante SMTP a **Mailpit privado**; token de un uso, rechazo de contraseña anterior y cambio con contraseña actual verificados. No acredita entrega a correo externo.
+- Posteriormente se configuró **Gmail SMTP** en AWS: autenticación STARTTLS en puerto 587 y `verify_environment --demo --production` aprobados. Gmail aceptó un correo de prueba al destinatario autorizado; no se inspeccionó su bandeja. Remitente y contraseña de aplicación permanecen en la configuración privada del servidor.
 - Respaldo previo de MySQL, fotos, configuración e imagen anterior disponible en el host. El historial local anterior quedó conservado en una rama de archivo.
 - MySQL y aplicación reiniciados: la huella de registros de negocio, usuarios, hashes de contraseñas y fotos permaneció idéntica; `/api/health/` volvió a responder correctamente.
 - El nombre DNS depende de la IP actual del laboratorio. Al cambiar la IP se debe actualizar el dominio, hosts y certificado.
@@ -66,9 +67,9 @@ en EC2 y se verificó allí el despliegue público descrito arriba.
 - **GitHub Actions:** los últimos trabajos no iniciaron pasos por bloqueo de
   facturación de la cuenta. Resolverlo corresponde al propietario; después ejecutar
   la CI sobre el commit final.
-- **Correo externo:** configurar un proveedor SMTP y correos de destinatarios reales;
-  actualmente los mensajes llegan exclusivamente al buzón de pruebas privado.
-  Reemplazar en el proveedor cualquier credencial expuesta en el historial antes de reutilizarla.
+- **Destinatarios de recuperación:** registrar correos reales en las cuentas que aún
+  utilizan `@example.test`; confirmar recepción en el buzón del destinatario.
+  Gmail SMTP ya está configurado; la prueba autorizada fue aceptada por el proveedor.
 - **Entrega y defensa:** registrar el repositorio y nombres completos en la
   plataforma; entregar las seis credenciales por medio privado y explicar código,
   permisos, ORM/ModelForms, sesión y recorrido de `transaction.on_commit` a Redis,

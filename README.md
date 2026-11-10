@@ -20,7 +20,7 @@ Las seis credenciales de prueba se guardan exclusivamente en `.private/cuentas-d
 
 **AWS verificado el 10 de noviembre de 2026:** [abrir SGR](https://sgr-100-58-127-230.sslip.io). Instancia existente `i-0a5533ede6cc60b7e`, región `us-east-1`, IP `100.58.127.230`. Commit de la aplicación desplegada: `8f189c8807c1d0051ab7dc6eb1c0a751c5d4369a` (merge del [PR #13](https://github.com/zoroikami/sgr-municipalidad-laserena/pull/13)); se comprueba en [/api/health/](https://sgr-100-58-127-230.sslip.io/api/health/).
 
-HTTPS utiliza un certificado público de Let's Encrypt y renovación diaria mediante `sgr-tls-renew.timer`. Se verificaron las siete cuentas, permisos, WSS entre delegaciones, Croppr y recuperación con token de un uso. MySQL 8.4.13, Redis, fotos y estáticos se ejecutan en contenedores con volúmenes persistentes y `DEBUG=False`. **El correo llega a Mailpit privado, no a buzones externos**; falta elegir/configurar SMTP saliente. No se exponen MySQL, Redis ni Mailpit a Internet. La dirección usa la IP actual mediante sslip.io: si el laboratorio detiene la instancia y cambia su IP, habrá que actualizar dominio, hosts y certificado.
+HTTPS utiliza un certificado público de Let's Encrypt y renovación diaria mediante `sgr-tls-renew.timer`. Se verificaron las siete cuentas, permisos, WSS entre delegaciones, Croppr y recuperación con token de un uso. MySQL 8.4.13, Redis, fotos y estáticos se ejecutan en contenedores con volúmenes persistentes y `DEBUG=False`. **Gmail SMTP está configurado en AWS** con STARTTLS por el puerto 587: autenticación y checks de producción aprobados; Gmail aceptó un mensaje de prueba al destinatario autorizado. La recepción en la bandeja del destinatario debe confirmarse allí. Las credenciales se conservan únicamente en la configuración privada del host. No se exponen MySQL, Redis ni Mailpit a Internet. La dirección usa la IP actual mediante sslip.io: si el laboratorio detiene la instancia y cambia su IP, habrá que actualizar dominio, hosts y certificado.
 
 ## Instalación desde cero
 
@@ -149,6 +149,8 @@ Redis permite varios procesos ASGI; no se utiliza una capa en memoria que limite
 Login por usuario o correo, logout exclusivamente POST con CSRF, vistas privadas protegidas, contraseña actual para cambiarla y validadores Django (mínimo 10 caracteres, similitud, claves comunes y solo numéricas).
 
 La recuperación usa enlace y token Django de una hora. Solicitarlo muestra la misma respuesta para correos registrados y desconocidos. El correo contiene una URL del host que sirve la aplicación; en AWS deben configurarse los hosts/orígenes públicos y el SMTP real o buzón de pruebas accesible. Un enlace usado o inválido no permite otro cambio. No basta con imprimir enlaces en consola.
+
+Las cuentas sembradas conservan direcciones `@example.test`. Para recuperar una cuenta mediante correo real, registrar primero su dirección válida en el perfil o en la gestión de usuarios; configurar el remitente SMTP no reemplaza los correos de las cuentas.
 
 Localmente Mailpit recibe correo SMTP real del proceso Django y permite abrirlo en su buzón web. En producción, configurar `EMAIL_HOST`, `EMAIL_PORT`, usuario/contraseña privados, TLS y remitente. La credencial SMTP incrustada de la versión anterior se retiró del código activo; como permanece en el historial, debe reemplazarse en el proveedor antes de reutilizar esa cuenta de correo.
 
