@@ -5,7 +5,7 @@ Aplicación desplegada desde `main`: merge del PR #13 (`8f189c8807c1d0051ab7dc6e
 
 ## AWS verificado
 
-- URL pública: https://sgr-100-58-127-230.sslip.io
+- URL pública: https://sgr-184-195-57-121.sslip.io
 - EC2 existente: `i-0a5533ede6cc60b7e`, `us-east-1`, Amazon Linux 2023.
 - Imagen Docker construida en EC2; Compose con MySQL 8.4.13, Redis, Daphne y Nginx; migraciones aplicadas; `verify_environment --demo --production` aprobado.
 - Certificado público Let's Encrypt; cookies Secure y HTTPS/WSS comprobados sin desactivar verificación TLS. Simulación de renovación ACME aprobada y temporizador diario activo.
@@ -15,7 +15,7 @@ Aplicación desplegada desde `main`: merge del PR #13 (`8f189c8807c1d0051ab7dc6e
 - Posteriormente se configuró **Gmail SMTP** en AWS: autenticación STARTTLS en puerto 587 y `verify_environment --demo --production` aprobados. Gmail aceptó un correo de prueba al destinatario autorizado; no se inspeccionó su bandeja. Remitente y contraseña de aplicación permanecen en la configuración privada del servidor.
 - Respaldo previo de MySQL, fotos, configuración e imagen anterior disponible en el host. El historial local anterior quedó conservado en una rama de archivo.
 - MySQL y aplicación reiniciados: la huella de registros de negocio, usuarios, hashes de contraseñas y fotos permaneció idéntica; `/api/health/` volvió a responder correctamente.
-- El nombre DNS depende de la IP actual del laboratorio. Al cambiar la IP se debe actualizar el dominio, hosts y certificado.
+- Elastic IP `184.195.57.121`, reserva `eipalloc-08967e7da51b66e2c`, asociación `eipassoc-0b0f523c84db1f850`. El enlace permanece estable al detener/iniciar mientras se conserve la reserva y el laboratorio no elimine el recurso. Tiene cargo de IPv4 pública de AWS.
 
 ## Validación local completada
 
@@ -59,8 +59,8 @@ en EC2 y se verificó allí el despliegue público descrito arriba.
 
 ## Pendientes externos para la entrega
 
-- **Disponibilidad del laboratorio:** mantener EC2 encendido durante la demostración;
-  revisar la dirección pública si AWS cambia la IP al reiniciar el laboratorio.
+- **Disponibilidad del laboratorio:** mantener EC2 encendido durante la demostración
+  y conservar la reserva de Elastic IP; restablecer el laboratorio puede eliminar recursos.
 - **Revisión humana:** un compañero debe revisar los PR funcionales de cada
   integrante. Los aportes de zoroikami, Hvsh-bit y Bogotor existen; en los PR
   consultados no aparecían revisiones formales. No se fabrican revisiones ni autoría.
