@@ -46,6 +46,13 @@ def validated_photo(upload):
 class MunicipalAuthenticationForm(AuthenticationForm):
     username = forms.CharField(label='Usuario o correo electrónico', max_length=254)
 
+    def confirm_login_allowed(self, user):
+        super().confirm_login_allowed(user)
+        if user.is_superuser and not hasattr(user, 'perfil'):
+            raise ValidationError(
+                'Esta cuenta es de soporte técnico. Para entrar al sistema municipal, '
+                'usa una cuenta con delegación asignada.', code='technical_account')
+
     def clean(self):
         identifier = self.cleaned_data.get('username', '')
         matches = User.objects.filter(Q(username__iexact=identifier) | Q(email__iexact=identifier))

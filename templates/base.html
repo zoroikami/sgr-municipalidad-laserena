@@ -12,9 +12,9 @@
   <link rel="stylesheet" href="{% static 'sgr/legacy.css' %}">
   {% block extra_css %}{% endblock %}
 </head>
-<body class="{% if user.is_authenticated %}sgr-authenticated{% else %}sgr-public{% endif %}">
+<body class="{% if user.is_authenticated and not public_layout %}sgr-authenticated{% else %}sgr-public{% endif %}">
   <a class="skip-link" href="#contenido">Ir al contenido</a>
-  {% if user.is_authenticated %}
+  {% if user.is_authenticated and not public_layout %}
   <header class="municipal-header sgr-topbar">
     <a class="municipal-brand topbar-left" href="{% url 'gestion:inicio' %}"><img class="topbar-logo" src="{% static 'municipal/logo-la-serena-horizontal.svg' %}" alt="Municipalidad de La Serena" width="240" height="67"></a>
     <div class="topbar-delegacion-pill" aria-label="Delegación asignada a tu cuenta">
@@ -31,8 +31,8 @@
     </div>
   </header>
   {% endif %}
-  <div class="workspace sgr-app-layout{% if not user.is_authenticated %} workspace-public auth-wrapper{% endif %}">
-    {% if user.is_authenticated %}
+  <div class="workspace sgr-app-layout{% if not user.is_authenticated or public_layout %} workspace-public auth-wrapper{% endif %}">
+    {% if user.is_authenticated and not public_layout %}
     {% include 'shared/sidebar.html' %}
     {% endif %}
     <main class="workspace-main sgr-main-content" id="contenido" tabindex="-1">

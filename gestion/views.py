@@ -31,7 +31,8 @@ def module_config(modulo):
 @login_required
 def inicio(request):
     if request.user.is_superuser and not hasattr(request.user, 'perfil'):
-        return redirect('admin:index')
+        messages.info(request, 'Esta sesión es de soporte técnico. Ingresa con una cuenta municipal que tenga una delegación asignada.')
+        return redirect('cuentas:login')
     if is_cliente(request.user):
         return redirect('gestion:portal')
     delegation_id(request.user)
