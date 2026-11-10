@@ -1,8 +1,15 @@
 from django.urls import path
 from . import views
+from . import views_integrado
 
 app_name = 'gestion'
 urlpatterns = [
+    path('tubo/', views_integrado.tablero, name='tablero'),
+    path('tubo/<int:pk>/avanzar/', views_integrado.mover, name='tubo_mover'),
+    path('sgr/', views_integrado.resultados, name='resultados_sgr'),
+    path('sgr/actividad/', views_integrado.registrar, name='actividad_crear'),
+    path('sgr/ausencia/', views_integrado.registrar, {'ausencia': True}, name='ausencia_crear'),
+    path('sgr/meta/<int:pk>/', views_integrado.configurar_meta, name='meta_configurar'),
     path('', views.inicio, name='inicio'),
     path('api/health/', views.health, name='health'),
     path('portal/', views.portal, name='portal'),

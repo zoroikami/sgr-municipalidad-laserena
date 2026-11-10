@@ -5,6 +5,9 @@
       <a class="nav-link-btn" href="{% url 'gestion:portal' %}"{% if request.resolver_match.app_name == 'gestion' %} aria-current="page"{% endif %}>{% include 'shared/icon.html' with name='atenciones' %}<span>Mis atenciones</span></a>
     {% else %}
       <div class="sidebar-category">Gestión municipal</div>
+      {% if perms.gestion.view_gestiontubo %}<a class="nav-link-btn" href="{% url 'gestion:tablero' %}">{% include 'shared/icon.html' with name='atenciones' %}<span>Tubo de trabajo</span></a>{% endif %}
+      {% if perms.gestion.view_actividadsgr %}<a class="nav-link-btn" href="{% url 'gestion:resultados_sgr' %}">{% include 'shared/icon.html' with name='metas' %}<span>Resultados SGR</span></a>{% endif %}
+      {% if perms.gestion.view_organizacion %}<a class="nav-link-btn" href="{% url 'gestion:listado' 'organizaciones' %}">{% include 'shared/icon.html' with name='users' %}<span>Organizaciones</span></a>{% endif %}
       <a class="nav-link-btn" href="{% url 'gestion:inicio' %}"{% if request.resolver_match.url_name == 'inicio' %} aria-current="page"{% endif %}>{% include 'shared/icon.html' with name='home' %}<span>Inicio</span></a>
       {% if perms.gestion.view_atencion %}<a class="nav-link-btn" href="{% url 'gestion:listado' 'atenciones' %}"{% if modulo == 'atenciones' %} aria-current="page"{% endif %}>{% include 'shared/icon.html' with name='atenciones' %}<span>Atenciones ciudadanas</span></a>{% endif %}
       <div class="sidebar-category">Mantenedores del sistema</div>
