@@ -173,7 +173,7 @@ python tests_browser/check_flows.py
 
 El segundo recorrido usa seis sesiones independientes, comprueba cambios WebSocket solo en A, filtros, cancelación de SweetAlert, errores dentro del modal, navegación, portal, foto, correo SMTP, token de un uso y cambio/logout. Modifica y restaura un nombre ficticio, guarda una foto de prueba en Cliente 1 y restaura su contraseña privada. Ejecutarlo sobre datos de demostración. Las capturas locales se escriben en `output/browser/`, excluido de Git.
 
-Las pruebas controladas de 400/500 viven exclusivamente en `tests_django/error_urls.py` con `DEBUG=False`; no hay rutas de producción para forzar fallos. Ver [docs/EVALUACION_3_ESTADO.md](docs/EVALUACION_3_ESTADO.md) para resultados y límites verificados.
+Las pruebas controladas de 400/500 viven exclusivamente en `tests_django/error_urls.py` con `DEBUG=False`; no hay rutas de producción para forzar fallos. Ver [docs/evaluacion3/EVALUACION_3_ESTADO.md](docs/evaluacion3/EVALUACION_3_ESTADO.md) para resultados y límites verificados.
 
 ## AWS: preparación y puesta en marcha
 
