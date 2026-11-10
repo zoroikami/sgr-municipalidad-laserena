@@ -30,6 +30,8 @@ gestión de cuentas se mantienen con la política de alcance documentada.
 | Nginx | Sintaxis válida usando un certificado efímero exclusivamente local |
 | Diagrama | Mermaid validado en Chromium; SVG generado y revisado |
 | JavaScript y copy | Sintaxis correcta; guard es-CL: 27 archivos, cero errores/advertencias |
+| Pull Request | [PR #5](https://github.com/zoroikami/sgr-municipalidad-laserena/pull/5), integrado a main el 10 de noviembre de 2026; ajustes posteriores en rama feature |
+| GitHub Actions | El run original no inició pruebas por un bloqueo de facturación reportado entonces; los resultados de pruebas indicados son locales |
 
 Los tests incluyen accesos directos y POST manipulados, lectores sin escrituras,
 editor sin archivado, administrador limitado sin Django Admin, IDs/FK ajenos,
@@ -100,6 +102,20 @@ La revisión independiente final aprobó el alcance local implementado y la cali
 del código después de comprobar las correcciones. No quedaron hallazgos
 importantes abiertos; AWS y revisión de compañeros siguen pendientes.
 
+## Actualización local del 10 de noviembre de 2026
+
+Se recuperó el diseño anterior sobre Django, con mini tablas de registros reales
+en Inicio, códigos ascendentes por sección, descripciones limitadas a 500
+caracteres, recorte de foto acotado, ayuda y presentación del RUT y botones de
+guardado uniformes. El acceso municipal ya no redirige automáticamente al panel
+técnico cuando una cuenta de soporte no tiene delegación asignada.
+
+La última suite aprobó 80 pruebas Django. Los recorridos de Chromium comprobaron
+la interfaz, teclado, fotos grandes horizontales/verticales, recorte persistente,
+WebSocket y aislamiento, portal y recuperación SMTP. Los checks de despliegue no
+mostraron problemas. Estos ajustes siguen en la rama feature; la integración
+del PR #5 corresponde a la migración inicial, no a los commits posteriores.
+
 ## Pendientes externos
 
 1. Identificar la instancia EC2 y la URL o dominio, y disponer de acceso configurado.
@@ -112,6 +128,11 @@ importantes abiertos; AWS y revisión de compañeros siguen pendientes.
    agentes no acreditan participación académica ni sustituyen la de un compañero.
 4. Reemplazar en el proveedor la credencial SMTP que estaba incrustada en la
    versión anterior. Se retiró del código actual, pero no se reescribió el historial.
+5. Revisar con el propietario el estado de facturación antes de volver a ejecutar
+   Actions. El [run 42318065289](https://github.com/zoroikami/sgr-municipalidad-laserena/actions/runs/42318065289)
+   terminó sin pasos ejecutados; su anotación indica: “The job was not started
+   because your account is locked due to a billing issue.” No se modificó la
+   facturación ni se intentó ejecutar el trabajo en otro recurso de pago.
 
 Estos pendientes impiden afirmar cumplimiento total de la evaluación o asignar
 puntaje. No se generó ni inventó una evidencia de despliegue AWS.

@@ -205,6 +205,8 @@ La base SQLite anterior no se modifica ni se importa automáticamente: el nuevo 
 
 Desarrollo en `feature/SGR-evaluacion3-django`; integrar mediante Pull Request revisado por otro integrante, sin commits ni push directos a `main`. La CI declarada en `.github/workflows/django.yml` ejecuta las pruebas con MySQL/Redis y conserva las pruebas históricas. La revisión de un agente no sustituye la revisión de un compañero requerida por la pauta.
 
+El [PR #5 · migración Django y evaluación III](https://github.com/zoroikami/sgr-municipalidad-laserena/pull/5) fue integrado el 10 de noviembre de 2026. Los ajustes posteriores de interfaz, códigos, perfil e ingreso municipal se mantienen en `feature/SGR-evaluacion3-django` para su revisión e integración. La última verificación local aprobó 80 pruebas Django y los recorridos de navegador; las 70 pruebas históricas se verificaron en la migración inicial. El run remoto original no inició pasos por un bloqueo de facturación reportado por GitHub; ese resultado no acredita pruebas remotas de los cambios posteriores.
+
 Cada integrante debe aportar al menos un PR funcional con su autoría y revisión reales. Este trabajo no crea aportes ni revisiones ficticias y no reescribe el historial previo.
 
 La entrega en la plataforma consiste en el enlace del repositorio y los nombres completos de todos los integrantes. No se exige un informe adicional. Los antecedentes de primera/segunda entrega permanecen en `diagramas/`, `especificaciones/`, `gestion_agil/`, `mockup/` y los documentos históricos; no representan el estado operativo actual de Django.
