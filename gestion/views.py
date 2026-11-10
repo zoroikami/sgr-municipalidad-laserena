@@ -36,10 +36,17 @@ def inicio(request):
         return redirect('gestion:portal')
     delegation_id(request.user)
     stats = []
-    for module in ['atenciones', 'metas', 'tipos', 'subatenciones']:
+    descriptions = {
+        'atenciones': 'Consulta las solicitudes ciudadanas y revisa su estado de atención.',
+        'metas': 'Revisa los objetivos y las metas de tu delegación.',
+        'tipos': 'Consulta las categorías de servicios para la atención ciudadana.',
+        'subatenciones': 'Encuentra las prestaciones asociadas a cada tipo de atención.',
+    }
+    for module, description in descriptions.items():
         config = MODULES[module]
         if request.user.has_perm(f'gestion.view_{config["model"]._meta.model_name}'):
-            stats.append({'titulo': config['title'], 'total': scoped(request.user, config['model']).count(),
+            stats.append({'modulo': module, 'titulo': config['title'], 'descripcion': description,
+                          'total': scoped(request.user, config['model']).count(),
                           'url': reverse('gestion:listado', args=[module])})
     return render(request, 'gestion/inicio.html', {'titulo': 'Gestión municipal', 'stats': stats})
 

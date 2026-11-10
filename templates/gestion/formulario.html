@@ -12,7 +12,7 @@
         {% for field in form %}<div class="form-field{% if field.errors %} has-error{% endif %}">
           {{ field.label_tag }}{% if field.field.required %}<span class="required-label"> (obligatorio)</span>{% endif %}
           {{ field }}
-          <div class="field-help" id="{{ field.auto_id }}_help">{{ field.help_text|safe }}</div>
+          <div class="field-help{% if field.name == 'descripcion' %} description-help{% endif %}" id="{{ field.auto_id }}_help">{{ field.help_text|safe }}{% if field.name == 'descripcion' %}<output class="description-counter" for="{{ field.id_for_label }}" data-description-counter data-count-for="{{ field.id_for_label }}" aria-live="off">{{ field.value|default_if_none:''|length }} / {{ field.field.max_length }}</output>{% endif %}</div>
           <div class="field-errors" id="{{ field.auto_id }}_errors">{% if field.errors %}{{ field.errors }}{% endif %}</div>
         </div>{% endfor %}
         {% if modulo == 'atenciones' %}<p id="subatencion-status" class="field-help" role="status" aria-live="polite"></p>{% endif %}

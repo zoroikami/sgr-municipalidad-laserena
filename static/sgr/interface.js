@@ -12,4 +12,13 @@
       button.setAttribute('aria-pressed', String(visible));
     });
   });
+  document.querySelectorAll('[data-description-counter]').forEach(counter => {
+    const field = document.getElementById(counter.dataset.countFor);
+    if (!(field instanceof HTMLTextAreaElement) || field.maxLength < 0) return;
+    const update = () => {
+      counter.textContent = `${field.value.length} / ${field.maxLength}`;
+    };
+    field.addEventListener('input', update);
+    update();
+  });
 })();

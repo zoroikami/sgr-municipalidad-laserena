@@ -178,11 +178,22 @@ a { color: var(--brand-wine); }
 .record-details.content-panel { max-width: 65rem; }
 .record-details > div:first-child { border-top: 0; }
 .record-details dt, .record-details dd { font-size: var(--type-small); }
-.module-summary { border: 0; max-width: none; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-lg); }
-.module-summary > div { padding: var(--space-xl); border: 1px solid var(--brand-border); border-radius: var(--legacy-radius-panel); background: var(--brand-white); align-items: center; }
-.module-summary dt a { display: flex; align-items: center; gap: var(--space-md); text-decoration: none; color: var(--brand-ink); font-size: var(--type-small); font-weight: 500; }
-.module-summary dt a:hover { color: var(--brand-red); text-decoration: underline; }
-.module-summary dd { color: var(--brand-wine); }
+.module-shortcuts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-lg); margin: var(--space-xl) 0; }
+.module-shortcut { display: flex; flex-direction: column; align-items: stretch; gap: var(--space-md); padding: var(--space-xl); background: var(--brand-white); border: 1px solid var(--brand-border); border-top: var(--space-xs) solid var(--brand-wine); border-radius: var(--legacy-radius-panel); text-decoration: none; color: var(--brand-ink); scroll-margin-top: calc(var(--legacy-topbar-height) + var(--space-lg)); }
+.module-shortcut-heading { display: flex; align-items: center; gap: var(--space-md); }
+.module-shortcut-heading .ui-icon { width: var(--space-xl); height: var(--space-xl); color: var(--brand-wine); }
+.module-shortcut h3 { color: var(--brand-wine); font-size: var(--type-subtitle); line-height: 1.4; margin: 0; }
+.module-shortcut > p { color: var(--brand-muted); font-size: var(--type-small); line-height: 1.6; max-width: 45ch; margin: 0 0 var(--space-md); }
+.module-shortcut-footer { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: var(--space-md); margin-top: auto; padding-top: var(--space-lg); border-top: 1px solid var(--brand-row-rule); }
+.module-shortcut-total { display: flex; align-items: baseline; gap: var(--space-sm); color: var(--brand-muted); font-size: var(--type-caption); }
+.module-shortcut-total strong { font-size: var(--type-title); line-height: 1.2; color: var(--brand-wine); font-variant-numeric: tabular-nums; }
+.module-shortcut-action { display: inline-flex; align-items: center; gap: var(--space-sm); color: var(--brand-wine); font-size: var(--type-small); font-weight: 700; white-space: nowrap; }
+.module-shortcut:hover { border-color: var(--brand-wine); background: var(--brand-surface); color: var(--brand-ink); }
+.module-shortcut:hover .module-shortcut-action { text-decoration: underline; text-underline-offset: 0.2em; }
+.module-shortcut:focus-visible { outline: 3px solid var(--brand-focus); outline-offset: 3px; background: var(--brand-surface); }
+.module-shortcut:active { background: var(--brand-soft); border-color: var(--brand-red); }
+.description-help { display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: var(--space-sm); }
+.description-counter { color: var(--brand-muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
 .welcome-panel { padding: var(--space-xl); border-left: var(--space-xs) solid var(--brand-red); background: var(--brand-soft); margin-bottom: var(--space-2xl); }
 .welcome-panel p { max-width: 65ch; margin: 0; font-size: var(--type-small); }
 .welcome-panel strong { display: block; margin-bottom: var(--space-sm); color: var(--brand-wine); }
@@ -224,7 +235,7 @@ a { color: var(--brand-wine); }
   .workspace-public.auth-wrapper { padding: var(--space-lg); }
   .auth-card.account-section { padding: var(--space-xl); }
   .auth-header img { margin-bottom: var(--space-lg); }
-  .module-summary { grid-template-columns: minmax(0, 1fr); }
+  .module-shortcuts { grid-template-columns: minmax(0, 1fr); }
   .content-panel { padding: var(--space-lg); }
   .profile-overview { gap: var(--space-lg); align-items: flex-start; flex-wrap: wrap; }
   .profile-overview dl { flex: 1 1 12rem; }

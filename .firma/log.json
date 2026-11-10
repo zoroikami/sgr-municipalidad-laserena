@@ -2,6 +2,16 @@
   {
     "date": "2026-11-10",
     "family": "Product",
+    "macro": "municipal section shortcuts",
+    "theme": "Existing municipal wine and red identity",
+    "direction": "minimal-modern",
+    "display": "Native system sans-serif (existing brand requirement)",
+    "nav": "Full-card section links with keyboard focus",
+    "brief": "User-requested refinement: module icons, useful descriptions, real scoped totals and explicit panel action; 500-character descriptions with server validation and live counters. Component refinement preserves the approved system."
+  },
+  {
+    "date": "2026-11-10",
+    "family": "Product",
     "macro": "restored municipal workspace",
     "theme": "Original second-evaluation municipal identity",
     "direction": "minimal-modern",

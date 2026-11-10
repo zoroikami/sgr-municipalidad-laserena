@@ -66,7 +66,7 @@ class Delegacion(Registro):
 
 class RegistroDelegacion(Registro):
     delegacion = models.ForeignKey(Delegacion, on_delete=models.PROTECT)
-    descripcion = models.TextField('Descripción', blank=True, max_length=3000)
+    descripcion = models.TextField('Descripción', blank=True, max_length=500)
 
     class Meta(Registro.Meta):
         abstract = True
@@ -120,7 +120,7 @@ class Atencion(models.Model):
     responsable = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name='atenciones_registradas')
     solicitante_rut = models.CharField('RUT del solicitante', max_length=12)
     solicitante_nombre = models.CharField('Nombre del solicitante', max_length=140)
-    descripcion = models.TextField('Descripción', max_length=3000)
+    descripcion = models.TextField('Descripción', max_length=500)
     estado = models.CharField('Estado', max_length=20, choices=ESTADOS_ATENCION, default='Ingresada')
     created_at = models.DateTimeField('Fecha de creación', default=timezone.now, editable=False)
     updated_at = models.DateTimeField('Última actualización', auto_now=True)

@@ -15,6 +15,9 @@ class ScopedModelForm(forms.ModelForm):
         for name, field in self.fields.items():
             field.widget.attrs.setdefault('class', 'form-select' if isinstance(field.widget, forms.Select) else 'form-control')
             field.widget.attrs.setdefault('aria-describedby', f'id_{name}_help id_{name}_errors')
+            if name == 'descripcion':
+                field.help_text = f'Máximo {field.max_length} caracteres.'
+                field.error_messages['max_length'] = f'La descripción debe tener como máximo {field.max_length} caracteres.'
 
     def clean_nombre(self):
         name = self.cleaned_data['nombre'].strip()
