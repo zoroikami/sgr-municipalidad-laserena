@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Consultar mi atención | SGR La Serena{% endblock %}
+{% block body_class %}public-consultation-page{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'sgr/consulta-publica.css' %}">{% endblock %}
+{% block content %}
+<header class="citizen-header">
+  <a class="citizen-brand" href="{% url 'gestion:consulta_publica' %}" aria-label="Municipalidad de La Serena, consulta ciudadana"><img src="{% static 'municipal/logo-la-serena-horizontal.svg' %}" width="240" height="67" alt="La Serena · Ilustre Municipalidad"></a>
+  <a class="btn citizen-staff-link" href="{% url 'cuentas:login' %}">{% include 'shared/icon.html' with name='lock' %} Ingreso de funcionarios</a>
+</header>
+<div class="citizen-layout">
+  <section class="citizen-intro" aria-labelledby="citizen-title">
+    <p class="citizen-kicker">Atención ciudadana</p>
+    <h1 id="citizen-title">Consulta el estado de tu atención.</h1>
+    <p class="citizen-description">Revisa el estado de tu atención con el folio y el código privado que recibiste por correo. No necesitas crear una cuenta.</p>
+    <div class="citizen-receipt-note">
+      {% include 'shared/icon.html' with name='atenciones' %}
+      <div><h2>La información que necesitas</h2><p>Consulta el estado actual, la delegación responsable y la fecha de la última actualización.</p></div>
+    </div>
+  </section>
+  <section class="citizen-query" aria-labelledby="query-title">
+    {% if result %}
+    <div class="citizen-result-heading"><span class="citizen-kicker">Resultado de tu consulta</span><h2 id="query-title">Estado de tu atención</h2><span class="badge-status {{ result.estado|slugify }}">{{ result.estado }}</span></div>
+    <dl class="citizen-result-details">
+      <div><dt>Folio</dt><dd>{{ result.folio }}</dd></div>
+      <div><dt>Delegación</dt><dd>{{ result.delegacion }}</dd></div>
+      <div><dt>Fecha de registro</dt><dd>{{ result.created_at|date:'d-m-Y H:i' }}</dd></div>
+      <div><dt>Última actualización</dt><dd>{{ result.updated_at|date:'d-m-Y H:i' }}</dd></div>
+    </dl>
+    <a class="btn btn-primary citizen-primary" href="{% url 'gestion:consulta_publica' %}">Consultar otra atención</a>
+    {% else %}
+    <h2 id="query-title">Consultar mi atención</h2>
+    <p class="citizen-query-description">Usa los datos del correo enviado por la municipalidad.</p>
+    {% if lookup_error %}<div class="alert alert-warning" role="alert">{{ lookup_error }}</div>{% endif %}
+    <form method="post" action="{% url 'gestion:consulta_publica' %}" autocomplete="off">
+      {% csrf_token %}{% include 'cuentas/_fields.html' %}
+      <button class="btn btn-primary citizen-primary" type="submit">Consultar atención {% include 'shared/icon.html' with name='arrow' %}</button>
+    </form>
+    <p class="citizen-privacy">{% include 'shared/icon.html' with name='lock' %}<span>Tu código es privado. Consérvalo para futuras consultas. Tiene una vigencia de 30 días.</span></p>
+    {% endif %}
+    <details class="citizen-help"><summary>¿No recibiste el correo o tu código venció?</summary><p>Comunícate con la delegación donde registraste la atención para confirmar tu correo y solicitar un código nuevo.</p></details>
+    <div class="citizen-account-access"><span>¿Ya tienes una cuenta?</span><a href="{% url 'cuentas:login' %}">Iniciar sesión</a></div>
+  </section>
+</div>
+{% endblock %}

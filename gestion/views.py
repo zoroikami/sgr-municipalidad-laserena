@@ -21,6 +21,7 @@ from .forms import FORMS, PortalDateFilterForm
 from .models import Atencion, Delegacion, ItemMeta, SubAtencion, TipoAtencion
 from .queries import MODULES, display_value, list_context, query_for, state_for
 from .realtime import notify_after_commit
+from .public_views import consulta_publica, schedule_access_email
 
 
 def module_config(modulo):
@@ -29,8 +30,9 @@ def module_config(modulo):
     return MODULES[modulo]
 
 
-@login_required
 def inicio(request):
+    if not request.user.is_authenticated:
+        return consulta_publica(request)
     if is_cliente(request.user):
         return redirect('gestion:portal')
     if not has_global_scope(request.user):
@@ -97,6 +99,9 @@ def form_view(request, modulo, pk=None):
                     saved = form.save()
                     if modulo == 'atenciones':
                         notify_after_commit(saved.delegacion_id)
+                        if saved.solicitante_email and (
+                                saved.solicitante_email != form.original_email or not saved.consulta_codigo_hash):
+                            schedule_access_email(request, saved.pk)
             except IntegrityError:
                 form.add_error(None, 'Ya existe un registro con esos datos. Revisa el nombre y vuelve a guardar.')
             else:

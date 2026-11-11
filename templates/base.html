@@ -12,7 +12,7 @@
   <link rel="stylesheet" href="{% static 'sgr/legacy.css' %}">
   {% block extra_css %}{% endblock %}
 </head>
-<body class="{% if user.is_authenticated and not public_layout %}sgr-authenticated{% else %}sgr-public{% endif %}">
+<body class="{% if user.is_authenticated and not public_layout %}sgr-authenticated{% else %}sgr-public{% endif %} {% block body_class %}{% endblock %}">
   <a class="skip-link" href="#contenido">Ir al contenido</a>
   {% if user.is_authenticated and not public_layout %}
   <header class="municipal-header sgr-topbar">

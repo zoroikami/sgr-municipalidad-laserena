@@ -16,6 +16,8 @@ daphne -b 127.0.0.1 -p 8001 config.asgi:application
 
 Aplicación: [http://127.0.0.1:8001](http://127.0.0.1:8001). Buzón SMTP local: [http://127.0.0.1:8025](http://127.0.0.1:8025).
 
+La página inicial ofrece **Consultar mi atención** sin cuenta. El botón **Ingreso de funcionarios** lleva al login existente. Las personas con cuenta Cliente también pueden iniciar sesión y utilizar su portal privado.
+
 Las seis credenciales de prueba se guardan exclusivamente en `.private/cuentas-demo.json`, con permisos `600` y fuera de Git. Entregarlas al docente por un medio privado. No existen accesos automáticos ni botones para cambiar de cuenta.
 
 **AWS verificado el 10 de noviembre de 2026:** [abrir SGR](https://sgr-184-195-57-121.sslip.io). Instancia existente `i-0a5533ede6cc60b7e`, región `us-east-1`, IP `184.195.57.121`. Commit de la aplicación desplegada: `8f189c8807c1d0051ab7dc6eb1c0a751c5d4369a` (merge del [PR #13](https://github.com/zoroikami/sgr-municipalidad-laserena/pull/13)); se comprueba en [/api/health/](https://sgr-184-195-57-121.sslip.io/api/health/).
@@ -107,6 +109,16 @@ El modelo implementado está documentado en [diagramas/modelos_django.md](diagra
 
 Al editar se conserva `created_at`; el orden inicial es creación descendente e id descendente. Búsqueda, filtros, orden, tamaño y página se conservan **en sesión, por módulo**. Una consulta nueva vuelve a página 1; una página que ya no existe se ajusta a una válida. El Excel reutiliza la consulta autorizada completa, excluye archivados y credenciales y trata el contenido del usuario como texto, no como fórmulas.
 
+## Consulta ciudadana por correo
+
+Al crear una atención, el funcionario puede registrar el **Correo del solicitante**. Después de guardar se envían el folio y un código privado, válido por 30 días, con el enlace `/consulta/`. Agregar o cambiar ese correo en una atención existente también envía un código nuevo. Las atenciones sin correo se conservan y pueden seguir registrándose normalmente; para habilitar su consulta pública es necesario agregar el correo.
+
+La consulta anónima requiere ambos datos por POST y muestra solo estado, folio, delegación y fechas. No presenta nombre, RUT, correo ni descripción. El código se guarda como HMAC ligado al registro y al correo; no se muestra en el CRUD ni se incluye en URLs. Los registros archivados y los códigos incorrectos, vencidos o sustituidos dan la misma respuesta.
+
+En el detalle de una atención, una cuenta con permiso de edición puede **Enviar nuevo código**. Un envío correcto sustituye al anterior. Si SMTP falla, la atención permanece guardada y la interfaz informa que el correo no se envió; un reenvío fallido al mismo destinatario conserva el código anterior. Cambiar o eliminar el correo revoca el acceso del destinatario previo.
+
+Redis limita la consulta pública a 30 intentos por IP cada 15 minutos mediante el alias `consulta_publica`. Detrás del Nginx configurado se usa su cabecera X-Real-IP; en local se usa REMOTE_ADDR. Si Redis no está disponible, la consulta pública responde temporalmente con 503. No hay reenvíos de correo anónimos. La migración `gestion.0004` incorpora los tres campos de acceso, inicialmente vacíos, sin enviar correos a registros existentes.
+
 ## Datos de revisión
 
 Carga reproducible e idempotente:
@@ -194,11 +206,14 @@ python tests_browser/check_paneles.py
 python tests_browser/check_usability.py
 python tests_browser/check_delegation_roles.py
 python tests_browser/check_client_readonly.py
+python tests_browser/check_public_consultation.py
 ```
 
 `check_delegation_roles.py` requiere también `.private/superadmin.json`, generado por `python manage.py provision_superadmin`. Comprueba cambios de delegación, roles históricos, restricciones locales y alineación de la casilla Cuenta activa a cuatro anchos, sin guardar cambios de negocio.
 
 `check_client_readonly.py` verifica que Roles solo ofrece Consultar para Cliente y que dos clientes de la misma delegación no pueden abrir las atenciones del otro. La migración `cuentas.0005` asigna únicamente `gestion.view_atencion` al grupo Cliente, sin cambiar cuentas ni contraseñas. Revocar ese permiso desde Roles impide consultar el portal.
+
+`check_public_consultation.py` se limita a local: crea una atención temporal, verifica entrega SMTP en Mailpit y consulta anónima con el código recibido, comprueba la renovación y revisa cuatro anchos. Elimina únicamente la atención temporal al terminar. No utilizarlo contra producción; allí se verifican la entrada pública y las restricciones sin enviar mensajes externos de prueba.
 
 El recorrido `check_flows.py` usa seis sesiones independientes, comprueba cambios WebSocket solo en A, filtros, cancelación de SweetAlert, errores dentro del modal, navegación, portal, foto, correo SMTP, token de un uso y cambio/logout. Modifica y restaura un nombre ficticio, guarda una foto de prueba en Cliente 1 y restaura su contraseña privada. Ejecutarlo sobre datos de demostración. Las capturas locales se escriben en `output/browser/`, excluido de Git.
 

@@ -53,6 +53,11 @@ CHANNEL_LAYERS = {'default': {
     'BACKEND': 'channels_redis.core.RedisChannelLayer',
     'CONFIG': {'hosts': [os.environ.get('REDIS_URL', 'redis://127.0.0.1:6380/0')]},
 }}
+CACHES = {'default': {'BACKEND': 'django.core.cache.backends.locmem.LocMemCache'},
+          'consulta_publica': {'BACKEND': 'django.core.cache.backends.redis.RedisCache',
+              'LOCATION': os.environ.get('REDIS_URL', 'redis://127.0.0.1:6380/0'),
+              'KEY_PREFIX': 'sgr-public-consultation',
+              'OPTIONS': {'socket_connect_timeout': 2, 'socket_timeout': 2}}}
 
 INSTALLED_APPS = ['daphne',
     'django.contrib.admin', 'django.contrib.auth', 'django.contrib.contenttypes',

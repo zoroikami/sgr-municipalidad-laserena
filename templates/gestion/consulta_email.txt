@@ -1,0 +1,15 @@
+Municipalidad de La Serena
+Sistema de Gestión de Resultados
+
+Puedes consultar el estado de tu atención sin crear una cuenta.
+
+Folio: {{ folio }}
+Código privado: {{ codigo }}
+
+Abre esta página e ingresa ambos datos:
+{{ consulta_url }}
+
+El código es válido hasta el {{ vence|date:"d-m-Y H:i" }} (hora de Chile).
+Consérvalo en privado. Quien tenga el folio y el código podrá consultar el estado, las fechas y la delegación de esta atención.
+
+Si necesitas un código nuevo o no solicitaste esta atención, comunícate con tu delegación municipal.
