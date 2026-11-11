@@ -1,9 +1,12 @@
 from django.urls import path
 from . import views
+from . import public_views
 
 app_name = 'gestion'
 urlpatterns = [
     path('', views.inicio, name='inicio'),
+    path('consulta/', public_views.consulta_publica, name='consulta_publica'),
+    path('gestion/atenciones/<int:pk>/correo-consulta/', public_views.enviar_codigo_consulta, name='enviar_codigo_consulta'),
     path('api/health/', views.health, name='health'),
     path('portal/', views.portal, name='portal'),
     path('portal/atenciones/<int:pk>/', views.portal_detalle, name='portal_detalle'),

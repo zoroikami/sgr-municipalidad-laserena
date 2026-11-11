@@ -128,10 +128,12 @@ class DelegacionForm(ScopedModelForm):
 class AtencionForm(ScopedModelForm):
     class Meta:
         model = Atencion
-        fields = ['solicitante_nombre', 'solicitante_rut', 'tipo', 'subatencion', 'cliente', 'descripcion', 'estado']
+        fields = ['solicitante_nombre', 'solicitante_rut', 'solicitante_email', 'tipo', 'subatencion', 'cliente', 'descripcion', 'estado']
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.original_email = self.instance.solicitante_email
+        self.fields['solicitante_email'].help_text = 'Enviaremos a este correo el folio y un código privado para consultar la atención sin cuenta. Verifica la dirección con el solicitante.'
         if not self.instance.pk:
             self.instance.responsable = self.user
         self.fields['tipo'].queryset = self.active_catalog(TipoAtencion)
@@ -149,6 +151,12 @@ class AtencionForm(ScopedModelForm):
         self.fields['cliente'].label_from_instance = lambda user: user.get_full_name() or user.username
         self.fields['solicitante_rut'].help_text = RUT_INPUT_HELP
         self.fields['solicitante_rut'].widget.attrs.update({'placeholder': '12345678-5', 'spellcheck': 'false'})
+
+    def save(self, commit=True):
+        if self.instance.solicitante_email != self.original_email:
+            self.instance.consulta_codigo_hash = ''
+            self.instance.consulta_enviado_at = None
+        return super().save(commit=commit)
 
 
 class PortalDateFilterForm(forms.Form):

@@ -7,5 +7,15 @@
     {% if can_delete %}<form class="archive-form" method="post" action="{% url 'gestion:archivar' modulo obj.pk %}" data-record="{{ obj }}">{% csrf_token %}<button class="btn btn-outline-danger" type="submit">Archivar registro</button></form>{% endif %}
   </div></div>
   <dl class="record-details content-panel">{% for detail in details %}<div><dt>{{ detail.label }}</dt><dd>{{ detail.value|default:'Sin dato'|linebreaksbr }}</dd></div>{% endfor %}</dl>
+  {% if modulo == 'atenciones' and can_change %}
+  <section class="content-panel mt-4" aria-labelledby="consulta-access-title">
+    <h2 id="consulta-access-title">Consulta ciudadana por correo</h2>
+    {% if obj.solicitante_email %}
+    <p>Correo del solicitante: <strong>{{ obj.solicitante_email }}</strong></p>
+    <p class="text-muted">{% if obj.consulta_enviado_at %}Último envío: {{ obj.consulta_enviado_at|date:'d-m-Y H:i' }}. El nuevo código reemplaza al anterior.{% else %}Envía el folio y un código privado para que el solicitante consulte el estado sin crear una cuenta.{% endif %}</p>
+    <form method="post" action="{% url 'gestion:enviar_codigo_consulta' obj.pk %}">{% csrf_token %}<button class="btn btn-outline-secondary" type="submit">{% if obj.consulta_enviado_at %}Enviar nuevo código{% else %}Enviar código por correo{% endif %}</button></form>
+    {% else %}<p>Agrega el correo del solicitante para enviarle un código privado de consulta.</p><a class="btn btn-outline-secondary" href="{% url 'gestion:editar' modulo obj.pk %}#id_solicitante_email">Agregar correo</a>{% endif %}
+  </section>
+  {% endif %}
 </section>
 {% endblock %}
