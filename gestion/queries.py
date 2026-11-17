@@ -1,6 +1,6 @@
 """One authorized query powers list, table refresh and unpaginated export."""
 from django.core.paginator import Paginator
-from django.db.models import Q
+from django.db.models import Q, Count
 from django.urls import reverse
 from urllib.parse import urlencode
 from cuentas.rut import format_rut
@@ -8,10 +8,24 @@ from cuentas.rut import format_rut
 from .access import scoped
 from .delegation import has_global_scope
 from .forms import AtencionFilterForm
-from .models import Atencion, Delegacion, ItemMeta, SubAtencion, TipoAtencion, ESTADOS, ESTADOS_ATENCION, Organizacion, GestionTubo
+from .models import Atencion, Delegacion, ItemMeta, SubAtencion, TipoAtencion, ESTADOS, ESTADOS_ATENCION, Organizacion, GestionTubo, Carta
 
+
+CARTA_FIELDS = [('Código', 'codigo'), ('Fecha de ingreso', 'fecha'),
+    ('Nº de ingreso', 'numero_ingreso'), ('Para', 'para'), ('Remite', 'remite'),
+    ('Fono de contacto', 'telefono'), ('Actividad o tema', 'nombre'),
+    ('Fecha de la actividad', 'fecha_actividad'), ('Encargado de seguimiento', 'encargado.get_full_name'),
+    ('Estado', 'estado'), ('Pronunciamiento', 'pronunciamiento'),
+    ('Derivada a', 'derivada_a'), ('Observación', 'observacion')]
 
 MODULES = {
+    'cartas': {'model': Carta, 'title': 'Cartas de oficina de partes',
+        'search': ['codigo', 'numero_ingreso', 'nombre', 'remite', 'derivada_a', 'pronunciamiento',
+                   'encargado__first_name', 'encargado__last_name', 'encargado__username'],
+        'columns': [('Código', 'codigo'), ('Nº de ingreso', 'numero_ingreso'), ('Actividad o tema', 'nombre'),
+                    ('Remite', 'remite'), ('Para', 'para'), ('Estado', 'estado'), ('Fecha de ingreso', 'fecha')],
+        'export_columns': CARTA_FIELDS, 'detail_columns': CARTA_FIELDS,
+        'sort': ['codigo', '-codigo', 'nombre', '-nombre', 'fecha', '-fecha', 'created_at', '-created_at']},
     'organizaciones': {'model': Organizacion, 'title': 'Organizaciones comunitarias',
         'search': ['codigo', 'nombre', 'familia', 'subfamilia', 'domicilio', 'registro_pj'],
         'columns': [('Código', 'codigo'), ('Nombre', 'nombre'), ('Familia', 'familia'), ('Subfamilia', 'subfamilia'), ('Verificada', 'verificada'), ('Estado', 'estado')],
@@ -95,6 +109,8 @@ def query_for(user, modulo, state):
             query = query.filter(created_at__date__gte=state['desde'])
         if state['hasta']:
             query = query.filter(created_at__date__lte=state['hasta'])
+    elif modulo == 'cartas':
+        query = query.select_related('encargado')
     elif modulo == 'subatenciones':
         query = query.select_related('tipo')
     if state['q']:
@@ -127,7 +143,7 @@ def list_context(request, modulo):
     export_url = reverse('gestion:exportar', args=[modulo])
     if modulo == 'atenciones':
         export_url = '' if invalid_filters else f'{export_url}?{urlencode(state)}'
-    return {
+    context = {
         'modulo': modulo, 'titulo': config['title'], 'state': state, 'page_obj': page,
         'columns': cols, 'rows': rows, 'can_add': can('add') and (modulo != 'delegaciones' or has_global_scope(request.user)),
         'can_change': can('change'), 'can_delete': can('delete') and modulo != 'delegaciones',
@@ -137,6 +153,16 @@ def list_context(request, modulo):
         'filter_form': filter_form, 'invalid_filters': invalid_filters, 'export_url': export_url,
         'tipos': scoped(request.user, TipoAtencion).filter(estado='Activo'),
     }
+
+    if modulo == 'cartas':
+        totals = {row['estado']: row['cantidad'] for row in scoped(request.user, Carta)
+                  .values('estado').annotate(cantidad=Count('pk'))}
+        styles = ['proceso', 'realizado', 'realizado', '']
+        context['cartas_resumen'] = [
+            {'label': label, 'cantidad': totals.get(value, 0), 'clase': style}
+            for (value, label), style in zip(Carta.ESTADOS, styles)]
+        context['cartas_resumen'].append({'label': 'Total', 'cantidad': sum(totals.values()), 'clase': ''})
+    return context
 
 
 def display_value(obj, key):
@@ -149,15 +175,19 @@ def display_value(obj, key):
         return timezone.localtime(value).strftime('%d-%m-%Y %H:%M')
     if key in ('rut', 'solicitante_rut'):
         return format_rut(value)
+    if callable(value):
+        value = value() or getattr(getattr(obj, 'encargado', None), 'username', '')
     if isinstance(value, bool):
         return 'Sí' if value else 'No'
     return str(value) if value is not None else ''
 
 
 def choices_for(modulo):
+    if modulo == 'cartas':
+        return Carta.ESTADOS
     return GestionTubo.ESTADOS if modulo == 'tubo' else ESTADOS_ATENCION if modulo == 'atenciones' else ESTADOS
 
 
 def sort_label(key):
-    names = {'nombre': 'Nombre', 'codigo': 'Código', 'folio': 'Folio', 'solicitante_nombre': 'Solicitante', 'created_at': 'Fecha de creación'}
+    names = {'nombre': 'Nombre', 'codigo': 'Código', 'folio': 'Folio', 'solicitante_nombre': 'Solicitante', 'created_at': 'Fecha de creación', 'fecha': 'Fecha de ingreso'}
     return names[key.lstrip('-')] + (' descendente' if key.startswith('-') else ' ascendente')
