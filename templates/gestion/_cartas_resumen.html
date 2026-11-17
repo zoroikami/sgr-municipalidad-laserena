@@ -1,0 +1,7 @@
+<section class="tubo-resumen" aria-label="Resumen de cartas de la delegación seleccionada">
+  {% for resumen in cartas_resumen %}<article class="{{ resumen.clase }}">
+    <h2 class="text-uppercase">{{ resumen.label }}</h2>
+    <strong>{{ resumen.cantidad }}</strong>
+  </article>{% endfor %}
+</section>
+<p class="text-muted">Los totales incluyen las cartas vigentes del ámbito seleccionado, antes de aplicar los filtros.</p>

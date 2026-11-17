@@ -49,6 +49,8 @@ class AtencionFilterForm(forms.Form):
 
 
 class ScopedModelForm(forms.ModelForm):
+    unique_name = True
+
     def __init__(self, *args, user, **kwargs):
         self.user = user
         super().__init__(*args, **kwargs)
@@ -83,7 +85,7 @@ class ScopedModelForm(forms.ModelForm):
             self.instance.delegacion = data['delegacion']
             self.org_id = self.instance.delegacion_id
         name = data.get('nombre')
-        if name:
+        if name and self.unique_name:
             matches = self._meta.model.all_objects.filter(nombre__iexact=name).exclude(pk=self.instance.pk)
             if self._meta.model is Delegacion:
                 matches = matches if has_global_scope(self.user) else matches.filter(pk=self.org_id)

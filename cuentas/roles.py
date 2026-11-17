@@ -2,18 +2,18 @@ from django.contrib.auth.models import Group, Permission
 
 ROLE_NAMES = ('Superadministrador', 'Coordinador', 'Delegado Municipal', 'Operador / Funcionario', 'Consultor', 'Cliente')
 LOCAL_ROLE_NAMES = ('Delegado Municipal', 'Operador / Funcionario', 'Consultor', 'Cliente')
-INTEGRATED_MODELS = ('organizacion', 'gestiontubo', 'actividadsgr', 'ausenciasgr', 'reclamosgr')
+INTEGRATED_MODELS = ('organizacion', 'gestiontubo', 'actividadsgr', 'ausenciasgr', 'reclamosgr', 'carta')
 BUSINESS_MODELS = ('delegacion', 'itemmeta', 'tipoatencion', 'subatencion', 'atencion') + INTEGRATED_MODELS
 ROLE_RULES = {
     # Technical access is granted through User.is_superuser, never a group name.
     'Superadministrador': {},
     'Coordinador': {model: ('view', 'add', 'change', 'delete') for model in BUSINESS_MODELS},
     'Delegado Municipal': {
-        **{model: ('view', 'add', 'change', 'delete') for model in ('itemmeta', 'atencion', 'organizacion', 'gestiontubo')},
+        **{model: ('view', 'add', 'change', 'delete') for model in ('itemmeta', 'atencion', 'organizacion', 'gestiontubo', 'carta')},
         'actividadsgr': ('view', 'add'), 'ausenciasgr': ('view', 'add'), 'reclamosgr': ('view', 'add'),
     },
     'Operador / Funcionario': {
-        **{model: ('view', 'add', 'change') for model in ('atencion', 'organizacion', 'gestiontubo')},
+        **{model: ('view', 'add', 'change') for model in ('atencion', 'organizacion', 'gestiontubo', 'carta')},
         'actividadsgr': ('view', 'add'), 'ausenciasgr': ('view',), 'reclamosgr': ('view',),
     },
     'Consultor': {model: ('view',) for model in BUSINESS_MODELS},
