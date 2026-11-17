@@ -63,6 +63,26 @@
 .sgr-sem-rojo { color: var(--error-ink); }
 .sgr-sem-amarillo { color: var(--action-edit-ink); }
 .sgr-sem-verde { color: var(--success-ink); }
+.sgr-luz {
+  display: inline-flex; align-items: center; gap: var(--space-xs);
+  font-size: var(--type-caption); font-weight: 700; line-height: 1.4; white-space: nowrap;
+  padding: var(--space-xs) var(--space-sm); border: 1px solid; border-radius: var(--legacy-radius-control);
+}
+.sgr-luz::before { content: ''; width: 0.5rem; height: 0.5rem; border-radius: 50%; background: currentColor; }
+.sgr-luz-verde { color: var(--status-active-ink); background: var(--status-active-bg); border-color: var(--status-active-border); }
+.sgr-luz-naranjo { color: var(--action-edit-ink); background: var(--action-edit-bg); border-color: var(--action-edit-border); }
+.sgr-luz-rojo { color: var(--error-ink); background: var(--action-delete-bg); border-color: var(--action-delete-border); }
+.sgr-semaforo-resumen { display: flex; flex-wrap: wrap; gap: var(--space-sm); margin-bottom: var(--space-lg); }
+.tubo-resumen .sgr-objetivo-verde { border-left-color: var(--success-ink); }
+.tubo-resumen .sgr-objetivo-naranjo { border-left-color: var(--action-edit-ink); }
+.tubo-resumen .sgr-objetivo-rojo { border-left-color: var(--error-ink); }
+.tubo-resumen .sgr-objetivo p { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-sm); }
+.tubo-resumen .pendiente strong { color: var(--error-ink); }
+.sgr-alerta {
+  background: var(--action-delete-bg); color: var(--error-ink); border: 1px solid var(--action-delete-border);
+  border-left: var(--space-xs) solid var(--error-ink); border-radius: var(--legacy-radius-control);
+  padding: var(--space-lg); margin-bottom: var(--space-xl);
+}
 @media (max-width: 1500px) {
   .tubo-columnas, .tubo-resumen { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }

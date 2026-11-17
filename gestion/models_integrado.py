@@ -146,3 +146,39 @@ class AusenciaSGR(models.Model):
             perfil = getattr(self.responsable, 'perfil', None)
             if not perfil or perfil.delegacion_id != self.delegacion_id:
                 raise ValidationError({'responsable': 'Selecciona un funcionario de la misma delegación.'})
+
+
+class ReclamoSGR(models.Model):
+    """Hoja RECLAMOS: reclamo escrito por mala atención de un funcionario; descuenta 20% de su resultado."""
+    MEDIOS = [('whatsapp', 'WhatsApp'), ('correo', 'Correo electrónico'), ('libro', 'Libro de observaciones')]
+    delegacion = models.ForeignKey('gestion.Delegacion', on_delete=models.PROTECT)
+    responsable = models.ForeignKey(settings.AUTH_USER_MODEL, verbose_name='Funcionario involucrado', on_delete=models.PROTECT,
+        related_name='reclamos_sgr')
+    fecha = models.DateField(default=timezone.localdate)
+    usuario_nombre = models.CharField('Usuario que reclama', max_length=140)
+    contacto = models.CharField(max_length=25, blank=True,
+        validators=[RegexValidator(r'^\+?[0-9 ()-]{7,25}$', 'Ingresa un teléfono válido.')])
+    ubicacion = models.CharField('Ubicación', max_length=160, blank=True)
+    situacion = models.TextField('Situación que reclama', max_length=500)
+    medio_escrito = models.CharField('Medio escrito', max_length=20, choices=MEDIOS)
+    informado_a = models.CharField('Reclamo informado a', max_length=140, blank=True)
+    registrado_por = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name='reclamos_registrados',
+        editable=False)
+    created_at = models.DateTimeField(default=timezone.now, editable=False)
+
+    class Meta:
+        ordering = ['-fecha', '-pk']
+        verbose_name = 'reclamo SGR'
+        verbose_name_plural = 'reclamos SGR'
+
+    def __str__(self):
+        return f'Reclamo {self.fecha:%d/%m/%Y}: {self.usuario_nombre}'
+
+    def clean(self):
+        super().clean()
+        if self.fecha and self.fecha > timezone.localdate():
+            raise ValidationError({'fecha': 'No puedes registrar reclamos con fecha futura.'})
+        if self.responsable_id:
+            perfil = getattr(self.responsable, 'perfil', None)
+            if not perfil or perfil.delegacion_id != self.delegacion_id:
+                raise ValidationError({'responsable': 'Selecciona un funcionario de la misma delegación.'})

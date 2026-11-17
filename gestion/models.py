@@ -125,6 +125,9 @@ class ItemMeta(RegistroDelegacion):
     meta_cantidad = models.PositiveIntegerField('Cantidad de meta', default=100, validators=[MinValueValidator(0)])
     ponderador = models.DecimalField('Ponderador (%)', max_digits=5, decimal_places=2, default=100,
         validators=[MinValueValidator(0), MaxValueValidator(100)])
+    INDICADORES = [('cantidad', 'Cantidad de acciones'), ('tubo', 'Soluciones al ingreso al tubo (% realizado)')]
+    indicador = models.CharField('Tipo de indicador', max_length=20, choices=INDICADORES, default='cantidad',
+        help_text='En «Soluciones al ingreso al tubo» la meta es el porcentaje de gestiones realizadas (por ejemplo, 80).')
 
     class Meta(RegistroDelegacion.Meta):
         verbose_name = 'ítem y meta'
@@ -197,4 +200,4 @@ class Atencion(models.Model):
         return super().save(*args, **kwargs)
 
 
-from .models_integrado import ActividadSGR, AusenciaSGR, GestionTubo, Organizacion  # noqa: E402,F401
+from .models_integrado import ActividadSGR, AusenciaSGR, GestionTubo, Organizacion, ReclamoSGR  # noqa: E402,F401
