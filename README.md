@@ -2,6 +2,8 @@
 
 Sistema de Gestión de Resultados para registrar atenciones ciudadanas y consultar metas por delegación municipal. El personal trabaja sobre su delegación; cada cliente consulta exclusivamente sus atenciones, incluso cuando comparte delegación con otro cliente.
 
+La rama de Proyecto Integrado 3 agrega tubo de trabajo, actividades SGR, organizaciones y ajuste de metas por ausencias. Consulta [instalación, reglas y validación](docs/proyecto-integrado-3.md).
+
 Implementación de la Evaluación Sumativa III de Programación Back End, TI3041, INACAP La Serena. El código anterior de Proyecto Integrado se conserva como antecedente; el servidor vigente es **Django**, no `server.py`.
 
 ## Ejecutar en este equipo

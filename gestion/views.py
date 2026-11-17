@@ -22,6 +22,9 @@ from .models import Atencion, Delegacion, ItemMeta, SubAtencion, TipoAtencion
 from .queries import MODULES, display_value, list_context, query_for, state_for
 from .realtime import notify_after_commit
 from .public_views import consulta_publica, schedule_access_email
+from .forms_integrado import OrganizacionForm, GestionTuboForm
+
+FORMS.update(organizaciones=OrganizacionForm, tubo=GestionTuboForm)
 
 
 def module_config(modulo):
@@ -130,6 +133,13 @@ def editar(request, modulo, pk):
 
 def details_for(obj, modulo):
     fields = MODULES[modulo]['columns'] + [('Descripción', 'descripcion')]
+    if modulo == 'tubo':
+        fields += [('Responsable', 'responsable.username'), ('Fecha de solicitud', 'fecha_solicitud'),
+                   ('Fecha de compromiso', 'fecha_compromiso'), ('Observaciones', 'observaciones'),
+                   ('Atención vinculada', 'atencion.folio'), ('Organización', 'organizacion.nombre')]
+    if modulo == 'organizaciones':
+        fields += [('Domicilio', 'domicilio'), ('Socios activos', 'socios_activos'), ('Registro P.J.', 'registro_pj'),
+                   ('Constitución', 'fecha_constitucion'), ('Inscripción', 'fecha_inscripcion'), ('Directiva', 'registro_directiva')]
     if modulo == 'atenciones':
         fields += [('RUT solicitante', 'solicitante_rut'), ('Subatención', 'subatencion.nombre'),
                    ('Responsable', 'responsable.get_full_name'), ('Delegación', 'delegacion.nombre')]

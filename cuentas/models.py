@@ -17,6 +17,7 @@ def photo_upload_path(instance, filename):
 class Perfil(models.Model):
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='perfil')
     delegacion = models.ForeignKey('gestion.Delegacion', on_delete=models.PROTECT, blank=True, null=True)
+    cargo_sgr = models.CharField('Cargo municipal', max_length=30, blank=True)
     rut = models.CharField('RUT', max_length=12, unique=True, blank=True, null=True)
     foto = models.ImageField('Foto', upload_to=photo_upload_path, storage=private_photo_storage, blank=True)
 
