@@ -6,7 +6,7 @@ from .delegation import has_global_scope
 from .forms import ScopedModelForm
 from .integrado import validar_fecha
 from .integrado import CARGOS
-from .models import ActividadSGR, AusenciaSGR, GestionTubo, Organizacion, Atencion, ItemMeta
+from .models import ActividadSGR, AusenciaSGR, GestionTubo, Organizacion, Atencion, ItemMeta, ReclamoSGR
 
 
 def cuentas_ambito(org_id, todas=False):
@@ -99,6 +99,19 @@ class AusenciaSGRForm(RelacionesForm):
         self.fields['responsable'].queryset = cuentas_ambito(self.rel_org, todas=self.rel_global)
 
 
+class ReclamoSGRForm(RelacionesForm):
+    class Meta:
+        model = ReclamoSGR
+        fields = ['responsable', 'fecha', 'usuario_nombre', 'contacto', 'ubicacion', 'situacion', 'medio_escrito', 'informado_a']
+        widgets = {'fecha': forms.DateInput(format='%Y-%m-%d', attrs={'type': 'date'})}
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.instance.registrado_por = self.user
+        self.fields['responsable'].queryset = cuentas_ambito(self.rel_org, todas=self.rel_global)
+        self.fields['medio_escrito'].help_text = 'Solo se aceptan reclamos escritos por mala atención del funcionario.'
+
+
 class PeriodoSGRForm(forms.Form):
     anio = forms.IntegerField(label='Año', min_value=2020, max_value=2100)
     trimestre = forms.TypedChoiceField(label='Trimestre', choices=[(n, n) for n in range(1, 5)], coerce=int)
@@ -118,4 +131,4 @@ class MetaSGRForm(forms.ModelForm):
     cargo_sgr = forms.ChoiceField(label='Cargo municipal', required=False, choices=[('', 'Común a todos los cargos')] + CARGOS)
     class Meta:
         model = ItemMeta
-        fields = ['meta_cantidad', 'ponderador', 'cargo_sgr']
+        fields = ['indicador', 'meta_cantidad', 'ponderador', 'cargo_sgr']

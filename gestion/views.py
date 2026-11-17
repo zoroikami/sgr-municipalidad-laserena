@@ -24,7 +24,9 @@ from .realtime import notify_after_commit
 from .public_views import consulta_publica, schedule_access_email
 from .forms_integrado import OrganizacionForm, GestionTuboForm
 
-FORMS.update(organizaciones=OrganizacionForm, tubo=GestionTuboForm)
+from .forms_cartas import CartaForm
+
+FORMS.update(organizaciones=OrganizacionForm, tubo=GestionTuboForm, cartas=CartaForm)
 
 
 def module_config(modulo):
@@ -42,6 +44,7 @@ def inicio(request):
         delegation_id(request.user)
     stats = []
     descriptions = {
+        'cartas': 'Revisa los ingresos de oficina de partes y su seguimiento por estado.',
         'atenciones': 'Consulta las solicitudes ciudadanas y revisa su estado de atención.',
         'metas': 'Revisa los objetivos y las metas de tu delegación.',
         'tipos': 'Consulta las categorías de servicios para la atención ciudadana.',
@@ -132,7 +135,8 @@ def editar(request, modulo, pk):
 
 
 def details_for(obj, modulo):
-    fields = MODULES[modulo]['columns'] + [('Descripción', 'descripcion')]
+    config = MODULES[modulo]
+    fields = config.get('detail_columns', config['columns'] + [('Descripción', 'descripcion')])
     if modulo == 'tubo':
         fields += [('Responsable', 'responsable.username'), ('Fecha de solicitud', 'fecha_solicitud'),
                    ('Fecha de compromiso', 'fecha_compromiso'), ('Observaciones', 'observaciones'),
@@ -201,10 +205,11 @@ def exportar(request, modulo):
     query = query_for(request.user, modulo, state)
     book = Workbook(write_only=True)
     sheet = book.create_sheet(config['title'][:31])
-    sheet.append([title for title, _ in config['columns']])
+    columns = config.get('export_columns', config['columns'])
+    sheet.append([title for title, _ in columns])
     for obj in query.iterator(chunk_size=1000):
         cells = []
-        for _, key in config['columns']:
+        for _, key in columns:
             value = display_value(obj, key)
             # Treat user-entered =,+,-,@ text as text, never as spreadsheet formulas.
             cell = WriteOnlyCell(sheet, value=value)

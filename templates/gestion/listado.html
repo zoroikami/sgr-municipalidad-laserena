@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% load static %}
+{% block extra_css %}{% if modulo == 'cartas' %}<link rel="stylesheet" href="{% static 'sgr/integrado.css' %}">{% endif %}{% endblock %}
 {% block content %}
 <section aria-labelledby="page-title"{% if modulo == 'atenciones' %} data-realtime-table data-table-url="{% url 'gestion:tabla' modulo %}"{% endif %}>
   <div class="module-breadcrumb"><a href="{% url 'gestion:inicio' %}">Gestión municipal</a> / {{ titulo }}</div>
@@ -11,6 +12,7 @@
     </div>
   </div>
   {% if modulo == 'atenciones' %}<p class="connection-status" id="realtime-status" role="status" aria-live="polite" data-state="connecting">Conectando actualizaciones en tiempo real…</p>{% endif %}
+  {% if cartas_resumen %}{% include 'gestion/_cartas_resumen.html' %}{% endif %}
   <div class="table-card">
   <form class="filter-form table-toolbar" method="get" action="{% url 'gestion:listado' modulo %}" role="search" aria-label="Filtrar {{ titulo }}">
     <div class="filter-search"><label for="filter-q">Buscar</label><div class="search-input-wrapper">{% include 'shared/icon.html' with name='search' %}<input class="form-control" id="filter-q" type="search" name="q" value="{{ state.q }}" maxlength="140" placeholder="Buscar registros…"></div></div>

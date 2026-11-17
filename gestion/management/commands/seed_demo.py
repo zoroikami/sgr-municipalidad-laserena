@@ -10,6 +10,7 @@ from django.contrib.auth.models import Group
 from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
 
+from gestion.management.cartas_demo import seed_cartas
 from cuentas.models import Perfil
 from cuentas.roles import configure_groups
 from gestion.models import Atencion, Delegacion, ItemMeta, SubAtencion, TipoAtencion
@@ -126,6 +127,7 @@ class Command(BaseCommand):
                         'descripcion': f'Dato ficticio: {sub.nombre.lower()} del sector {i % 12 + 1} de {org.nombre}.',
                         'estado': ['Ingresada', 'En proceso', 'Resuelta'][i % 3],
                         'created_at': anchor - datetime.timedelta(days=i // 2, hours=i % 12, minutes=d)})
+            seed_cartas(orgs, users)
         if created_credentials:
             by_alias = {account['usuario']: account for account in previous}
             by_alias.update({account['usuario']: account for account in created_credentials})

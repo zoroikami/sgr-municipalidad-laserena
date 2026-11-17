@@ -80,3 +80,15 @@ Verificación realizada con Python 3.14, MySQL 8.4, Redis y Mailpit locales sobr
 - Actualización desde el esquema previo de `main`: se conservaron registros, metas, correo, hash de consulta privada y permisos personalizados. Los permisos de los módulos nuevos se incorporaron correctamente.
 
 `check_integrado.py` realiza comprobaciones de lectura sobre el servidor local y requiere las cuentas demo y `.private/superadmin.json`. Esta validación acredita el entorno local; no constituye un despliegue ni un resultado de GitHub Actions.
+
+## Matriz SGR completa: 17 de noviembre de 2026
+
+Se incorporaron las hojas de la matriz que faltaban:
+
+- **RECLAMOS.** `/sgr/reclamo/` permite al delegado registrar reclamos escritos (WhatsApp, correo o libro de observaciones) por mala atención de un funcionario. Cada reclamo descuenta 20% del resultado final. Cada felicitación válida suma 10%, con un máximo de tres; ya no se cuenta como acción del ítem. El resultado final queda entre 0% y 150%; cada ítem conserva su tope de 120%. Si un funcionario acumula reclamos en tres trimestres seguidos, el informe muestra «Informar a RRHH».
+- **SEMÁFORO y RESUMEN.** `/sgr/` muestra, por funcionario de la delegación, el objetivo al día de hoy (días transcurridos del trimestre sin ausencias × porcentaje diario), el semáforo (verde si cumple el objetivo, naranjo desde 60% del objetivo, rojo bajo ese umbral), el último ingreso, los días sin ingresar, el número de ingresos y los ingresos diarios.
+- **GES SEG.** Nuevo cargo «Gestor de seguridad ciudadana».
+- **Hojas por cargo.** `python manage.py cargar_matriz_sgr --delegacion ID [--aplicar] [--desactivar-comunes]` crea los ítems, metas y ponderadores de G SOC, T OC, AP ADM, COOR DISERCO, PLAN y CON y GES SEG. Sin `--aplicar` solo simula. `--desactivar-comunes` deja inactivos los ítems sin cargo de esa delegación.
+- **Soluciones al ingreso al tubo.** Los ítems tienen tipo de indicador. El indicador del tubo mide gestiones realizadas / gestiones ingresadas del funcionario en el trimestre frente a la tasa meta (80%).
+
+Emergencia se carga con meta 0 (no aplica) hasta que el delegado la configure cuando ocurra.

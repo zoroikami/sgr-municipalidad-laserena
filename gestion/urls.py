@@ -10,6 +10,7 @@ urlpatterns = [
     path('sgr/', views_integrado.resultados, name='resultados_sgr'),
     path('sgr/actividad/', views_integrado.registrar, name='actividad_crear'),
     path('sgr/ausencia/', views_integrado.registrar, {'ausencia': True}, name='ausencia_crear'),
+    path('sgr/reclamo/', views_integrado.registrar, {'reclamo': True}, name='reclamo_crear'),
     path('sgr/meta/<int:pk>/', views_integrado.configurar_meta, name='meta_configurar'),
     path('', views.inicio, name='inicio'),
     path('consulta/', public_views.consulta_publica, name='consulta_publica'),
