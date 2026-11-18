@@ -52,6 +52,7 @@
     {% include 'shared/sidebar.html' %}
     {% endif %}
     <main class="workspace-main sgr-main-content" id="contenido" tabindex="-1">
+      {% if user.is_authenticated and not public_layout %}{% include 'shared/periodo.html' %}{% endif %}
       {% if messages %}<div class="messages" aria-live="polite">{% for message in messages %}<div class="alert {% if message.tags == 'error' %}alert-danger{% elif message.tags == 'success' %}alert-success{% else %}alert-info{% endif %}" role="status">{{ message }}</div>{% endfor %}</div>{% endif %}
       {% block content %}{% endblock %}
     </main>
@@ -60,6 +61,7 @@
   <script src="{% static 'vendor/bootstrap-5.3.3.bundle.min.js' %}" defer></script>
   <script src="{% static 'vendor/sweetalert2-11.14.5.min.js' %}" defer></script>
   <script src="{% static 'sgr/app.js' %}" defer></script>
+  <script src="{% static 'sgr/formularios.js' %}" defer></script>
   <script src="{% static 'sgr/interface.js' %}" defer></script>
   {% block extra_js %}{% endblock %}
 </body>

@@ -56,11 +56,16 @@ class ScopedModelForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         self.org_id = None
         if has_global_scope(user):
-            self.org_id = getattr(self.instance, 'delegacion_id', None) or active_delegation(user)
+            self.org_id = (getattr(self.instance, 'delegacion_id', None) or active_delegation(user)
+                           or self.delegacion_elegida())
             if hasattr(self.instance, 'delegacion_id') and not self.instance.pk:
                 self.fields['delegacion'] = forms.ModelChoiceField(
                     label='Delegación', queryset=Delegacion.objects.filter(estado='Activo'),
                     initial=self.org_id, disabled=self.org_id is not None)
+                if self.org_id is None:
+                    # Requisitos 2a entrega: las listas muestran solo opciones de la delegación elegida.
+                    self.fields['delegacion'].help_text = 'Selecciona la delegación para cargar solo sus opciones.'
+                    self.fields['delegacion'].widget.attrs['data-recargar-delegacion'] = ''
                 self.order_fields(['delegacion'])
         else:
             self.org_id = delegation_id(user)
@@ -73,10 +78,19 @@ class ScopedModelForm(forms.ModelForm):
                 field.help_text = f'Máximo {field.max_length} caracteres.'
                 field.error_messages['max_length'] = f'La descripción debe tener como máximo {field.max_length} caracteres.'
 
+    def delegacion_elegida(self):
+        """Delegación elegida por una cuenta global antes de cargar las listas dependientes."""
+        value = self.initial.get('delegacion')
+        if value is None or not str(value).isdigit():
+            return None
+        return Delegacion.objects.filter(pk=int(value), estado='Activo').values_list('pk', flat=True).first()
+
     def active_catalog(self, model):
         query = model.objects.filter(estado='Activo')
         if self.org_id:
             return query.filter(delegacion_id=self.org_id)
+        if not self.is_bound and has_global_scope(self.user):
+            return query.none()
         return query.filter(delegacion__estado='Activo', delegacion__deleted_at__isnull=True)
 
     def clean(self):

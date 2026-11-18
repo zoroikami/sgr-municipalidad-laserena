@@ -200,11 +200,19 @@ def test_actividad_fuera_de_delegacion_del_funcionario_muestra_error_sin_guardar
     assert not ActividadSGR.objects.exists()
 
 
-def test_altas_globales_ofrecen_relaciones_sin_necesitar_un_post_previo(client, mundo):
+def test_altas_globales_cargan_solo_las_opciones_de_la_delegacion_elegida(client, mundo):
+    # Requisitos 2a entrega: el selector muestra solo opciones de la delegación elegida.
     client.force_login(mundo['users']['coordinador'])
     response = client.get(reverse('gestion:crear', args=['tubo']))
     assert response.status_code == 200
-    assert mundo['users']['lector_b'] in response.context['form'].fields['responsable'].queryset
-    assert mundo['atn_b'] in response.context['form'].fields['atencion'].queryset
-    response = client.get(reverse('gestion:actividad_crear'))
-    assert mundo['meta_b'] in response.context['form'].fields['item'].queryset
+    form = response.context['form']
+    assert not form.fields['responsable'].queryset.exists() and not form.fields['atencion'].queryset.exists()
+    assert 'data-recargar-delegacion' in response.content.decode()
+    response = client.get(reverse('gestion:crear', args=['tubo']), {'delegacion': mundo['b'].pk})
+    form = response.context['form']
+    assert mundo['users']['lector_b'] in form.fields['responsable'].queryset
+    assert mundo['users']['editor_a'] not in form.fields['responsable'].queryset
+    assert mundo['atn_b'] in form.fields['atencion'].queryset and mundo['atn_a'] not in form.fields['atencion'].queryset
+    assert form.fields['delegacion'].disabled and form.fields['delegacion'].initial == mundo['b'].pk
+    response = client.get(reverse('gestion:actividad_crear'), {'delegacion': mundo['b'].pk})
+    assert list(response.context['form'].fields['item'].queryset) == [mundo['meta_b']]

@@ -1,4 +1,3 @@
-from calendar import monthrange
 from datetime import date
 from decimal import Decimal
 
@@ -10,11 +9,13 @@ from django.db.models import Max
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
+from django.http import JsonResponse
 from django.views.decorators.http import require_GET, require_POST
 
 from .access import authorize, scoped
 from .forms_integrado import ActividadSGRForm, AusenciaSGRForm, PeriodoSGRForm, MetaSGRForm, ReclamoSGRForm
-from .integrado import resultado_final, resultado_item, semaforo, trimestres_anteriores, CARGOS, MAX_FELICITACIONES
+from .integrado import (resultado_final, resultado_item, semaforo, trimestres_anteriores, limites_trimestre,
+                        CARGOS, MAX_FELICITACIONES)
 from .models import ActividadSGR, AusenciaSGR, GestionTubo, ItemMeta, ReclamoSGR
 
 
@@ -54,6 +55,24 @@ def mover(request, pk):
     return redirect('gestion:tablero')
 
 
+def initial_formulario(request):
+    """Selección previa (delegación, funcionario, cargo) que acota las listas dependientes."""
+    return {name: request.GET[name] for name in ('delegacion', 'responsable', 'cargo')
+            if request.GET.get(name, '').isascii() and request.GET.get(name, '').replace('_', '').isalnum()}
+
+
+@login_required
+@require_GET
+def items_actividad(request):
+    """RF-003: ítems vigentes del cargo del funcionario elegido, para recargar el formulario."""
+    authorize(request.user, ActividadSGR, 'add')
+    form = ActividadSGRForm(user=request.user, initial=initial_formulario(request))
+    return JsonResponse({
+        'cargo': form.cargo_efectivo, 'cargo_fijo': bool(form.cargo_asignado),
+        'items': [{'id': item.pk, 'nombre': item.nombre} for item in form.fields['item'].queryset],
+    })
+
+
 @login_required
 def registrar(request, ausencia=False, reclamo=False):
     if request.method not in ('GET', 'POST'):
@@ -68,7 +87,8 @@ def registrar(request, ausencia=False, reclamo=False):
     authorize(request.user, model, 'add')
     if (ausencia or reclamo) and not request.user.has_perm('gestion.validar_delegado'):
         raise PermissionDenied('Las ausencias y los reclamos deben ser registrados por el delegado.')
-    form = form_class(request.POST if request.method == 'POST' else None, user=request.user)
+    form = form_class(request.POST if request.method == 'POST' else None, user=request.user,
+                      initial=initial_formulario(request))
     if request.method == 'POST' and form.is_valid():
         obj = form.save(commit=False)
         if model is ActividadSGR and obj.felicitacion and obj.respaldo_formal and request.user.has_perm('gestion.validar_delegado'):
@@ -83,6 +103,7 @@ def registrar(request, ausencia=False, reclamo=False):
             messages.success(request, aviso or f'Actividad registrada. {obj.motivo_puntaje}')
             return redirect('gestion:resultados_sgr')
     return render(request, 'gestion/formulario.html', {'titulo': titulo,
+        'items_url': reverse('gestion:items_actividad') if model is ActividadSGR else '',
         'form': form, 'sgr_section': True, 'return_url': reverse('gestion:resultados_sgr')})
 
 
@@ -145,11 +166,6 @@ def resultados(request):
         'resultados': rows, 'actividades': actividades, 'ausencias': ausencias, 'reclamos': reclamos, 'total': total, 'base': base,
         'detalle': detalle, 'equipo': equipo, 'total_equipo': total_equipo, 'resumen_semaforo': resumen,
         'objetivo_equipo': objetivo_equipo})
-
-
-def limites_trimestre(anio, trimestre):
-    mes = (trimestre - 1) * 3 + 1
-    return date(anio, mes, 1), date(anio, mes + 2, monthrange(anio, mes + 2)[1])
 
 
 @login_required

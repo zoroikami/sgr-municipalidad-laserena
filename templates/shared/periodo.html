@@ -1,0 +1,22 @@
+{% if periodo_sgr %}{% with p=periodo_sgr %}
+<section class="periodo-sgr" aria-label="Período de medición vigente">
+  <div class="periodo-item">
+    <span class="periodo-label">Trimestre en curso</span>
+    <strong>{{ p.nombre }}</strong>
+    <span>Inicio {{ p.inicio|date:'d/m/Y' }} · término {{ p.fin|date:'d/m/Y' }}</span>
+  </div>
+  <div class="periodo-item">
+    <span class="periodo-label">Avance del período</span>
+    <strong>Día {{ p.dia }} de {{ p.dias_totales }}</strong>
+    <span>Quedan {{ p.restantes }} días · meta esperada al día {{ p.meta_esperada|floatformat:1 }}%</span>
+    <progress class="periodo-progreso" max="100" value="{{ p.meta_esperada|floatformat:'1u' }}" aria-label="Meta esperada al día: {{ p.meta_esperada|floatformat:1 }}%"></progress>
+  </div>
+  <div class="periodo-item periodo-plazo{% if p.cierra_hoy %} periodo-alerta{% endif %}">
+    <span class="periodo-label">Plazo de ingreso semanal</span>
+    {% if p.cierra_hoy %}<strong>Hoy vence la semana del {{ p.semana_anterior_inicio|date:'d/m' }}</strong>
+    <span>Desde mañana solo se aceptan actividades desde el {{ p.semana_inicio|date:'d/m/Y' }}.</span>
+    {% else %}<strong>Semana del {{ p.semana_inicio|date:'d/m' }} al {{ p.semana_fin|date:'d/m' }}</strong>
+    <span>Ingresa hasta el lunes {{ p.cierre_semana|date:'d/m/Y' }}; desde el martes la semana se cierra.</span>{% endif %}
+  </div>
+</section>
+{% endwith %}{% endif %}

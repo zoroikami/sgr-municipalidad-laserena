@@ -1,5 +1,5 @@
 """Reglas de la matriz SGR para el cuarto trimestre de 2026."""
-from datetime import timedelta
+from datetime import date, timedelta
 from decimal import Decimal
 
 from django.core.exceptions import ValidationError
@@ -13,6 +13,14 @@ CARGOS = [
     ('servicios', 'Coordinador de servicios comunitarios'), ('seguridad', 'Gestor de seguridad ciudadana'),
 ]
 
+# Nuevo requerimiento: subfamilias de organizaciones comunitarias (territoriales y funcionales).
+SUBFAMILIAS = {
+    'territorial': ['Junta de vecinos'],
+    'funcional': ['Club de adulto mayor', 'Organización deportiva', 'Centro de madres', 'Centro cultural',
+                  'Agrupación juvenil', 'Comité de seguridad', 'Comité de allegados', 'Comité de vecinos',
+                  'Por clasificar'],
+}
+
 # Hoja RECLAMOS de la matriz: cada felicitación vale 10% (máximo 3), cada reclamo
 # descuenta 20% y el sobrecumplimiento del colaborador no puede superar 150%.
 BONO_FELICITACION = Decimal('10')
@@ -23,10 +31,43 @@ TOPE_FINAL = Decimal('150')
 FACTOR_NARANJO = Decimal('0.6')
 
 
-def validar_fecha(fecha, hoy=None):
+def primera_fecha_admisible(hoy=None):
+    """Nuevo requerimiento, punto 4: la semana (lunes a viernes) se cierra el lunes siguiente."""
     hoy = hoy or timezone.localdate()
     lunes = hoy - timedelta(days=hoy.weekday())
-    primera = lunes - timedelta(days=7) if hoy.weekday() == 0 else lunes
+    return lunes - timedelta(days=7) if hoy.weekday() == 0 else lunes
+
+
+def limites_trimestre(anio, trimestre):
+    mes = (trimestre - 1) * 3 + 1
+    fin_mes = mes + 2
+    ultimo = (date(anio, fin_mes, 28) + timedelta(days=4)).replace(day=1) - timedelta(days=1)
+    return date(anio, mes, 1), ultimo
+
+
+def periodo_actual(hoy=None):
+    """Período de medición vigente (RF-005, RF-026) y plazo de ingreso semanal (punto 4)."""
+    hoy = hoy or timezone.localdate()
+    anio, trimestre = hoy.year, (hoy.month - 1) // 3 + 1
+    inicio, fin = limites_trimestre(anio, trimestre)
+    totales = (fin - inicio).days + 1
+    transcurridos = (hoy - inicio).days + 1
+    lunes = hoy - timedelta(days=hoy.weekday())
+    primera = primera_fecha_admisible(hoy)
+    return {
+        'anio': anio, 'trimestre': trimestre, 'nombre': f'{trimestre}º trimestre {anio}',
+        'inicio': inicio, 'fin': fin, 'dias_totales': totales, 'dia': transcurridos,
+        'restantes': (fin - hoy).days, 'dias_habiles': len(dias_habiles(inicio, fin)),
+        'meta_esperada': Decimal(transcurridos) * 100 / Decimal(totales),
+        'semana_inicio': lunes, 'semana_fin': lunes + timedelta(days=4), 'cierre_semana': lunes + timedelta(days=7),
+        'primera_admisible': primera, 'cierra_hoy': hoy.weekday() == 0,
+        'semana_anterior_inicio': lunes - timedelta(days=7),
+    }
+
+
+def validar_fecha(fecha, hoy=None):
+    hoy = hoy or timezone.localdate()
+    primera = primera_fecha_admisible(hoy)
     if fecha > hoy:
         raise ValidationError('No puedes registrar acciones futuras.')
     if fecha < primera:

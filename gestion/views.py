@@ -25,6 +25,7 @@ from .public_views import consulta_publica, schedule_access_email
 from .forms_integrado import OrganizacionForm, GestionTuboForm
 
 from .forms_cartas import CartaForm
+from .views_integrado import initial_formulario
 
 FORMS.update(organizaciones=OrganizacionForm, tubo=GestionTuboForm, cartas=CartaForm)
 
@@ -98,7 +99,7 @@ def form_view(request, modulo, pk=None):
         obj = get_object_or_404(query, pk=pk) if pk else None
         form = FORMS[modulo](request.POST if request.method == 'POST' else None,
                              request.FILES if request.method == 'POST' else None,
-                             instance=obj, user=request.user)
+                             instance=obj, user=request.user, initial=initial_formulario(request))
         if request.method == 'POST' and form.is_valid():
             try:
                 with transaction.atomic():
