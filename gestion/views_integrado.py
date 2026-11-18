@@ -17,13 +17,16 @@ from .forms_integrado import ActividadSGRForm, AusenciaSGRForm, PeriodoSGRForm, 
 from .integrado import (resultado_final, resultado_item, semaforo, trimestres_anteriores, limites_trimestre,
                         CARGOS, MAX_FELICITACIONES)
 from .models import ActividadSGR, AusenciaSGR, GestionTubo, ItemMeta, ReclamoSGR
+from .seguimiento import ObservacionCambioForm, registrar_cambio, TRANSICIONES_TUBO
+from .plazos import con_plazos, contar_vencidos, etiquetar_plazos
 
 
 @login_required
 @require_GET
 def tablero(request):
     authorize(request.user, GestionTubo)
-    query = scoped(request.user, GestionTubo).select_related('responsable', 'atencion', 'organizacion')
+    hoy = timezone.localdate()
+    query = con_plazos(scoped(request.user, GestionTubo).select_related('responsable', 'atencion', 'organizacion'))
     total = query.count()
     realizados = query.filter(estado='Realizado').count()
     columnas = []
@@ -32,9 +35,10 @@ def tablero(request):
     for (estado, _), color in zip(GestionTubo.ESTADOS, colores):
         registros = query.filter(estado=estado)
         columnas.append({'estado': estado, 'color': color, 'cantidad': registros.count(),
-                         'registros': registros[:100], 'siguiente': siguientes.get(estado)})
+                         'registros': etiquetar_plazos(list(registros[:100]), hoy), 'siguiente': siguientes.get(estado)})
     return render(request, 'gestion/tablero.html', {'titulo': 'Tubo de trabajo', 'columnas': columnas,
         'total': total, 'realizados': realizados, 'porcentaje': realizados * 100 / total if total else 0,
+        'vencidos': contar_vencidos(query, hoy),
         'proceso': query.filter(estado='En proceso').count(), 'pendientes': query.filter(estado='Pendiente').count()})
 
 
@@ -42,15 +46,21 @@ def tablero(request):
 @require_POST
 def mover(request, pk):
     authorize(request.user, GestionTubo, 'change')
-    siguientes = {'Ingresado': 'Pendiente', 'Pendiente': 'En proceso', 'En proceso': 'Realizado'}
+    nota = ObservacionCambioForm(request.POST)
+    if not nota.is_valid():
+        messages.error(request, 'La observación no puede superar 2000 caracteres.')
+        return redirect('gestion:tablero')
     with transaction.atomic():
         obj = get_object_or_404(scoped(request.user, GestionTubo).select_for_update(), pk=pk)
-        destino = siguientes.get(obj.estado)
+        destinos = TRANSICIONES_TUBO.get(obj.estado, ())
+        destino = destinos[0] if destinos else None
         if not destino or request.POST.get('desde') != obj.estado:
             messages.error(request, 'La gestión cambió de estado. Revisa el tablero antes de continuar.')
         else:
+            anterior = obj.estado
             obj.estado = destino
             obj.save(update_fields=['estado', 'updated_at'])
+            registrar_cambio(obj, anterior, request.user, nota.cleaned_data['observacion'])
             messages.success(request, f'{obj.codigo}: {destino}.')
     return redirect('gestion:tablero')
 

@@ -25,6 +25,7 @@ from .public_views import consulta_publica, schedule_access_email
 from .forms_integrado import OrganizacionForm, GestionTuboForm
 
 from .forms_cartas import CartaForm
+from .seguimiento import configurar_estado_formulario, registrar_cambio
 from .views_integrado import initial_formulario
 
 FORMS.update(organizaciones=OrganizacionForm, tubo=GestionTuboForm, cartas=CartaForm)
@@ -97,13 +98,21 @@ def form_view(request, modulo, pk=None):
         # Read and validate the existing row under the same lock used by archive.
         # A stale editor cannot write deleted_at=None over an administrator's archive.
         obj = get_object_or_404(query, pk=pk) if pk else None
+        estado_anterior = obj.estado if obj and modulo in ('tubo', 'cartas') else None
         form = FORMS[modulo](request.POST if request.method == 'POST' else None,
                              request.FILES if request.method == 'POST' else None,
                              instance=obj, user=request.user, initial=initial_formulario(request))
+        if modulo in ('tubo', 'cartas'):
+            configurar_estado_formulario(form, obj)
         if request.method == 'POST' and form.is_valid():
             try:
                 with transaction.atomic():
+                    if modulo == 'tubo' and obj:
+                        form.instance.estado = form.cleaned_data['estado']
                     saved = form.save()
+                    if estado_anterior is not None:
+                        registrar_cambio(saved, estado_anterior, request.user,
+                            form.cleaned_data.get('observacion_estado', ''))
                     if modulo == 'atenciones':
                         notify_after_commit(saved.delegacion_id)
                         if saved.solicitante_email and (
@@ -166,6 +175,7 @@ def detalle(request, modulo, pk):
         'can_change': request.user.has_perm(f'gestion.change_{name}'),
         'can_delete': modulo != 'delegaciones' and request.user.has_perm(f'gestion.delete_{name}'),
         'return_url': reverse('gestion:listado', args=[modulo]),
+        'historial': obj.historial_estados.select_related('autor') if modulo in ('tubo', 'cartas') else None,
     })
 
 

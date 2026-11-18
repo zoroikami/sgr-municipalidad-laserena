@@ -89,3 +89,13 @@
 @media (max-width: 700px) {
   .tubo-columnas, .tubo-resumen { grid-template-columns: minmax(0, 1fr); }
 }
+
+/* Observaciones de transición: conservan los controles del sistema municipal. */
+.tubo-tarjeta footer form { flex: 1 1 100%; min-width: 0; }
+.tubo-observacion { display: block; font-size: var(--type-caption); margin-bottom: var(--space-xs); }
+.tubo-nota { margin-bottom: var(--space-sm); min-width: 0; }
+
+/* Los avisos usan texto explícito además del color para identificar el plazo. */
+.tubo-tarjeta.tubo-vencido { border-left-color: var(--error-ink); background: var(--action-delete-bg); }
+.tubo-vencido .tubo-plazo, .tubo-fuera-plazo .tubo-plazo { color: var(--error-ink); }
+.tubo-proximo .tubo-plazo { color: var(--action-edit-ink); }

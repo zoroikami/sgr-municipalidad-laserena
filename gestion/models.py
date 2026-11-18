@@ -203,3 +203,4 @@ class Atencion(models.Model):
 from .models_integrado import ActividadSGR, AusenciaSGR, GestionTubo, Organizacion, ReclamoSGR  # noqa: E402,F401
 
 from .models_cartas import Carta  # noqa: E402,F401
+from .models_seguimiento import HistorialEstado  # noqa: E402,F401

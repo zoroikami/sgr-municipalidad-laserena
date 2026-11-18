@@ -1,0 +1,9 @@
+<section class="content-panel mt-4" aria-labelledby="historial-title">
+  <h2 id="historial-title">Historial de estados</h2>
+  <div class="table-responsive" role="region" aria-label="Historial de cambios de estado" tabindex="0">
+    <table class="table"><caption class="visually-hidden">Transiciones registradas, en orden cronológico</caption>
+      <thead><tr><th scope="col">Fecha y hora</th><th scope="col">Estado anterior</th><th scope="col">Nuevo estado</th><th scope="col">Autor</th><th scope="col">Observación</th></tr></thead>
+      <tbody>{% for cambio in historial %}<tr><td>{{ cambio.fecha|date:'d/m/Y H:i' }}</td><td>{{ cambio.estado_anterior }}</td><td>{{ cambio.estado_nuevo }}</td><td>{{ cambio.autor.get_full_name|default:cambio.autor.username }}</td><td>{{ cambio.observacion|default:'Sin observación'|linebreaksbr }}</td></tr>{% empty %}<tr><td colspan="5">Sin cambios de estado registrados desde la incorporación del historial.</td></tr>{% endfor %}</tbody>
+    </table>
+  </div>
+</section>
