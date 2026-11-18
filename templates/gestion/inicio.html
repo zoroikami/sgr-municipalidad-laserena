@@ -16,7 +16,7 @@
           <tbody>{% for row in stat.preview %}<tr><td><a class="record-key" href="{{ row.url }}">{{ row.codigo }}</a></td><td class="mini-record-name">{{ row.nombre }}</td><td><span class="badge-status {{ row.estado|slugify }}">{{ row.estado }}</span></td></tr>{% empty %}<tr><td class="mini-empty" colspan="3">Aún no hay registros en esta sección.</td></tr>{% endfor %}</tbody>
         </table>
       </div>
-      <div class="module-preview-footer"><small>Últimos registros disponibles</small><a href="{{ stat.url }}" aria-label="Ver todos los registros de {{ stat.titulo }}">Ver todos {% include 'shared/icon.html' with name='arrow' %}</a></div>
+      <div class="module-preview-footer"><small>Últimos registros disponibles</small>{% if stat.modulo == 'cartas' %}<a href="{% url 'gestion:cartas_tablero' %}">Ver tablero</a>{% endif %}<a href="{{ stat.url }}" aria-label="Ver todos los registros de {{ stat.titulo }}">Ver todos {% include 'shared/icon.html' with name='arrow' %}</a></div>
     </section>
     {% empty %}<p>Tu cuenta aún no tiene secciones de consulta asignadas.</p>{% endfor %}
   </div>

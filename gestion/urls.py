@@ -2,9 +2,12 @@ from django.urls import path
 from . import views
 from . import public_views
 from . import views_integrado
+from . import views_tablero
 
 app_name = 'gestion'
 urlpatterns = [
+    path('cartas/tablero/', views_tablero.cartas_tablero, name='cartas_tablero'),
+    path('cartas/<int:pk>/avanzar/', views_tablero.cartas_mover, name='cartas_mover'),
     path('tubo/', views_integrado.tablero, name='tablero'),
     path('tubo/<int:pk>/avanzar/', views_integrado.mover, name='tubo_mover'),
     path('sgr/', views_integrado.resultados, name='resultados_sgr'),
