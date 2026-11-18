@@ -16,6 +16,7 @@ from .access import authorize, scoped
 from .forms_integrado import ActividadSGRForm, AusenciaSGRForm, PeriodoSGRForm, MetaSGRForm, ReclamoSGRForm
 from .integrado import resultado_final, resultado_item, semaforo, trimestres_anteriores, CARGOS, MAX_FELICITACIONES
 from .models import ActividadSGR, AusenciaSGR, GestionTubo, ItemMeta, ReclamoSGR
+from .seguimiento import ObservacionCambioForm, registrar_cambio, TRANSICIONES_TUBO
 
 
 @login_required
@@ -41,15 +42,21 @@ def tablero(request):
 @require_POST
 def mover(request, pk):
     authorize(request.user, GestionTubo, 'change')
-    siguientes = {'Ingresado': 'Pendiente', 'Pendiente': 'En proceso', 'En proceso': 'Realizado'}
+    nota = ObservacionCambioForm(request.POST)
+    if not nota.is_valid():
+        messages.error(request, 'La observación no puede superar 2000 caracteres.')
+        return redirect('gestion:tablero')
     with transaction.atomic():
         obj = get_object_or_404(scoped(request.user, GestionTubo).select_for_update(), pk=pk)
-        destino = siguientes.get(obj.estado)
+        destinos = TRANSICIONES_TUBO.get(obj.estado, ())
+        destino = destinos[0] if destinos else None
         if not destino or request.POST.get('desde') != obj.estado:
             messages.error(request, 'La gestión cambió de estado. Revisa el tablero antes de continuar.')
         else:
+            anterior = obj.estado
             obj.estado = destino
             obj.save(update_fields=['estado', 'updated_at'])
+            registrar_cambio(obj, anterior, request.user, nota.cleaned_data['observacion'])
             messages.success(request, f'{obj.codigo}: {destino}.')
     return redirect('gestion:tablero')
 

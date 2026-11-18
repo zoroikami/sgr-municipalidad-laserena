@@ -89,3 +89,8 @@
 @media (max-width: 700px) {
   .tubo-columnas, .tubo-resumen { grid-template-columns: minmax(0, 1fr); }
 }
+
+/* Observaciones de transición: conservan los controles del sistema municipal. */
+.tubo-tarjeta footer form { flex: 1 1 100%; min-width: 0; }
+.tubo-observacion { display: block; font-size: var(--type-caption); margin-bottom: var(--space-xs); }
+.tubo-nota { margin-bottom: var(--space-sm); min-width: 0; }

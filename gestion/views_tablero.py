@@ -8,13 +8,7 @@ from django.views.decorators.http import require_GET, require_POST
 
 from .access import authorize, scoped
 from .models import Carta
-
-
-# Inferencia documentada en docs/tablero-canvas.md; no son estados nuevos.
-TRANSICIONES_CARTA = {
-    'En proceso': ('Aprobada', 'No aplica'),
-    'Aprobada': ('Finalizada',),
-}
+from .seguimiento import ObservacionCambioForm, TRANSICIONES_CARTA, registrar_cambio
 
 
 @login_required
@@ -37,13 +31,19 @@ def cartas_tablero(request):
 @require_POST
 def cartas_mover(request, pk):
     authorize(request.user, Carta, 'change')
+    nota = ObservacionCambioForm(request.POST)
+    if not nota.is_valid():
+        messages.error(request, 'La observación no puede superar 2000 caracteres.')
+        return redirect('gestion:cartas_tablero')
     with transaction.atomic():
         obj = get_object_or_404(scoped(request.user, Carta).select_for_update(), pk=pk)
         destino = request.POST.get('estado')
         if request.POST.get('desde') != obj.estado or destino not in TRANSICIONES_CARTA.get(obj.estado, ()):
             messages.error(request, 'La carta cambió de estado o la transición no está permitida. Revisa el tablero.')
         else:
+            anterior = obj.estado
             obj.estado = destino
             obj.save(update_fields=['estado', 'updated_at'])
+            registrar_cambio(obj, anterior, request.user, nota.cleaned_data['observacion'])
             messages.success(request, f'{obj.codigo}: {destino}.')
     return redirect('gestion:cartas_tablero')

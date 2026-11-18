@@ -20,7 +20,7 @@
     {% if obj.apoyo %}<p class="tubo-apoyo"><strong>Apoyo:</strong> {{ obj.apoyo }}</p>{% endif %}
     {% if obj.fecha_compromiso %}<p>Compromiso: {{ obj.fecha_compromiso|date:'d/m/Y' }}</p>{% endif %}
     <footer><span>{% if obj.estado == 'Realizado' %}Concluido{% else %}Responsable: {{ obj.responsable.get_full_name|default:obj.responsable.username }}{% endif %}</span><a href="{% url 'gestion:detalle' 'tubo' obj.pk %}">Ver detalle</a>
-    {% if columna.siguiente and perms.gestion.change_gestiontubo %}<form method="post" action="{% url 'gestion:tubo_mover' obj.pk %}">{% csrf_token %}<input type="hidden" name="desde" value="{{ obj.estado }}"><button class="btn btn-outline-secondary" type="submit">{% if columna.siguiente == 'Realizado' %}Realizar{% else %}A {{ columna.siguiente|lower }}{% endif %}</button></form>{% endif %}</footer>
+    {% if columna.siguiente and perms.gestion.change_gestiontubo %}<form method="post" action="{% url 'gestion:tubo_mover' obj.pk %}">{% csrf_token %}<input type="hidden" name="desde" value="{{ obj.estado }}">{% include 'gestion/_observacion_transicion.html' with destino=columna.siguiente %}<button class="btn btn-outline-secondary" type="submit">{% if columna.siguiente == 'Realizado' %}Realizar{% else %}A {{ columna.siguiente|lower }}{% endif %}</button></form>{% endif %}</footer>
   </article>{% empty %}<p class="text-muted">Sin gestiones en este estado.</p>{% endfor %}
   {% if columna.cantidad > 100 %}<a href="{% url 'gestion:listado' 'tubo' %}?estado={{ columna.estado|urlencode }}">Ver las {{ columna.cantidad }} gestiones</a>{% endif %}
 </section>{% endfor %}</section>

@@ -22,7 +22,7 @@
     <p><strong>Encargado:</strong> {{ obj.encargado.get_full_name|default:obj.encargado.username }}</p>
     {% if obj.derivada_a %}<p class="tubo-apoyo"><strong>Derivada a:</strong> {{ obj.derivada_a }}</p>{% endif %}
     <footer><a href="{% url 'gestion:detalle' 'cartas' obj.pk %}">Ver detalle</a>
-    {% if perms.gestion.change_carta %}{% for destino in columna.destinos %}<form method="post" action="{% url 'gestion:cartas_mover' obj.pk %}">{% csrf_token %}<input type="hidden" name="desde" value="{{ obj.estado }}"><input type="hidden" name="estado" value="{{ destino }}"><button class="btn btn-outline-secondary" type="submit">{% if destino == 'Aprobada' %}Aprobar{% elif destino == 'Finalizada' %}Finalizar{% else %}No aplica{% endif %}</button></form>{% endfor %}{% endif %}</footer>
+    {% if perms.gestion.change_carta %}{% for destino in columna.destinos %}<form method="post" action="{% url 'gestion:cartas_mover' obj.pk %}">{% csrf_token %}<input type="hidden" name="desde" value="{{ obj.estado }}"><input type="hidden" name="estado" value="{{ destino }}">{% include 'gestion/_observacion_transicion.html' %}<button class="btn btn-outline-secondary" type="submit">{% if destino == 'Aprobada' %}Aprobar{% elif destino == 'Finalizada' %}Finalizar{% else %}No aplica{% endif %}</button></form>{% endfor %}{% endif %}</footer>
   </article>{% empty %}<p class="text-muted">Sin cartas en este estado.</p>{% endfor %}
   {% if columna.cantidad > 100 %}<a href="{% url 'gestion:listado' 'cartas' %}?estado={{ columna.estado|urlencode }}">Ver las {{ columna.cantidad }} cartas</a>{% endif %}
 </section>{% endfor %}</section>
