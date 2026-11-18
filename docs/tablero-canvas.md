@@ -11,3 +11,11 @@ Las tarjetas se ordenan por fecha de actividad ascendente, las fechas vacías va
 Cada avance desde los tableros o la edición conserva estado anterior, nuevo estado, autor, instante y observación opcional. Estado e historial se escriben en la misma transacción bajo bloqueo de fila. Reintentos con un origen obsoleto y ediciones sin cambio de estado no generan entradas. La edición permite el estado actual y los siguientes estados autorizados; el Tubo conserva la secuencia Ingresado → Pendiente → En proceso → Realizado.
 
 La observación de la transición es un campo separado de la descripción general del registro. El historial se consulta solo desde el detalle y hereda sus permisos y ámbito de delegación. No hay rutas para modificarlo. La migración no inventa fechas de cierre para registros anteriores: comienzan sin entradas hasta la primera transición registrada.
+
+## Plazos (RF-019, CA-03 y HU-12)
+
+El Tubo destaca «Vencido» cuando el compromiso es anterior a la fecha local y la gestión no está Realizada. Cartas aplica el mismo aviso a la fecha de actividad exclusivamente mientras está En proceso. Los resúmenes cuentan todos los vencidos del ámbito autorizado, incluidos los que exceden las 100 tarjetas visibles.
+
+Los compromisos de hoy muestran «Vence hoy» y los de los próximos tres días muestran «Vence en N días». No se avisa para fechas vacías o posteriores a esa ventana. Una gestión Realizada o carta Finalizada muestra «Realizado fuera de plazo» si la fecha local de su última transición al estado final es posterior a su compromiso/actividad. No se usa la última edición como fecha de realización ni se infieren cierres para registros históricos sin transición registrada. Se compara con la fecha de compromiso/actividad vigente del registro.
+
+Ambos tableros ordenan por fecha de compromiso/actividad ascendente, con fechas vacías al final y clave primaria como desempate. No se implementa arrastrar y soltar.

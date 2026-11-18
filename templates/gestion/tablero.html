@@ -9,16 +9,18 @@
   <article class="realizado"><h2>Realizadas / concluidas</h2><strong>{{ realizados }}</strong><p>Tasa de resolución: {{ porcentaje|floatformat:1 }}%</p></article>
   <article class="proceso"><h2>En proceso activo</h2><strong>{{ proceso }}</strong><p>Con cuadrilla o área de apoyo</p></article>
   <article class="pendiente"><h2>Pendientes / alerta</h2><strong>{{ pendientes }}</strong><p>Esperando gestión técnica</p></article>
+  <article class="pendiente"><h2>Vencidos</h2><strong>{{ vencidos }}</strong><p>Compromisos sin cierre con fecha anterior a hoy</p></article>
 </section>
 <section class="tubo-columnas" aria-label="Tablero de seguimiento">
 {% for columna in columnas %}<section class="tubo-columna {{ columna.color }}" aria-label="{{ columna.estado }}">
   <h2>{{ forloop.counter }}. {{ columna.estado }} <span>{{ columna.cantidad }}</span></h2>
-  {% for obj in columna.registros %}<article class="tubo-tarjeta">
+  {% for obj in columna.registros %}<article class="tubo-tarjeta{% if obj.plazo_tipo %} tubo-{{ obj.plazo_tipo }}{% endif %}">
     <div class="tubo-codigos"><strong>{{ obj.codigo }}</strong>{% if obj.atencion %}<a href="{% url 'gestion:detalle' 'atenciones' obj.atencion_id %}">{{ obj.atencion.folio }}</a>{% endif %}</div>
     <h3{% if obj.estado == 'Realizado' %} class="tubo-concluido"{% endif %}>{{ obj.nombre }}</h3>
     <p><strong>Solicitante:</strong> {{ obj.solicitante }}</p>
     {% if obj.apoyo %}<p class="tubo-apoyo"><strong>Apoyo:</strong> {{ obj.apoyo }}</p>{% endif %}
     {% if obj.fecha_compromiso %}<p>Compromiso: {{ obj.fecha_compromiso|date:'d/m/Y' }}</p>{% endif %}
+    {% if obj.plazo %}<p class="tubo-plazo"><strong>{{ obj.plazo }}</strong></p>{% endif %}
     <footer><span>{% if obj.estado == 'Realizado' %}Concluido{% else %}Responsable: {{ obj.responsable.get_full_name|default:obj.responsable.username }}{% endif %}</span><a href="{% url 'gestion:detalle' 'tubo' obj.pk %}">Ver detalle</a>
     {% if columna.siguiente and perms.gestion.change_gestiontubo %}<form method="post" action="{% url 'gestion:tubo_mover' obj.pk %}">{% csrf_token %}<input type="hidden" name="desde" value="{{ obj.estado }}">{% include 'gestion/_observacion_transicion.html' with destino=columna.siguiente %}<button class="btn btn-outline-secondary" type="submit">{% if columna.siguiente == 'Realizado' %}Realizar{% else %}A {{ columna.siguiente|lower }}{% endif %}</button></form>{% endif %}</footer>
   </article>{% empty %}<p class="text-muted">Sin gestiones en este estado.</p>{% endfor %}

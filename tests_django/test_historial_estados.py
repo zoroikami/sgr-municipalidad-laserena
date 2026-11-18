@@ -10,7 +10,7 @@ pytestmark = pytest.mark.django_db
 
 
 def tubo(mundo, **changes):
-    return GestionTubo.objects.create(**{'delegacion': mundo['a'], 'nombre': 'Gestión de prueba',
+    return GestionTubo.objects.create(**{'delegacion': mundo['a'], 'nombre': f'Gestión de prueba {GestionTubo.all_objects.count() + 1}',
         'solicitante': 'Vecino de prueba', 'responsable': mundo['users']['editor_a'], **changes})
 
 

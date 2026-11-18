@@ -2,28 +2,31 @@
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.db import transaction
-from django.db.models import F
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_GET, require_POST
+from django.utils import timezone
 
 from .access import authorize, scoped
 from .models import Carta
 from .seguimiento import ObservacionCambioForm, TRANSICIONES_CARTA, registrar_cambio
+from .plazos import con_plazos, contar_vencidos, etiquetar_plazos
 
 
 @login_required
 @require_GET
 def cartas_tablero(request):
     authorize(request.user, Carta)
-    query = scoped(request.user, Carta).select_related('encargado').order_by(
-        F('fecha_actividad').asc(nulls_last=True), 'fecha', 'pk')
+    hoy = timezone.localdate()
+    query = con_plazos(scoped(request.user, Carta).select_related('encargado'))
     columnas = []
     for (estado, _), color in zip(Carta.ESTADOS, ['proceso', 'ingresado', 'realizado', 'pendiente']):
         registros = query.filter(estado=estado)
         columnas.append({'estado': estado, 'color': color, 'cantidad': registros.count(),
-                         'registros': registros[:100], 'destinos': TRANSICIONES_CARTA.get(estado, ())})
+                         'registros': etiquetar_plazos(list(registros[:100]), hoy),
+                         'destinos': TRANSICIONES_CARTA.get(estado, ())})
     return render(request, 'gestion/cartas_tablero.html', {
         'titulo': 'Tubo de cartas', 'modulo': 'cartas', 'columnas': columnas, 'total': query.count(),
+        'vencidos': contar_vencidos(query, hoy),
     })
 
 
