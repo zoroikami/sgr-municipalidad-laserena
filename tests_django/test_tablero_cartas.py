@@ -87,3 +87,28 @@ def test_tablero_cartas_exige_csrf(mundo):
     assert client.post(f'/cartas/{obj.pk}/avanzar/', {'desde': 'En proceso', 'estado': 'Aprobada'}).status_code == 403
     obj.refresh_from_db()
     assert obj.estado == 'En proceso'
+
+
+def test_alta_carta_conserva_estados_validos_previos(client, mundo):
+    from tests_django.test_cartas import data
+    client.force_login(mundo['users']['editor_a'])
+    response = client.post('/gestion/cartas/crear/', data(mundo, estado='Aprobada'))
+    assert response.status_code == 302
+    assert Carta.objects.get().estado == 'Aprobada'
+
+
+def test_navegacion_del_tablero_anuncia_un_solo_destino_activo(client, mundo):
+    from html.parser import HTMLParser
+
+    class ActiveLinks(HTMLParser):
+        active = []
+
+        def handle_starttag(self, tag, attrs):
+            values = dict(attrs)
+            if tag == 'a' and values.get('aria-current') == 'page':
+                self.active.append(values.get('href'))
+
+    client.force_login(mundo['users']['lector_a'])
+    parser = ActiveLinks()
+    parser.feed(client.get('/cartas/tablero/').content.decode())
+    assert parser.active == ['/cartas/tablero/']

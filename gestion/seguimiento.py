@@ -21,9 +21,9 @@ class ObservacionCambioForm(forms.Form):
 
 def configurar_estado_formulario(form, obj):
     """No modifica las clases de formularios que comparten otros módulos."""
-    if isinstance(form.instance, Carta):
-        estado = obj.estado if obj else 'En proceso'
-        permitidos = (estado, *TRANSICIONES_CARTA.get(estado, ())) if obj else (estado,)
+    if isinstance(obj, Carta):
+        estado = obj.estado
+        permitidos = (estado, *TRANSICIONES_CARTA.get(estado, ()))
         form.fields['estado'].choices = [(s, s) for s in permitidos]
     elif isinstance(obj, GestionTubo):
         permitidos = (obj.estado, *TRANSICIONES_TUBO.get(obj.estado, ()))
@@ -44,4 +44,5 @@ def registrar_cambio(obj, anterior, autor, observacion=''):
         return
     relacion = 'carta' if isinstance(obj, Carta) else 'gestion_tubo'
     HistorialEstado.objects.create(**{relacion: obj}, estado_anterior=anterior,
-        estado_nuevo=obj.estado, autor=autor, observacion=observacion)
+        estado_nuevo=obj.estado, autor=autor, observacion=observacion,
+        fecha_objetivo=obj.fecha_actividad if isinstance(obj, Carta) else obj.fecha_compromiso)

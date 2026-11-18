@@ -64,7 +64,7 @@ def test_cierre_posterior_al_compromiso_usa_historial_no_fecha_de_edicion(client
     unknown = crear(mundo, kind, due, estado=closed)
     for obj, date in [(late, today), (on_time, due)]:
         obj.historial_estados.create(autor=mundo['users']['editor_a'], estado_anterior='En proceso',
-            estado_nuevo=closed, fecha=timezone.make_aware(datetime.combine(date, time(10))))
+            estado_nuevo=closed, fecha=timezone.make_aware(datetime.combine(date, time(10))), fecha_objetivo=due)
     client.force_login(mundo['users']['lector_a'])
     response = tablero(client, kind)
     assert response.context['vencidos'] == 0
@@ -82,3 +82,33 @@ def test_carta_aprobada_o_no_aplica_no_se_cuenta_como_pendiente_vencido(client, 
     response = tablero(client, 'cartas')
     assert response.context['vencidos'] == 0
     assert tarjeta(response, approved).plazo == tarjeta(response, not_applicable).plazo == ''
+
+
+@pytest.mark.parametrize('kind', ['cartas', 'tubo'])
+def test_cambio_de_fecha_posterior_al_cierre_no_borra_el_atraso_historico(client, mundo, kind):
+    due = timezone.localdate() - timedelta(days=2)
+    obj = crear(mundo, kind, due, estado='Aprobada' if kind == 'cartas' else 'En proceso')
+    client.force_login(mundo['users']['editor_a'])
+    url = f'/cartas/{obj.pk}/avanzar/' if kind == 'cartas' else f'/tubo/{obj.pk}/avanzar/'
+    client.post(url, {'desde': obj.estado, 'estado': 'Finalizada'})
+    field = 'fecha_actividad' if kind == 'cartas' else 'fecha_compromiso'
+    setattr(obj, field, timezone.localdate() + timedelta(days=4))
+    obj.refresh_from_db(fields=['estado'])
+    obj.save(update_fields=[field])
+    assert tarjeta(tablero(client, kind), obj).plazo == 'Realizado fuera de plazo'
+    setattr(obj, field, None)
+    obj.save(update_fields=[field])
+    assert tarjeta(tablero(client, kind), obj).plazo == 'Realizado fuera de plazo'
+
+
+@pytest.mark.parametrize('kind', ['cartas', 'tubo'])
+@pytest.mark.parametrize('original_days', [0, None])
+def test_adelantar_fecha_despues_de_cierre_no_inventa_atraso(client, mundo, kind, original_days):
+    due = timezone.localdate() if original_days == 0 else None
+    obj = crear(mundo, kind, due, estado='Aprobada' if kind == 'cartas' else 'En proceso')
+    client.force_login(mundo['users']['editor_a'])
+    url = f'/cartas/{obj.pk}/avanzar/' if kind == 'cartas' else f'/tubo/{obj.pk}/avanzar/'
+    assert client.post(url, {'desde': obj.estado, 'estado': 'Finalizada'}).status_code == 302
+    field = 'fecha_actividad' if kind == 'cartas' else 'fecha_compromiso'
+    type(obj).objects.filter(pk=obj.pk).update(**{field:timezone.localdate()-timedelta(days=10)})
+    assert tarjeta(tablero(client, kind), obj).plazo == ''

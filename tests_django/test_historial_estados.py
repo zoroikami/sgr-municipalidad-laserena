@@ -1,6 +1,4 @@
 import pytest
-from django.contrib.auth import get_user_model
-from django.test import Client
 
 from gestion.models import GestionTubo
 from tests_django.test_cartas import data
@@ -94,3 +92,22 @@ def test_observacion_demasiado_larga_no_cambia_estado(client, mundo, kind):
     client.post(url, {'desde': original, 'estado': 'Aprobada', 'observacion': 'x' * 2001})
     obj.refresh_from_db()
     assert obj.estado == original
+
+
+@pytest.mark.parametrize('kind', ['cartas', 'tubo'])
+def test_fallo_de_historial_revierte_el_cambio_de_estado(client, mundo, monkeypatch, kind):
+    from gestion.models import HistorialEstado
+    obj = carta(mundo) if kind == 'cartas' else tubo(mundo)
+    original = obj.estado
+    client.force_login(mundo['users']['editor_a'])
+
+    def fallar(**kwargs):
+        raise RuntimeError('Fallo de almacenamiento de historial simulado')
+
+    monkeypatch.setattr(HistorialEstado.objects, 'create', fallar)
+    url = f'/cartas/{obj.pk}/avanzar/' if kind == 'cartas' else f'/tubo/{obj.pk}/avanzar/'
+    with pytest.raises(RuntimeError):
+        client.post(url, {'desde': original, 'estado': 'Aprobada'})
+    obj.refresh_from_db()
+    assert obj.estado == original
+    assert obj.historial_estados.count() == 0

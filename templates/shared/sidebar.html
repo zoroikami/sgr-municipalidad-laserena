@@ -6,7 +6,7 @@
     {% else %}
       <div class="sidebar-category">Gestión municipal</div>
       {% if perms.gestion.view_carta %}<a class="nav-link-btn" href="{% url 'gestion:cartas_tablero' %}"{% if request.resolver_match.url_name == 'cartas_tablero' %} aria-current="page"{% endif %}>{% include 'shared/icon.html' with name='cartas' %}<span>Tubo de cartas</span></a>{% endif %}
-      {% if perms.gestion.view_carta %}<a class="nav-link-btn" href="{% url 'gestion:listado' 'cartas' %}"{% if modulo == 'cartas' %} aria-current="page"{% endif %}>{% include 'shared/icon.html' with name='cartas' %}<span>Cartas</span></a>{% endif %}
+      {% if perms.gestion.view_carta %}<a class="nav-link-btn" href="{% url 'gestion:listado' 'cartas' %}"{% if modulo == 'cartas' and request.resolver_match.url_name != 'cartas_tablero' %} aria-current="page"{% endif %}>{% include 'shared/icon.html' with name='cartas' %}<span>Cartas</span></a>{% endif %}
       {% if perms.gestion.view_gestiontubo %}<a class="nav-link-btn" href="{% url 'gestion:tablero' %}"{% if request.resolver_match.url_name == 'tablero' or modulo == 'tubo' %} aria-current="page"{% endif %}>{% include 'shared/icon.html' with name='atenciones' %}<span>Tubo de trabajo</span></a>{% endif %}
       {% if perms.gestion.view_actividadsgr %}<a class="nav-link-btn" href="{% url 'gestion:resultados_sgr' %}"{% if sgr_section %} aria-current="page"{% endif %}>{% include 'shared/icon.html' with name='metas' %}<span>Resultados SGR</span></a>{% endif %}
       {% if perms.gestion.view_organizacion %}<a class="nav-link-btn" href="{% url 'gestion:listado' 'organizaciones' %}"{% if modulo == 'organizaciones' %} aria-current="page"{% endif %}>{% include 'shared/icon.html' with name='users' %}<span>Organizaciones</span></a>{% endif %}

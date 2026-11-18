@@ -11,7 +11,9 @@ def con_plazos(query):
     campo_fecha = 'fecha_actividad' if es_carta else 'fecha_compromiso'
     estado_cierre = 'Finalizada' if es_carta else 'Realizado'
     cierre = HistorialEstado.objects.filter(**{relacion: OuterRef('pk')}, estado_nuevo=estado_cierre)
-    return query.annotate(fecha_cierre=Subquery(cierre.order_by('-fecha', '-pk').values('fecha')[:1])).order_by(
+    cierre = cierre.order_by('-fecha', '-pk')
+    return query.annotate(fecha_cierre=Subquery(cierre.values('fecha')[:1]),
+        fecha_objetivo_cierre=Subquery(cierre.values('fecha_objetivo')[:1])).order_by(
         F(campo_fecha).asc(nulls_last=True), 'pk')
 
 
@@ -28,12 +30,11 @@ def etiquetar_plazos(registros, hoy):
         cerrado = obj.estado == ('Finalizada' if es_carta else 'Realizado')
         abierto = obj.estado == 'En proceso' if es_carta else not cerrado
         obj.plazo = obj.plazo_tipo = ''
-        if not compromiso:
-            continue
         if cerrado:
-            if obj.fecha_cierre and timezone.localdate(obj.fecha_cierre) > compromiso:
+            if (obj.fecha_cierre and obj.fecha_objetivo_cierre
+                    and timezone.localdate(obj.fecha_cierre) > obj.fecha_objetivo_cierre):
                 obj.plazo, obj.plazo_tipo = 'Realizado fuera de plazo', 'fuera-plazo'
-        elif abierto:
+        elif abierto and compromiso:
             dias = (compromiso - hoy).days
             if dias < 0:
                 obj.plazo, obj.plazo_tipo = 'Vencido', 'vencido'
