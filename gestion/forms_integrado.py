@@ -3,13 +3,14 @@ from django.db.models import Q
 from django.contrib.auth import get_user_model
 from django.urls import reverse
 from django.utils import timezone
+from django.utils.html import format_html, format_html_join
 
 from .access import scoped
 from .delegation import has_global_scope
 from .forms import ScopedModelForm
 from .integrado import primera_fecha_admisible, validar_fecha
-from .integrado import CARGOS, SUBFAMILIAS
-from .models import ActividadSGR, AusenciaSGR, GestionTubo, Organizacion, Atencion, ItemMeta, ReclamoSGR
+from .integrado import CARGOS, SUBFAMILIAS, TERRITORIOS_TUBO
+from .models import ActividadSGR, AusenciaSGR, Delegacion, GestionTubo, Organizacion, Atencion, ItemMeta, ReclamoSGR
 
 
 def nombre_cuenta(account):
@@ -69,6 +70,27 @@ class OrganizacionForm(ScopedModelForm):
         return data
 
 
+class TextoConSugerencias(forms.TextInput):
+    """Campo libre con sugerencias nativas (datalist): no restringe valores ya registrados."""
+    def __init__(self, *args, sugerencias=(), **kwargs):
+        super().__init__(*args, **kwargs)
+        self.sugerencias = list(sugerencias)
+
+    def get_context(self, name, value, attrs):
+        context = super().get_context(name, value, attrs)
+        if self.sugerencias:
+            context['widget']['attrs']['list'] = f"{context['widget']['attrs'].get('id', name)}_sugerencias"
+        return context
+
+    def render(self, name, value, attrs=None, renderer=None):
+        html = super().render(name, value, attrs, renderer)
+        if not self.sugerencias:
+            return html
+        lista = f"{(attrs or {}).get('id', name)}_sugerencias"
+        opciones = format_html_join('', '<option value="{}"></option>', ((s,) for s in self.sugerencias))
+        return format_html('{}<datalist id="{}">{}</datalist>', html, lista, opciones)
+
+
 class GestionTuboForm(RelacionesForm):
     class Meta:
         model = GestionTubo
@@ -93,6 +115,8 @@ class GestionTuboForm(RelacionesForm):
         self.fields['organizacion'].queryset = self.fields['organizacion'].queryset.order_by('nombre')
         for campo in ('atencion', 'organizacion'):
             self.fields[campo].widget.attrs['data-buscable'] = ''
+        self.fields['territorio'].widget = TextoConSugerencias(attrs=self.fields['territorio'].widget.attrs,
+                                                               sugerencias=self.territorios())
         # Nuevo requerimiento, puntos 1 y 2: identificar al solicitante y exigir su nombre y teléfono.
         self.fields['solicitante'].label = 'Nombre del solicitante'
         rut = self.fields['solicitante_rut']
@@ -105,6 +129,22 @@ class GestionTuboForm(RelacionesForm):
         if not self.instance.pk:
             telefono.required = True
         telefono.help_text = 'Las solicitudes sin nombre y teléfono del usuario no tienen puntaje.'
+
+    def territorios(self):
+        if not self.rel_org:
+            return []
+        from .management.commands.importar_organizaciones import canon
+        delegacion = Delegacion.objects.filter(pk=self.rel_org).values_list('nombre', flat=True).first() or ''
+        base = TERRITORIOS_TUBO.get(canon(delegacion), [])
+        usados = (GestionTubo.objects.filter(delegacion_id=self.rel_org).exclude(territorio='')
+                  .values_list('territorio', flat=True).distinct().order_by('territorio')[:40])
+        vistos, resultado = set(), []
+        for territorio in [*base, *usados]:
+            clave = ' '.join(territorio.split()).casefold()
+            if clave not in vistos:
+                vistos.add(clave)
+                resultado.append(' '.join(territorio.split()))
+        return resultado
 
     def clean_solicitante_rut(self):
         from cuentas.rut import RutError, normalize_rut

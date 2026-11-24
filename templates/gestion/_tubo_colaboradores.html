@@ -1,0 +1,7 @@
+{% if colaboradores %}<section class="content-panel tubo-colaboradores" aria-labelledby="tubo-colaboradores-titulo">
+  <h2 id="tubo-colaboradores-titulo">Avance por colaborador</h2>
+  <div class="table-responsive"><table class="table records-table">
+    <thead><tr><th scope="col">Colaborador</th>{% for estado, _ in estados_tubo %}<th scope="col" class="num">{{ estado }}</th>{% endfor %}<th scope="col" class="num">% realizado</th></tr></thead>
+    <tbody>{% for c in colaboradores %}<tr><th scope="row">{{ c.nombre }}</th>{% for n in c.conteos %}<td class="num">{{ n }}</td>{% endfor %}<td class="num">{{ c.porcentaje|floatformat:0 }}%</td></tr>{% endfor %}</tbody>
+  </table></div>
+</section>{% endif %}

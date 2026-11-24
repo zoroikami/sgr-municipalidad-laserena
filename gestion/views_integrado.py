@@ -5,7 +5,8 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.db import transaction
-from django.db.models import Max
+from django.contrib.auth import get_user_model
+from django.db.models import Count, Max
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
@@ -36,7 +37,20 @@ def tablero(request):
         registros = query.filter(estado=estado)
         columnas.append({'estado': estado, 'color': color, 'cantidad': registros.count(),
                          'registros': etiquetar_plazos(list(registros[:100]), hoy), 'siguiente': siguientes.get(estado)})
+    # Hojas TUBO de la matriz: avance por colaborador (las solicitudes del delegado no suman, punto 1).
+    conteo = query.order_by().values('responsable_id', 'estado').annotate(n=Count('pk'))
+    porcolaborador = {}
+    for fila in conteo:
+        porcolaborador.setdefault(fila['responsable_id'], dict.fromkeys(dict(GestionTubo.ESTADOS), 0))[fila['estado']] = fila['n']
+    cuentas = {u.pk: u for u in get_user_model().objects.filter(pk__in=porcolaborador)}
+    colaboradores = sorted(({'nombre': cuentas[pk].get_full_name() or cuentas[pk].username,
+                             'conteos': list(estados.values()),
+                             'total': sum(estados.values()),
+                             'porcentaje': estados['Realizado'] * 100 / sum(estados.values())}
+                            for pk, estados in porcolaborador.items() if pk in cuentas),
+                           key=lambda c: (-c['total'], c['nombre']))
     return render(request, 'gestion/tablero.html', {'titulo': 'Tubo de trabajo', 'columnas': columnas,
+        'colaboradores': colaboradores, 'estados_tubo': GestionTubo.ESTADOS,
         'total': total, 'realizados': realizados, 'porcentaje': realizados * 100 / total if total else 0,
         'vencidos': contar_vencidos(query, hoy),
         'proceso': query.filter(estado='En proceso').count(), 'pendientes': query.filter(estado='Pendiente').count()})

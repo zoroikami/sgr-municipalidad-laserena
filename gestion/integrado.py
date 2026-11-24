@@ -23,6 +23,12 @@ SUBFAMILIAS = {
                   'Por clasificar'],
 }
 
+# Listas de territorio de las hojas TUBO COMPAÑIAS y TUBO ANTENA (matriz SGR 3er trimestre, revisión).
+TERRITORIOS_TUBO = {
+    'LAS COMPANIAS': ['Latorre', 'Rukalaf', 'Toqui', 'Zorrilla'],
+    'LA ANTENA - LA FLORIDA': ['Alfalfares', 'Antena', 'Ceres', 'La Florida'],
+}
+
 # Hoja RECLAMOS de la matriz: cada felicitación vale 10% (máximo 3), cada reclamo
 # descuenta 20% y el sobrecumplimiento del colaborador no puede superar 150%.
 BONO_FELICITACION = Decimal('10')

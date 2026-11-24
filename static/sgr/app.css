@@ -232,3 +232,8 @@ button, .btn, input, select { min-height: 2.75rem; }
 }
 .tubo-funcionario.es-delegado { background: var(--action-edit-bg); border-color: var(--action-edit-border); color: var(--action-edit-ink); }
 .tubo-otra-gestion { color: var(--action-edit-ink); font-weight: 700; }
+
+/* Tubo: avance por colaborador (cabecera de las hojas TUBO de la matriz). */
+.tubo-colaboradores { margin-top: var(--space-xl); }
+.tubo-colaboradores h2 { font-size: var(--type-section); margin-bottom: var(--space-lg); }
+.tubo-colaboradores .num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
