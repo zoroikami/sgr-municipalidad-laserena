@@ -1,0 +1,46 @@
+/* firma · municipal workflow · inherited tokens · drag destinations follow each state */
+.tubo-dnd-ayuda {
+  display: none;
+  color: var(--brand-muted);
+  font-size: var(--type-small);
+  margin-bottom: var(--space-lg);
+}
+.tubo-dnd-ayuda:has(+ .tubo-dnd-listo) { display: block; }
+.tubo-dnd-listo .tubo-tarjeta[draggable="true"] { cursor: grab; }
+.tubo-dnd-listo .tubo-tarjeta :is(a, button) { cursor: pointer; }
+.tubo-dnd-listo .tubo-tarjeta :is(input, textarea) { cursor: text; }
+.tubo-dnd-listo .tubo-tarjeta.tubo-arrastrando {
+  cursor: grabbing;
+  transform: translateY(-2px);
+  box-shadow: 0 var(--space-xs) var(--space-lg) color-mix(in srgb, var(--brand-ink) 14%, transparent);
+}
+.tubo-dnd-listo .tubo-columna {
+  --tubo-destino-borde: var(--brand-wine);
+  --tubo-destino-fondo: var(--brand-surface);
+  min-height: 9rem;
+}
+.tubo-dnd-listo .tubo-columna.pendiente {
+  --tubo-destino-borde: var(--error-ink);
+  --tubo-destino-fondo: var(--action-delete-bg);
+}
+.tubo-dnd-listo .tubo-columna.proceso {
+  --tubo-destino-borde: var(--action-edit-ink);
+  --tubo-destino-fondo: var(--action-edit-bg);
+}
+.tubo-dnd-listo .tubo-columna.realizado {
+  --tubo-destino-borde: var(--success-ink);
+  --tubo-destino-fondo: var(--status-active-bg);
+}
+.tubo-columna.tubo-destino {
+  border-color: var(--tubo-destino-borde);
+  border-style: dashed;
+  background: var(--tubo-destino-fondo);
+}
+.tubo-columna.tubo-sobre-destino {
+  border-style: solid;
+  outline: 2px solid var(--tubo-destino-borde);
+  outline-offset: 2px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .tubo-dnd-listo .tubo-tarjeta.tubo-arrastrando { transform: none; }
+}
