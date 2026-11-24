@@ -16,8 +16,7 @@
   <h2>{{ forloop.counter }}. {{ columna.estado }} <span>{{ columna.cantidad }}</span></h2>
   {% for obj in columna.registros %}<article class="tubo-tarjeta{% if obj.plazo_tipo %} tubo-{{ obj.plazo_tipo }}{% endif %}">
     <div class="tubo-codigos"><strong>{{ obj.codigo }}</strong>{% if obj.atencion %}<a href="{% url 'gestion:detalle' 'atenciones' obj.atencion_id %}">{{ obj.atencion.folio }}</a>{% endif %}</div>
-    <h3{% if obj.estado == 'Realizado' %} class="tubo-concluido"{% endif %}>{{ obj.nombre }}</h3>
-    <p><strong>Solicitante:</strong> {{ obj.solicitante }}</p>
+    {% include 'gestion/_tubo_tarjeta_datos.html' %}
     {% if obj.apoyo %}<p class="tubo-apoyo"><strong>Apoyo:</strong> {{ obj.apoyo }}</p>{% endif %}
     {% if obj.fecha_compromiso %}<p>Compromiso: {{ obj.fecha_compromiso|date:'d/m/Y' }}</p>{% endif %}
     {% if obj.plazo %}<p class="tubo-plazo"><strong>{{ obj.plazo }}</strong></p>{% endif %}
