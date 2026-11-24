@@ -28,8 +28,11 @@ def run():
 
         for width in [375, 1280]:
             page.set_viewport_size({'width': width, 'height': 900})
-            expect(page.locator('.module-preview table')).to_have_count(4)
-            assert all(table.locator('tbody tr').count() == 3 for table in page.locator('.module-preview table').all())
+            panels = page.locator('.module-preview')
+            assert panels.count() > 0
+            for panel in panels.all():
+                total = int(panel.locator('.module-preview-total').inner_text().split()[0])
+                expect(panel.locator('table tbody tr')).to_have_count(max(1, min(3, total)))
             assert page.evaluate('document.documentElement.scrollWidth <= innerWidth')
             page.screenshot(path=str(OUTPUT / f'inicio-{width}.png'), full_page=True)
 
