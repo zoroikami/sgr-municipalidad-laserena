@@ -1,6 +1,7 @@
 {% extends 'base.html' %}
 {% load static %}
-{% block extra_css %}<link rel="stylesheet" href="{% static 'sgr/integrado.css' %}">{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'sgr/integrado.css' %}"><link rel="stylesheet" href="{% static 'sgr/tablero-dnd.css' %}">{% endblock %}
+{% block extra_js %}<script src="{% static 'sgr/tablero-dnd.js' %}" defer></script>{% endblock %}
 {% block content %}
 <div class="module-breadcrumb"><a href="{% url 'gestion:inicio' %}">Gestión municipal</a> / Cartas</div>
 <div class="page-heading"><div><h1>Tubo de cartas</h1><p>{{ total }} carta{{ total|pluralize:'s' }} en seguimiento. Ordenadas por fecha de actividad.</p></div><div class="heading-actions">
@@ -11,10 +12,11 @@
 {% for columna in columnas %}<article class="{{ columna.color }}"><h2>{{ columna.estado }}</h2><strong>{{ columna.cantidad }}</strong><p>Carta{{ columna.cantidad|pluralize:'s' }} en este estado</p></article>{% endfor %}
 <article class="pendiente"><h2>Vencidos</h2><strong>{{ vencidos }}</strong><p>Cartas en proceso con actividad anterior a hoy</p></article>
 </section>
-<section class="tubo-columnas" aria-label="Tablero de seguimiento de cartas">
-{% for columna in columnas %}<section class="tubo-columna {{ columna.color }}" aria-label="{{ columna.estado }}">
+{% if perms.gestion.change_carta %}<p class="tubo-dnd-ayuda">Arrastra una tarjeta a una columna habilitada o usa su botón para cambiar de estado.</p>{% endif %}
+<section class="tubo-columnas" aria-label="Tablero de seguimiento de cartas" data-tablero-dnd>
+{% for columna in columnas %}<section class="tubo-columna {{ columna.color }}" aria-label="{{ columna.estado }}" data-estado="{{ columna.estado }}">
   <h2>{{ forloop.counter }}. {{ columna.estado }} <span>{{ columna.cantidad }}</span></h2>
-  {% for obj in columna.registros %}<article class="tubo-tarjeta{% if obj.plazo_tipo %} tubo-{{ obj.plazo_tipo }}{% endif %}">
+  {% for obj in columna.registros %}<article class="tubo-tarjeta{% if obj.plazo_tipo %} tubo-{{ obj.plazo_tipo }}{% endif %}"{% if columna.destinos and perms.gestion.change_carta %} draggable="true"{% endif %}>
     <div class="tubo-codigos"><strong>{{ obj.codigo }}</strong><span>Nº ingreso: {{ obj.numero_ingreso }}</span></div>
     <h3{% if obj.estado == 'Finalizada' %} class="tubo-concluido"{% endif %}>{{ obj.nombre }}</h3>
     <p><strong>Para:</strong> {{ obj.para }}</p>
@@ -24,7 +26,7 @@
     <p><strong>Encargado:</strong> {{ obj.encargado.get_full_name|default:obj.encargado.username }}</p>
     {% if obj.derivada_a %}<p class="tubo-apoyo"><strong>Derivada a:</strong> {{ obj.derivada_a }}</p>{% endif %}
     <footer><a href="{% url 'gestion:detalle' 'cartas' obj.pk %}">Ver detalle</a>
-    {% if perms.gestion.change_carta %}{% for destino in columna.destinos %}<form method="post" action="{% url 'gestion:cartas_mover' obj.pk %}">{% csrf_token %}<input type="hidden" name="desde" value="{{ obj.estado }}"><input type="hidden" name="estado" value="{{ destino }}">{% include 'gestion/_observacion_transicion.html' %}<button class="btn btn-outline-secondary" type="submit">{% if destino == 'Aprobada' %}Aprobar{% elif destino == 'Finalizada' %}Finalizar{% else %}No aplica{% endif %}</button></form>{% endfor %}{% endif %}</footer>
+    {% if perms.gestion.change_carta %}{% for destino in columna.destinos %}<form method="post" action="{% url 'gestion:cartas_mover' obj.pk %}" data-destino="{{ destino }}">{% csrf_token %}<input type="hidden" name="desde" value="{{ obj.estado }}"><input type="hidden" name="estado" value="{{ destino }}">{% include 'gestion/_observacion_transicion.html' %}<button class="btn btn-outline-secondary" type="submit">{% if destino == 'Aprobada' %}Aprobar{% elif destino == 'Finalizada' %}Finalizar{% else %}No aplica{% endif %}</button></form>{% endfor %}{% endif %}</footer>
   </article>{% empty %}<p class="text-muted">Sin cartas en este estado.</p>{% endfor %}
   {% if columna.cantidad > 100 %}<a href="{% url 'gestion:listado' 'cartas' %}?estado={{ columna.estado|urlencode }}">Ver las {{ columna.cantidad }} cartas</a>{% endif %}
 </section>{% endfor %}</section>

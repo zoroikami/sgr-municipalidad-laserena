@@ -1,6 +1,7 @@
 {% extends 'base.html' %}
 {% load static %}
-{% block extra_css %}<link rel="stylesheet" href="{% static 'sgr/integrado.css' %}">{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'sgr/integrado.css' %}"><link rel="stylesheet" href="{% static 'sgr/tablero-dnd.css' %}">{% endblock %}
+{% block extra_js %}<script src="{% static 'sgr/tablero-dnd.js' %}" defer></script>{% endblock %}
 {% block content %}
 <div class="module-breadcrumb">Gestión municipal / Tubo de trabajo</div>
 <div class="page-heading"><div><h1>Tubo de trabajo</h1><p>Revisa las gestiones y avanza su seguimiento por estado.</p></div><div class="heading-actions"><a class="btn btn-outline-secondary" href="{% url 'gestion:listado' 'tubo' %}">Ver listado</a>{% if perms.gestion.add_gestiontubo %}<a class="btn btn-primary" href="{% url 'gestion:crear' 'tubo' %}">Nueva gestión</a>{% endif %}</div></div>
@@ -11,17 +12,18 @@
   <article class="pendiente"><h2>Pendientes / alerta</h2><strong>{{ pendientes }}</strong><p>Esperando gestión técnica</p></article>
   <article class="pendiente"><h2>Vencidos</h2><strong>{{ vencidos }}</strong><p>Compromisos sin cierre con fecha anterior a hoy</p></article>
 </section>
-<section class="tubo-columnas" aria-label="Tablero de seguimiento">
-{% for columna in columnas %}<section class="tubo-columna {{ columna.color }}" aria-label="{{ columna.estado }}">
+{% if perms.gestion.change_gestiontubo %}<p class="tubo-dnd-ayuda">Arrastra una tarjeta a una columna habilitada o usa su botón para cambiar de estado.</p>{% endif %}
+<section class="tubo-columnas" aria-label="Tablero de seguimiento" data-tablero-dnd>
+{% for columna in columnas %}<section class="tubo-columna {{ columna.color }}" aria-label="{{ columna.estado }}" data-estado="{{ columna.estado }}">
   <h2>{{ forloop.counter }}. {{ columna.estado }} <span>{{ columna.cantidad }}</span></h2>
-  {% for obj in columna.registros %}<article class="tubo-tarjeta{% if obj.plazo_tipo %} tubo-{{ obj.plazo_tipo }}{% endif %}">
+  {% for obj in columna.registros %}<article class="tubo-tarjeta{% if obj.plazo_tipo %} tubo-{{ obj.plazo_tipo }}{% endif %}"{% if columna.siguiente and perms.gestion.change_gestiontubo %} draggable="true"{% endif %}>
     <div class="tubo-codigos"><strong>{{ obj.codigo }}</strong>{% if obj.atencion %}<a href="{% url 'gestion:detalle' 'atenciones' obj.atencion_id %}">{{ obj.atencion.folio }}</a>{% endif %}</div>
     {% include 'gestion/_tubo_tarjeta_datos.html' %}
     {% if obj.apoyo %}<p class="tubo-apoyo"><strong>Apoyo:</strong> {{ obj.apoyo }}</p>{% endif %}
     {% if obj.fecha_compromiso %}<p>Compromiso: {{ obj.fecha_compromiso|date:'d/m/Y' }}</p>{% endif %}
     {% if obj.plazo %}<p class="tubo-plazo"><strong>{{ obj.plazo }}</strong></p>{% endif %}
     <footer><span>{% if obj.estado == 'Realizado' %}Concluido{% else %}Responsable: {{ obj.responsable.get_full_name|default:obj.responsable.username }}{% endif %}</span><a href="{% url 'gestion:detalle' 'tubo' obj.pk %}">Ver detalle</a>
-    {% if columna.siguiente and perms.gestion.change_gestiontubo %}<form method="post" action="{% url 'gestion:tubo_mover' obj.pk %}">{% csrf_token %}<input type="hidden" name="desde" value="{{ obj.estado }}">{% include 'gestion/_observacion_transicion.html' with destino=columna.siguiente %}<button class="btn btn-outline-secondary" type="submit">{% if columna.siguiente == 'Realizado' %}Realizar{% else %}A {{ columna.siguiente|lower }}{% endif %}</button></form>{% endif %}</footer>
+    {% if columna.siguiente and perms.gestion.change_gestiontubo %}<form method="post" action="{% url 'gestion:tubo_mover' obj.pk %}" data-destino="{{ columna.siguiente }}">{% csrf_token %}<input type="hidden" name="desde" value="{{ obj.estado }}">{% include 'gestion/_observacion_transicion.html' with destino=columna.siguiente %}<button class="btn btn-outline-secondary" type="submit">{% if columna.siguiente == 'Realizado' %}Realizar{% else %}A {{ columna.siguiente|lower }}{% endif %}</button></form>{% endif %}</footer>
   </article>{% empty %}<p class="text-muted">Sin gestiones en este estado.</p>{% endfor %}
   {% if columna.cantidad > 100 %}<a href="{% url 'gestion:listado' 'tubo' %}?estado={{ columna.estado|urlencode }}">Ver las {{ columna.cantidad }} gestiones</a>{% endif %}
 </section>{% endfor %}</section>
