@@ -202,3 +202,33 @@ button, .btn, input, select { min-height: 2.75rem; }
 /* Buscador de listas largas en formularios (requisitos de la segunda entrega). */
 .form-field > .select-buscador { margin-bottom: var(--space-xs); }
 .select-buscador-estado { display: block; padding-top: var(--space-xs); font-size: var(--type-caption); color: var(--brand-muted); }
+
+/* Aviso de funcionario por RUT (nuevo requerimiento, punto 1): informa sin bloquear el guardado. */
+.rut-aviso {
+  margin-top: var(--space-sm); padding: var(--space-md) var(--space-lg);
+  background: var(--action-view-bg); color: var(--brand-ink);
+  border: 1px solid var(--action-view-border); border-left: var(--space-xs) solid var(--action-view-ink);
+  border-radius: var(--radius-ui); font-size: var(--type-small); line-height: 1.5;
+  animation: rut-aviso-entrada 180ms var(--ease-enter);
+}
+.rut-aviso p { margin: 0; }
+.rut-aviso p + p { margin-top: var(--space-xs); }
+.rut-aviso-titulo { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--space-sm); }
+.rut-aviso-etiqueta { font-size: var(--type-caption); font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--action-view-ink); }
+.rut-aviso-cargo { font-weight: 700; color: var(--action-view-ink); }
+.rut-aviso-funciones { color: var(--brand-muted); }
+.rut-aviso.es-delegado { background: var(--action-edit-bg); border-color: var(--action-edit-border); border-left-color: var(--action-edit-ink); }
+.rut-aviso.es-delegado :is(.rut-aviso-etiqueta, .rut-aviso-cargo) { color: var(--action-edit-ink); }
+.rut-aviso-regla { font-weight: 700; color: var(--action-edit-ink); }
+@keyframes rut-aviso-entrada { from { opacity: 0; transform: translateY(-0.25rem); } }
+@media (prefers-reduced-motion: reduce) { .rut-aviso { animation: none; } }
+
+/* Tarjeta del tubo: solicitante identificado como funcionario. */
+.tubo-funcionario {
+  display: inline-flex; align-items: center; gap: var(--space-xs); margin-left: var(--space-xs);
+  padding: 0 var(--space-sm); border: 1px solid var(--action-view-border); border-radius: var(--radius-ui);
+  background: var(--action-view-bg); color: var(--action-view-ink);
+  font-size: var(--type-caption); font-weight: 700; line-height: 1.6; white-space: nowrap;
+}
+.tubo-funcionario.es-delegado { background: var(--action-edit-bg); border-color: var(--action-edit-border); color: var(--action-edit-ink); }
+.tubo-otra-gestion { color: var(--action-edit-ink); font-weight: 700; }

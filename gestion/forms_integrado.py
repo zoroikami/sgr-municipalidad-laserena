@@ -1,6 +1,7 @@
 from django import forms
 from django.db.models import Q
 from django.contrib.auth import get_user_model
+from django.urls import reverse
 from django.utils import timezone
 
 from .access import scoped
@@ -71,7 +72,8 @@ class OrganizacionForm(ScopedModelForm):
 class GestionTuboForm(RelacionesForm):
     class Meta:
         model = GestionTubo
-        fields = ['nombre', 'descripcion', 'fecha_solicitud', 'origen', 'solicitante', 'territorio',
+        fields = ['nombre', 'descripcion', 'fecha_solicitud', 'origen', 'solicitante', 'solicitante_rut',
+                  'solicitante_telefono', 'territorio',
                   'responsable', 'fecha_compromiso', 'apoyo', 'observaciones', 'atencion', 'organizacion']
         widgets = {key: forms.DateInput(format='%Y-%m-%d', attrs={'type': 'date'})
                    for key in ['fecha_solicitud', 'fecha_compromiso']}
@@ -91,6 +93,28 @@ class GestionTuboForm(RelacionesForm):
         self.fields['organizacion'].queryset = self.fields['organizacion'].queryset.order_by('nombre')
         for campo in ('atencion', 'organizacion'):
             self.fields[campo].widget.attrs['data-buscable'] = ''
+        # Nuevo requerimiento, puntos 1 y 2: identificar al solicitante y exigir su nombre y teléfono.
+        self.fields['solicitante'].label = 'Nombre del solicitante'
+        rut = self.fields['solicitante_rut']
+        rut.help_text = ('Opcional. Sin puntos y con guion (ej.: 12345678-5). Si corresponde a un funcionario '
+                         'municipal se indicará su cargo; si es el delegado, la gestión cuenta como otra gestión.')
+        rut.widget.attrs.update({'placeholder': '12345678-5', 'spellcheck': 'false', 'autocomplete': 'off',
+                                 'data-rut-funcionario': reverse('gestion:rut_funcionario')})
+        telefono = self.fields['solicitante_telefono']
+        telefono.widget.attrs.update({'type': 'tel', 'autocomplete': 'off', 'placeholder': '+56 9 1234 5678'})
+        if not self.instance.pk:
+            telefono.required = True
+        telefono.help_text = 'Las solicitudes sin nombre y teléfono del usuario no tienen puntaje.'
+
+    def clean_solicitante_rut(self):
+        from cuentas.rut import RutError, normalize_rut
+        valor = self.cleaned_data.get('solicitante_rut', '').strip()
+        if not valor:
+            return ''
+        try:
+            return normalize_rut(valor)
+        except RutError as error:
+            raise forms.ValidationError(str(error)) from error
 
 
 class ActividadSGRForm(RelacionesForm):

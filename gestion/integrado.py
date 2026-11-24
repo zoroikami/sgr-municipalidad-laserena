@@ -99,7 +99,10 @@ def resultado_item(meta, actividades, ausencias, inicio, fin, gestiones=None):
 
 
 def resultado_tubo(meta, gestiones):
-    """Soluciones al ingreso al tubo: gestiones realizadas / ingresadas frente a la tasa meta (p. ej. 80%)."""
+    """Soluciones al ingreso al tubo: gestiones realizadas / ingresadas frente a la tasa meta (p. ej. 80%).
+
+    Nuevo requerimiento, punto 1: las solicitudes del delegado son «otra gestión» y no se contabilizan."""
+    gestiones = [gestion for gestion in gestiones if getattr(gestion, 'solicitante_cargo', '') != 'delegado']
     total = len(gestiones)
     realizadas = sum(1 for gestion in gestiones if gestion.estado == 'Realizado')
     objetivo = Decimal(meta.meta_cantidad)

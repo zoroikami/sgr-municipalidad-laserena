@@ -151,8 +151,8 @@ def test_coordinador_crea_gestion_con_relaciones_de_la_delegacion_elegida(client
     response = client.post(reverse('gestion:crear', args=['tubo']), {
         'delegacion': mundo['b'].pk, 'nombre': 'Seguimiento en Las Compañías',
         'fecha_solicitud': timezone.localdate().isoformat(), 'origen': 'EXT',
-        'solicitante': 'Solicitante de prueba', 'responsable': mundo['users']['lector_b'].pk,
-        'atencion': mundo['atn_b'].pk,
+        'solicitante': 'Solicitante de prueba', 'solicitante_telefono': '912345678',
+        'responsable': mundo['users']['lector_b'].pk, 'atencion': mundo['atn_b'].pk,
     })
     assert response.status_code == 302, response.context['form'].errors
     obj = GestionTubo.objects.get()

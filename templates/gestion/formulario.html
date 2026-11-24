@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load static %}
 {% block content %}
 <div class="form-context"><a class="back-link" href="{{ return_url }}">Volver al listado</a><h1>{{ titulo }}</h1><p>Completa los datos del registro.</p></div>
 <div class="modal record-modal" id="record-modal" tabindex="-1" aria-labelledby="record-modal-title" data-return-url="{{ return_url }}">
@@ -21,4 +22,5 @@
     </div>
   </div></div>
 </div>
+<script src="{% static 'sgr/rut-funcionario.js' %}" defer></script>
 {% endblock %}

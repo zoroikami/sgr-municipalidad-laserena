@@ -29,6 +29,13 @@ class GestionTubo(RegistroDelegacion):
     estado = models.CharField(max_length=20, choices=ESTADOS, default='Ingresado')
     fecha_solicitud = models.DateField(default=timezone.localdate)
     solicitante = models.CharField(max_length=140)
+    solicitante_rut = models.CharField('RUT del solicitante', max_length=12, blank=True)
+    solicitante_telefono = models.CharField('Teléfono del solicitante', max_length=25, blank=True,
+        validators=[RegexValidator(r'^\+?[0-9 ()-]{7,25}$', 'Ingresa un teléfono válido.')])
+    # Identificación por RUT al guardar: conserva el cargo vigente al momento del ingreso.
+    solicitante_funcionario = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, editable=False,
+        on_delete=models.SET_NULL, related_name='gestiones_tubo_solicitadas')
+    solicitante_cargo = models.CharField(max_length=30, blank=True, editable=False)
     territorio = models.CharField(max_length=140, blank=True)
     origen = models.CharField(max_length=3, choices=[('INT', 'Interno'), ('EXT', 'Externo')], default='EXT')
     responsable = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name='gestiones_tubo')
@@ -38,9 +45,66 @@ class GestionTubo(RegistroDelegacion):
     atencion = models.ForeignKey('gestion.Atencion', null=True, blank=True, on_delete=models.PROTECT)
     organizacion = models.ForeignKey(Organizacion, null=True, blank=True, on_delete=models.PROTECT)
 
+    @property
+    def solicitante_es_funcionario(self):
+        return bool(self.solicitante_funcionario_id or self.solicitante_cargo)
+
+    @property
+    def solicitante_cargo_nombre(self):
+        from .funcionarios import nombre_cargo
+        return nombre_cargo(self.solicitante_cargo) if self.solicitante_es_funcionario else ''
+
+    @property
+    def solicitante_funcionario_texto(self):
+        if not self.solicitante_es_funcionario:
+            return 'No'
+        regla = ' · otra gestión, no suma puntaje' if self.es_otra_gestion else ''
+        return f'Sí · {self.solicitante_cargo_nombre}{regla}'
+
+    @property
+    def es_otra_gestion(self):
+        """Nuevo requerimiento, punto 1: si el solicitante es el delegado no se contabiliza."""
+        return self.solicitante_cargo == 'delegado'
+
+    @property
+    def titulo_tarjeta(self):
+        """Quita un código entre corchetes al inicio cuando ya se muestra en la tarjeta."""
+        codigos = {self.codigo}
+        if self.atencion_id:
+            codigos.add(self.atencion.folio)
+        nombre = self.nombre.strip()
+        if nombre.startswith('[') and ']' in nombre:
+            codigo, resto = nombre[1:].split(']', 1)
+            if codigo.strip() in codigos and resto.strip(' -·:'):
+                return resto.strip(' -·:')
+        return nombre
+
+    def identificar_solicitante(self):
+        from .funcionarios import buscar_funcionario, cargo_de
+        funcionario = buscar_funcionario(self.solicitante_rut) if self.solicitante_rut else None
+        self.solicitante_funcionario = funcionario
+        self.solicitante_cargo = cargo_de(funcionario) if funcionario else ''
+
+    def save(self, *args, **kwargs):
+        update_fields = kwargs.get('update_fields')
+        if update_fields is None or 'solicitante_rut' in update_fields:
+            anterior = (type(self).all_objects.filter(pk=self.pk).values_list('solicitante_rut', flat=True).first()
+                        if self.pk else None)
+            if self._state.adding or anterior != self.solicitante_rut:
+                self.identificar_solicitante()
+                if update_fields is not None:
+                    kwargs['update_fields'] = {*update_fields, 'solicitante_funcionario', 'solicitante_cargo'}
+        return super().save(*args, **kwargs)
+
     def clean(self):
         super().clean()
         errores = {}
+        if self.solicitante_rut:
+            from cuentas.rut import RutError, normalize_rut
+            try:
+                self.solicitante_rut = normalize_rut(self.solicitante_rut)
+            except RutError as error:
+                errores['solicitante_rut'] = str(error)
         for campo in ('atencion', 'organizacion'):
             obj = getattr(self, campo) if getattr(self, campo + '_id') else None
             if obj and (obj.delegacion_id != self.delegacion_id or obj.deleted_at):

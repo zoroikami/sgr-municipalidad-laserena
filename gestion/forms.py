@@ -1,6 +1,7 @@
 from django import forms
 from django.contrib.auth import get_user_model
 from django.db.models import Q
+from django.urls import reverse
 from cuentas.rut import RUT_INPUT_HELP
 
 from .access import delegation_id
@@ -166,7 +167,8 @@ class AtencionForm(ScopedModelForm):
         self.fields['cliente'].queryset = clients.distinct()
         self.fields['cliente'].label_from_instance = lambda user: user.get_full_name() or user.username
         self.fields['solicitante_rut'].help_text = RUT_INPUT_HELP
-        self.fields['solicitante_rut'].widget.attrs.update({'placeholder': '12345678-5', 'spellcheck': 'false'})
+        self.fields['solicitante_rut'].widget.attrs.update({'placeholder': '12345678-5', 'spellcheck': 'false',
+            'data-rut-funcionario': reverse('gestion:rut_funcionario')})
 
     def save(self, commit=True):
         if self.instance.solicitante_email != self.original_email:

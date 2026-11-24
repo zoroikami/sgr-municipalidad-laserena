@@ -31,7 +31,7 @@ MODULES = {
         'columns': [('Código', 'codigo'), ('Nombre', 'nombre'), ('Familia', 'familia'), ('Subfamilia', 'subfamilia'), ('Verificada', 'verificada'), ('Estado', 'estado')],
         'sort': ['codigo', '-codigo', 'nombre', '-nombre', 'created_at', '-created_at']},
     'tubo': {'model': GestionTubo, 'title': 'Gestiones en tubo',
-        'search': ['codigo', 'nombre', 'solicitante', 'territorio', 'apoyo'],
+        'search': ['codigo', 'nombre', 'solicitante', 'solicitante_rut', 'territorio', 'apoyo'],
         'columns': [('Código', 'codigo'), ('Gestión', 'nombre'), ('Solicitante', 'solicitante'), ('Territorio', 'territorio'), ('Apoyo', 'apoyo'), ('Estado', 'estado')],
         'sort': ['codigo', '-codigo', 'nombre', '-nombre', 'created_at', '-created_at']},
     'metas': {'model': ItemMeta, 'title': 'Ítems y Metas', 'search': ['codigo', 'nombre', 'descripcion'],

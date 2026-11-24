@@ -148,7 +148,9 @@ def details_for(obj, modulo):
     config = MODULES[modulo]
     fields = config.get('detail_columns', config['columns'] + [('Descripción', 'descripcion')])
     if modulo == 'tubo':
-        fields += [('Responsable', 'responsable.username'), ('Fecha de solicitud', 'fecha_solicitud'),
+        fields += [('RUT solicitante', 'solicitante_rut'), ('Teléfono solicitante', 'solicitante_telefono'),
+                   ('Solicitante funcionario', 'solicitante_funcionario_texto'),
+                   ('Responsable', 'responsable.username'), ('Fecha de solicitud', 'fecha_solicitud'),
                    ('Fecha de compromiso', 'fecha_compromiso'), ('Observaciones', 'observaciones'),
                    ('Atención vinculada', 'atencion.folio'), ('Organización', 'organizacion.nombre')]
     if modulo == 'organizaciones':

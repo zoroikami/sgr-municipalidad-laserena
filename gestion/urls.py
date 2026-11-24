@@ -3,6 +3,7 @@ from . import views
 from . import public_views
 from . import views_integrado
 from . import views_tablero
+from . import views_funcionarios
 
 app_name = 'gestion'
 urlpatterns = [
@@ -10,6 +11,7 @@ urlpatterns = [
     path('cartas/<int:pk>/avanzar/', views_tablero.cartas_mover, name='cartas_mover'),
     path('tubo/', views_integrado.tablero, name='tablero'),
     path('tubo/<int:pk>/avanzar/', views_integrado.mover, name='tubo_mover'),
+    path('funcionarios/rut/', views_funcionarios.rut_funcionario, name='rut_funcionario'),
     path('sgr/', views_integrado.resultados, name='resultados_sgr'),
     path('sgr/actividad/', views_integrado.registrar, name='actividad_crear'),
     path('sgr/ausencia/', views_integrado.registrar, {'ausencia': True}, name='ausencia_crear'),
