@@ -10,7 +10,7 @@ from django.urls import reverse
 from django.utils import timezone
 
 from gestion.integrado import validar_fecha, resultado_item
-from gestion.models import ActividadSGR, AusenciaSGR, GestionTubo, Organizacion
+from gestion.models import ActividadSGR, AusenciaSGR, Delegacion, GestionTubo, Organizacion
 
 pytestmark = pytest.mark.django_db
 
@@ -216,3 +216,42 @@ def test_altas_globales_cargan_solo_las_opciones_de_la_delegacion_elegida(client
     assert form.fields['delegacion'].disabled and form.fields['delegacion'].initial == mundo['b'].pk
     response = client.get(reverse('gestion:actividad_crear'), {'delegacion': mundo['b'].pk})
     assert list(response.context['form'].fields['item'].queryset) == [mundo['meta_b']]
+
+
+def test_clasificacion_de_la_base_jjvv_distingue_vivienda_agua_y_allegados():
+    from gestion.management.commands.importar_organizaciones import clasificar
+    assert clasificar('JUNTA DE VECINOS LOS ARANDANOS') == ('territorial', 'Junta de vecinos')
+    assert clasificar('COMITÉ DE VIVIENDA BOSQUE LA FLORIDA') == ('funcional', 'Comité de vivienda')
+    assert clasificar('COMITE DE ALLEGADOS DESIERTO FLORIDO') == ('funcional', 'Comité de allegados')
+    assert clasificar('COMITE DE AGUA POTABLE RURAL ESTANCIA EL ARRAYAN') == ('funcional', 'Comité de agua potable rural')
+    assert clasificar('CENTRO GENERAL DE PADRES Y APODERADOS ESCUELA') == ('funcional', 'Centro de padres y apoderados')
+    assert clasificar('AGRUPACION DE CRIANCEROS Y AGRICULTORES') == ('funcional', 'Por clasificar')
+    assert clasificar('CLUB DEPORTIVO Y CULTURAL LAS ROSAS') == ('funcional', 'Organización deportiva')
+
+
+def test_importacion_de_todos_los_territorios_informa_filas_sin_territorio(tmp_path, mundo):
+    from io import StringIO
+    from django.core.management import call_command
+    from django.core.management.base import CommandError
+    from openpyxl import Workbook
+    book = Workbook()
+    sheet = book.active
+    sheet.title = 'juntas de vecinos'
+    sheet.append(['ORGANIZACIONES', 'DOMICILIO', 'TERRITORIO', 'SOCIOS', 'FECHA', 'PJ'])
+    sheet.append(['CLUB DEPORTIVO PEDRO AGUIRRE CERDA', 'Calle 1', 'CENTRO ', 116, None, 302])
+    sheet.append(['CLUB DEPORTIVO PEDRO AGUIRRE CERDA', 'Calle 2', 'CIAS', 177, None, 455])
+    sheet.append(['COMITE DE VIVIENDA SIN DATO', 'Calle 3', None])
+    sheet.append(['AGRUPACION SERENA-MENTE', 'Parcela 36', 'ALFALFARES'])
+    path = tmp_path / 'base.xlsx'
+    book.save(path)
+    with pytest.raises(CommandError):
+        call_command('importar_organizaciones', str(path), todas=True)
+    for nombre in ['La Pampa', 'La Antena - La Florida', 'Rural', 'Avenida del Mar']:
+        Delegacion.objects.create(nombre=nombre, direccion='Dirección de prueba')
+    salida = StringIO()
+    call_command('importar_organizaciones', str(path), todas=True, aplicar=True, stdout=salida)
+    call_command('importar_organizaciones', str(path), todas=True, aplicar=True, stdout=StringIO())
+    assert Organizacion.objects.count() == 3
+    assert Organizacion.objects.get(delegacion=mundo['b']).registro_pj == '455'
+    assert Organizacion.objects.get(delegacion__nombre='La Antena - La Florida').nombre == 'AGRUPACION SERENA-MENTE'
+    assert 'Sin territorio (no importadas' in salida.getvalue() and 'COMITE DE VIVIENDA SIN DATO' in salida.getvalue()

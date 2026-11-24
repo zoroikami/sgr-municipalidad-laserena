@@ -18,6 +18,8 @@ SUBFAMILIAS = {
     'territorial': ['Junta de vecinos'],
     'funcional': ['Club de adulto mayor', 'Organización deportiva', 'Centro de madres', 'Centro cultural',
                   'Agrupación juvenil', 'Comité de seguridad', 'Comité de allegados', 'Comité de vecinos',
+                  # Base JJVV: vivienda y agua potable rural pueden regirse por otro marco legal (correo de coordinación).
+                  'Comité de vivienda', 'Comité de agua potable rural', 'Centro de padres y apoderados',
                   'Por clasificar'],
 }
 
