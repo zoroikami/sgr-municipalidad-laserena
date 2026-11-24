@@ -20,7 +20,11 @@ def test_tablero_resume_el_avance_por_colaborador(client, mundo):
     filas = {c['nombre']: c for c in response.context['colaboradores']}
     assert set(filas) == {'editor_a', 'admin_a'}
     assert filas['editor_a']['conteos'] == [1, 0, 0, 2] and round(filas['editor_a']['porcentaje']) == 67
-    assert 'Avance por colaborador' in response.content.decode()
+    html = response.content.decode()
+    assert 'Avance por colaborador' in html
+    # Los conteos por estado se muestran solo en las columnas, no repetidos en el resumen.
+    assert 'En proceso activo' not in html and 'Pendientes / alerta' not in html
+    assert 'Tasa de resolución' in html and '2 de 4 realizadas' in html
 
 
 def test_territorio_sugiere_la_lista_de_la_delegacion_y_los_usados(client, mundo):

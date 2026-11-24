@@ -52,8 +52,7 @@ def tablero(request):
     return render(request, 'gestion/tablero.html', {'titulo': 'Tubo de trabajo', 'columnas': columnas,
         'colaboradores': colaboradores, 'estados_tubo': GestionTubo.ESTADOS,
         'total': total, 'realizados': realizados, 'porcentaje': realizados * 100 / total if total else 0,
-        'vencidos': contar_vencidos(query, hoy),
-        'proceso': query.filter(estado='En proceso').count(), 'pendientes': query.filter(estado='Pendiente').count()})
+        'vencidos': contar_vencidos(query, hoy)})
 
 
 @login_required

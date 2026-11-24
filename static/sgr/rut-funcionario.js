@@ -70,11 +70,18 @@
     let temporizador;
     let controlador;
 
+    // Una respuesta tardía nunca debe mostrar el aviso de un RUT que ya no está escrito.
+    function invalidar() {
+      controlador?.abort();
+      controlador = null;
+      consultado = '';
+      aviso.hidden = true;
+    }
+
     async function verificar() {
       const rut = rutValido(input.value);
       if (!rut) {
-        consultado = '';
-        aviso.hidden = true;
+        invalidar();
         return;
       }
       if (rut === consultado) return;
@@ -91,7 +98,7 @@
         });
         if (!respuesta.ok || respuesta.redirected) throw new Error('rut');
         const datos = await respuesta.json();
-        if (controlador !== actual) return;
+        if (controlador !== actual || rutValido(input.value) !== rut) return;
         if (datos.funcionario) mostrar(aviso, datos);
         else aviso.hidden = true;
       } catch (error) {
@@ -104,6 +111,7 @@
 
     input.addEventListener('input', () => {
       clearTimeout(temporizador);
+      if (rutValido(input.value) !== consultado) invalidar();
       temporizador = setTimeout(verificar, 350);
     });
     input.addEventListener('change', verificar);

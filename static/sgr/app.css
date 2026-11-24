@@ -228,7 +228,8 @@ button, .btn, input, select { min-height: 2.75rem; }
   display: inline-flex; align-items: center; gap: var(--space-xs); margin-left: var(--space-xs);
   padding: 0 var(--space-sm); border: 1px solid var(--action-view-border); border-radius: var(--radius-ui);
   background: var(--action-view-bg); color: var(--action-view-ink);
-  font-size: var(--type-caption); font-weight: 700; line-height: 1.6; white-space: nowrap;
+  font-size: var(--type-caption); font-weight: 700; line-height: 1.6;
+  max-width: 100%; white-space: normal; overflow-wrap: anywhere;
 }
 .tubo-funcionario.es-delegado { background: var(--action-edit-bg); border-color: var(--action-edit-border); color: var(--action-edit-ink); }
 .tubo-otra-gestion { color: var(--action-edit-ink); font-weight: 700; }
@@ -237,3 +238,7 @@ button, .btn, input, select { min-height: 2.75rem; }
 .tubo-colaboradores { margin-top: var(--space-xl); }
 .tubo-colaboradores h2 { font-size: var(--type-section); margin-bottom: var(--space-lg); }
 .tubo-colaboradores .num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+/* Resumen del tubo sin repetir los conteos de las columnas. */
+.tubo-resumen.tubo-resumen-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+@media (max-width: 700px) { .tubo-resumen.tubo-resumen-3 { grid-template-columns: minmax(0, 1fr); } }

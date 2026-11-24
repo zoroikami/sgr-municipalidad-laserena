@@ -5,11 +5,10 @@
 {% block content %}
 <div class="module-breadcrumb">Gestión municipal / Tubo de trabajo</div>
 <div class="page-heading"><div><h1>Tubo de trabajo</h1><p>Revisa las gestiones y avanza su seguimiento por estado.</p></div><div class="heading-actions"><a class="btn btn-outline-secondary" href="{% url 'gestion:listado' 'tubo' %}">Ver listado</a>{% if perms.gestion.add_gestiontubo %}<a class="btn btn-primary" href="{% url 'gestion:crear' 'tubo' %}">Nueva gestión</a>{% endif %}</div></div>
-<section class="tubo-resumen" aria-label="Resumen de gestiones">
+{# Los conteos por estado ya figuran en cada columna: el resumen solo muestra datos que no se repiten. #}
+<section class="tubo-resumen tubo-resumen-3" aria-label="Resumen de gestiones">
   <article><h2>Gestiones en tubo</h2><strong>{{ total }}</strong><p>Derivadas para seguimiento</p></article>
-  <article class="realizado"><h2>Realizadas / concluidas</h2><strong>{{ realizados }}</strong><p>Tasa de resolución: {{ porcentaje|floatformat:1 }}%</p></article>
-  <article class="proceso"><h2>En proceso activo</h2><strong>{{ proceso }}</strong><p>Con cuadrilla o área de apoyo</p></article>
-  <article class="pendiente"><h2>Pendientes / alerta</h2><strong>{{ pendientes }}</strong><p>Esperando gestión técnica</p></article>
+  <article class="realizado"><h2>Tasa de resolución</h2><strong>{{ porcentaje|floatformat:1 }}%</strong><p>{{ realizados }} de {{ total }} realizada{{ realizados|pluralize:'s' }}</p></article>
   <article class="pendiente"><h2>Vencidos</h2><strong>{{ vencidos }}</strong><p>Compromisos sin cierre con fecha anterior a hoy</p></article>
 </section>
 {% if perms.gestion.change_gestiontubo %}<p class="tubo-dnd-ayuda">Arrastra una tarjeta a una columna habilitada o usa su botón para cambiar de estado.</p>{% endif %}
