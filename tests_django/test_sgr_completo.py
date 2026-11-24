@@ -48,11 +48,12 @@ def test_semaforo_objetivo_al_dia_descuenta_ausencias_y_usa_umbral_60():
 
 def test_soluciones_al_ingreso_al_tubo_mide_tasa_realizada():
     meta = SimpleNamespace(pk=1, meta_cantidad=80, ponderador=Decimal(25), indicador='tubo')
-    gestiones = [SimpleNamespace(estado='Realizado')] * 4 + [SimpleNamespace(estado='Pendiente')]
+    datos = {'solicitante': 'Vecina ficticia', 'solicitante_telefono': '912345678'}
+    gestiones = [SimpleNamespace(estado='Realizado', **datos)] * 4 + [SimpleNamespace(estado='Pendiente', **datos)]
     row = resultado_tubo(meta, gestiones)
     assert row['cantidad'] == 4 and row['porcentaje'] == Decimal(100)
     assert resultado_item(meta, [], [], date(2026, 10, 1), date(2026, 12, 31), gestiones)['porcentaje'] == Decimal(100)
-    assert resultado_tubo(meta, [SimpleNamespace(estado='Realizado')])['porcentaje'] == Decimal(120)
+    assert resultado_tubo(meta, [SimpleNamespace(estado='Realizado', **datos)])['porcentaje'] == Decimal(120)
     assert resultado_tubo(meta, [])['porcentaje'] is None
 
 

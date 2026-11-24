@@ -20,7 +20,7 @@ def rut(mundo, alias):
 
 def gestion(mundo, **datos):
     datos = {'delegacion': mundo['a'], 'nombre': 'Retiro de ramas', 'solicitante': 'Vecina del sector',
-             'responsable': mundo['users']['editor_a'], **datos}
+             'solicitante_telefono': '912345678', 'responsable': mundo['users']['editor_a'], **datos}
     return GestionTubo.objects.create(**datos)
 
 

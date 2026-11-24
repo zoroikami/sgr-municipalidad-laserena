@@ -106,13 +106,20 @@ def resultado_item(meta, actividades, ausencias, inicio, fin, gestiones=None):
             'porcentaje': porcentaje, 'ponderado': porcentaje * meta.ponderador / 100 if porcentaje is not None else None}
 
 
+def con_datos_usuario(gestion):
+    return bool(str(getattr(gestion, 'solicitante', '') or '').strip()
+                and str(getattr(gestion, 'solicitante_telefono', '') or '').strip())
+
+
 def resultado_tubo(meta, gestiones):
     """Soluciones al ingreso al tubo: gestiones realizadas / ingresadas frente a la tasa meta (p. ej. 80%).
 
-    Nuevo requerimiento, punto 1: las solicitudes del delegado son «otra gestión» y no se contabilizan."""
+    Nuevo requerimiento, punto 1: las solicitudes del delegado son «otra gestión» y no se contabilizan.
+    Punto 2: una solicitud sin nombre y teléfono del usuario no da puntaje; sigue contando como ingresada
+    para que omitir esos datos no mejore la tasa."""
     gestiones = [gestion for gestion in gestiones if getattr(gestion, 'solicitante_cargo', '') != 'delegado']
     total = len(gestiones)
-    realizadas = sum(1 for gestion in gestiones if gestion.estado == 'Realizado')
+    realizadas = sum(1 for gestion in gestiones if gestion.estado == 'Realizado' and con_datos_usuario(gestion))
     objetivo = Decimal(meta.meta_cantidad)
     porcentaje = None
     if total and objetivo:

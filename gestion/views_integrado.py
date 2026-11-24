@@ -148,7 +148,7 @@ def resultados(request):
         metas = list(scoped(request.user, ItemMeta).filter(delegacion_id=org, estado='Activo'))
         todos = list(scoped(request.user, ActividadSGR).filter(fecha__range=(inicio, fin)).select_related('item', 'responsable'))
         todas_ausencias = list(scoped(request.user, AusenciaSGR).filter(desde__lte=fin, hasta__gte=inicio))
-        gestiones = list(scoped(request.user, GestionTubo).filter(fecha_solicitud__range=(inicio, fin)).only('responsable_id', 'estado', 'solicitante_cargo'))
+        gestiones = list(scoped(request.user, GestionTubo).filter(fecha_solicitud__range=(inicio, fin)).only('responsable_id', 'estado', 'solicitante', 'solicitante_telefono', 'solicitante_cargo'))
         todos_reclamos = list(scoped(request.user, ReclamoSGR).filter(fecha__range=(inicio, fin)).select_related('responsable'))
         # Hoja RECLAMOS: no pueden repetirse más de dos trimestres seguidos (se informa a RRHH).
         previos = [limites_trimestre(a, t) for a, t in trimestres_anteriores(anio, trimestre, 2)]
