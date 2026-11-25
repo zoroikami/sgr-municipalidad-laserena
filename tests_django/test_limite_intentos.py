@@ -90,3 +90,16 @@ def test_consola_tecnica_usa_el_login_municipal(client):
     respuesta = client.get('/admin/login/?next=/admin/')
     assert respuesta.status_code == 302
     assert respuesta.url.startswith(reverse('cuentas:login')) and 'next=/admin/' in respuesta.url
+
+
+def test_solicitudes_de_cambio_de_correo_tienen_limite_por_cuenta(client, mundo):
+    editor = mundo['users']['editor_a']
+    client.force_login(editor)
+    for numero in range(intentos.LIMITES['cambio-correo'] + 1):
+        respuesta = client.post(reverse('cuentas:perfil'), {'first_name': 'Ana', 'last_name': 'Rojas',
+                                                            'email': f'nuevo{numero}@example.test'}, follow=True)
+        assert 'Te enviamos un enlace' in respuesta.content.decode()
+    # El mensaje es el mismo, pero sobre el límite ya no se envían más enlaces.
+    assert len(mail.outbox) == intentos.LIMITES['cambio-correo']
+    editor.refresh_from_db()
+    assert editor.email == 'editor_a@example.test'
