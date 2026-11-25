@@ -1,0 +1,9 @@
+Recibimos una solicitud para usar {{ correo_nuevo }} como correo de tu cuenta SGR.
+
+Ingresa con la cuenta que solicitó el cambio y abre este enlace:
+{{ enlace }}
+
+Revisa los datos y presiona Confirmar cambio de correo. Abrir el enlace no cambia tu cuenta.
+El enlace vence en 24 horas. Tu correo actual se mantiene hasta que confirmes.
+
+Si no solicitaste este cambio, ignora este correo.

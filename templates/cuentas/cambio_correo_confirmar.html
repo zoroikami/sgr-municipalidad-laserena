@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+{% block title %}Confirmar cambio de correo | SGR{% endblock %}
+{% block content %}
+<section class="account-section content-panel" aria-labelledby="account-title">
+  <a class="back-link" href="{% url 'cuentas:perfil' %}">Volver a Mi perfil</a>
+  <h1 id="account-title">Confirmar cambio de correo</h1>
+  {% if validlink %}
+    <p>Revisa el cambio antes de confirmar. Usarás el nuevo correo para ingresar y recuperar tu contraseña.</p>
+    <dl class="record-details">
+      <div><dt>Correo actual</dt><dd>{{ correo_actual }}</dd></div>
+      <div><dt>Nuevo correo</dt><dd>{{ correo_nuevo }}</dd></div>
+    </dl>
+    {% if error %}
+      <div class="error-summary mt-4" role="alert"><p>{{ error }}</p></div>
+    {% else %}
+      <form method="post">
+        {% csrf_token %}
+        <p class="field-help">Este enlace vence en 24 horas y deja de servir cuando cambias el correo.</p>
+        <div class="form-actions">
+          <button class="btn btn-primary btn-save" type="submit">Confirmar cambio de correo</button>
+          <a class="btn btn-outline-secondary" href="{% url 'cuentas:perfil' %}">Cancelar</a>
+        </div>
+      </form>
+    {% endif %}
+  {% else %}
+    <p role="alert">Este enlace no es válido, venció o ya se usó. Ingresa con la cuenta que solicitó el cambio o pide un nuevo enlace desde Mi perfil.</p>
+  {% endif %}
+</section>
+{% endblock %}

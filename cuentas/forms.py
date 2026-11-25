@@ -97,8 +97,8 @@ class ProfileForm(forms.ModelForm):
     foto = forms.FileField(label='Nueva foto', required=False,
         widget=forms.FileInput(attrs={'accept': 'image/jpeg,image/png'}),
         help_text='Selecciona una foto JPEG o PNG de hasta 2 MiB; podrás recortarla antes de guardar.')
-    email = forms.EmailField(label='Correo electrónico',
-        help_text='Escribe un correo personal vigente, por ejemplo nombre@correo.cl.')
+    email = forms.EmailField(label='Correo electrónico', max_length=254,
+        help_text='Si lo cambias, recibirás un enlace en el nuevo correo para confirmarlo. El enlace vence en 24 horas; hasta entonces se mantiene tu correo actual.')
     telefono = forms.CharField(label='Teléfono', max_length=25, required=False,
         validators=[RegexValidator(r'^\+?[0-9 ()-]{7,25}$', 'Ingresa un teléfono válido, por ejemplo +56 9 1234 5678.')],
         widget=forms.TextInput(attrs={'type': 'tel', 'placeholder': '+56 9 1234 5678', 'autocomplete': 'tel'}),
@@ -113,15 +113,29 @@ class ProfileForm(forms.ModelForm):
             'last_name': 'Escribe tus apellidos completos.',
         }
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.correo_actual = self.instance.email
+        self.correo_propuesto = ''
+
     def clean_foto(self):
         upload = self.cleaned_data.get('foto')
         return validated_photo(upload) if upload else None
 
     def clean_email(self):
-        email = self.cleaned_data['email']
-        if User.objects.filter(email__iexact=email).exclude(pk=self.instance.pk).exists():
-            raise ValidationError('Ya existe una cuenta con este correo electrónico.')
-        return email
+        # No consultar disponibilidad antes de demostrar control del buzón.
+        self.correo_propuesto = self.cleaned_data['email']
+        return self.correo_actual
+
+    def save(self, commit=True):
+        user = super().save(commit=False)
+        # Model.clean() normaliza el dominio; la firma necesita el valor aún guardado.
+        user.email = self.correo_actual
+        if commit:
+            # El correo solo lo actualiza la confirmación, incluso si cambió en otra sesión.
+            user.save(update_fields=['first_name', 'last_name'])
+            self.save_m2m()
+        return user
 
 
 class ManagedUserForm(forms.ModelForm):

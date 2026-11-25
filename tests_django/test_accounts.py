@@ -187,11 +187,11 @@ def test_unknown_login_never_maps_to_a_real_sentinel_user(client, accounts):
 
 
 @pytest.mark.django_db
-def test_duplicate_profile_email_is_rejected(client, accounts):
+def test_duplicate_profile_email_requires_confirmation_without_revealing_occupancy(client, accounts):
     client.force_login(accounts['editor'])
     response = client.post(reverse('cuentas:perfil'), {'first_name': '', 'last_name': '', 'email': 'ADMIN@example.test'})
-    assert response.status_code == 200
-    assert response.context['form'].errors.get('email')
+    assert response.status_code == 302
+    assert mail.outbox[-1].to == ['ADMIN@example.test']
     assert User.objects.get(pk=accounts['editor'].pk).email == 'editor@example.test'
 
 
