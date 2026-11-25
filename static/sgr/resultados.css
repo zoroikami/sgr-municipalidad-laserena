@@ -9,9 +9,19 @@
 .sgr-bloque-cabecera h2 { margin: 0; font-size: var(--type-subtitle); }
 .sgr-bloque-cabecera p { max-width: 72ch; margin: var(--space-xs) 0 0; color: var(--brand-muted); font-size: var(--type-small); }
 .sgr-bloque .table { margin: 0; }
-.sgr-bloque .table > :not(caption) > * > * { padding: var(--space-lg) var(--space-xl); }
+.sgr-bloque .table > :not(caption) > * > * { padding: var(--space-lg); }
+.sgr-bloque .table > :not(caption) > * > :first-child { padding-inline-start: var(--space-xl); }
+.sgr-bloque .table > :not(caption) > * > :last-child { padding-inline-end: var(--space-xl); }
 .sgr-bloque .table thead th { padding-block: var(--space-md); }
 .sgr-bloque .table td { line-height: 1.5; }
+/* El ítem tiene ancho de lectura; enlaces y cifras no se parten en varias líneas. */
+.sgr-bloque .table td:first-child { min-width: 13rem; }
+.sgr-bloque .table a, .sgr-bloque .table .sgr-cifra { white-space: nowrap; }
+.sgr-bloque .table .sgr-enlaces { display: flex; flex-direction: column; gap: var(--space-xs); }
+/* Cumplimiento con el color de su estado (Bootstrap fija el color de las celdas con mayor especificidad). */
+.sgr-bloque .table > tbody > tr > td.sgr-sem-rojo { color: var(--error-ink); font-weight: 700; }
+.sgr-bloque .table > tbody > tr > td.sgr-sem-amarillo, .sgr-bloque .table > tbody > tr > td.sgr-sem-naranjo { color: var(--action-edit-ink); font-weight: 700; }
+.sgr-bloque .table > tbody > tr > td.sgr-sem-verde { color: var(--success-ink); font-weight: 700; }
 .sgr-bloque .table .field-help { margin-top: var(--space-xs); }
 .sgr-bloque .estado-vacio { padding-block: var(--space-2xl); text-align: center; color: var(--brand-muted); }
 .sgr-area { color: var(--brand-ink); }
