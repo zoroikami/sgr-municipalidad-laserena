@@ -204,13 +204,15 @@ def list_context(request, modulo):
 
 
 def display_value(obj, key):
-    from datetime import datetime
+    from datetime import date, datetime
     from django.utils import timezone
     value = obj
     for part in key.split('.'):
         value = getattr(value, part, '') if value else ''
     if isinstance(value, datetime):
         return timezone.localtime(value).strftime('%d-%m-%Y %H:%M')
+    if isinstance(value, date):
+        return value.strftime('%d-%m-%Y')
     if key in ('rut', 'solicitante_rut', 'usuario_rut'):
         return format_rut(value)
     if callable(value):

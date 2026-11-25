@@ -14,7 +14,7 @@
 </section>
 <section class="content-panel mt-4" aria-labelledby="caso-gestiones-title">
   <div class="page-heading"><h2 id="caso-gestiones-title">Gestiones vinculadas</h2>
-    {% if perms.gestion.add_actividadsgr %}<a class="btn btn-primary" href="{% url 'gestion:actividad_crear' %}?caso={{ obj.pk }}">Registrar gestión</a>{% endif %}
+    {% if perms.gestion.add_actividadsgr %}<a class="btn btn-primary" href="{% url 'gestion:actividad_crear' %}?caso={{ obj.pk }}&amp;responsable={{ obj.responsable_id }}&amp;cargo=social">Registrar gestión</a>{% endif %}
   </div>
   {% if obj.gestion_tubo and perms.gestion.view_gestiontubo %}<p><a href="{% url 'gestion:detalle' 'tubo' obj.gestion_tubo_id %}">Ver gestión {{ obj.gestion_tubo.codigo }} en el tubo de trabajo</a></p>{% endif %}
   <div class="table-responsive" role="region" aria-label="Gestiones del caso social" tabindex="0">

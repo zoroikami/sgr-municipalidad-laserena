@@ -288,7 +288,9 @@ def meta_funcionario(request, pk, user_pk):
     instancia = ajuste or MetaFuncionario(item=item, funcionario=funcionario, meta_cantidad=item.meta_cantidad,
                                           ponderador=item.ponderador)
     form = MetaFuncionarioForm(request.POST if request.method == 'POST' else None, instance=instancia)
-    volver = f"{reverse('gestion:resultados_sgr')}?responsable={funcionario.pk}"
+    hoy = timezone.localdate()
+    volver = (f"{reverse('gestion:resultados_sgr')}?anio={hoy.year}&trimestre={(hoy.month - 1) // 3 + 1}"
+              f"&responsable={funcionario.pk}")
     if request.method == 'POST' and form.is_valid():
         if form.cleaned_data.get('quitar'):
             if ajuste:

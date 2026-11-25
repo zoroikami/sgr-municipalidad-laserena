@@ -9,7 +9,7 @@ from django.urls import reverse
 from django.utils import timezone
 
 from gestion.integrado import DESCUENTO_RECLAMO, primera_fecha_admisible, titulo_item
-from gestion.models import ActividadSGR, GestionTubo, ItemMeta, MetaFuncionario
+from gestion.models import ActividadSGR, CasoSocial, GestionTubo, ItemMeta, MetaFuncionario
 
 pytestmark = pytest.mark.django_db
 
@@ -84,7 +84,9 @@ def test_meta_individual_del_funcionario_reemplaza_la_del_cargo(client, mundo):
     client.force_login(editor)
     assert client.get(url).status_code == 403
     client.force_login(delegado)
-    assert client.post(url, {'meta_cantidad': 15, 'ponderador': '25'}).status_code == 302
+    response = client.post(url, {'meta_cantidad': 15, 'ponderador': '25'}, follow=True)
+    assert response.status_code == 200 and not response.context['filter_form'].errors
+    assert response.context['detalle']['funcionario'] == editor
     assert MetaFuncionario.objects.get(item=item, funcionario=editor).meta_cantidad == 15
     response = client.get(reverse('gestion:resultados_sgr'), {'anio': timezone.localdate().year,
                           'trimestre': (timezone.localdate().month - 1) // 3 + 1, 'responsable': editor.pk})
@@ -132,3 +134,39 @@ def test_tubo_nuevo_respeta_el_cierre_semanal_y_lo_antiguo_se_puede_editar(clien
     assert response.status_code in (200, 302)
     if response.status_code == 200:
         assert 'fecha_solicitud' not in response.context['form'].errors
+
+
+def test_gestion_registrada_desde_el_caso_alimenta_sus_plazos(client, mundo):
+    editor = mundo['users']['editor_a']
+    editor.perfil.cargo_sgr = 'social'
+    editor.perfil.save()
+    visita = ItemMeta.objects.create(delegacion=mundo['a'], nombre=titulo_item('social', 'VISITA TERRENO'),
+                                     unidad_medida='Visitas', cargo_sgr='social', meta_cantidad=12, ponderador=20)
+    hoy = timezone.localdate()
+    caso = CasoSocial.objects.create(delegacion=mundo['a'], nombre='Vecina con caso', responsable=editor,
+                                     usuario_telefono='912345678', requiere_visita=True, fecha_ingreso=hoy,
+                                     fecha_programada_visita=hoy)
+    client.force_login(editor)
+    detalle = client.get(reverse('gestion:detalle', args=['casos', caso.pk])).content.decode()
+    enlace = f"{reverse('gestion:actividad_crear')}?caso={caso.pk}&amp;responsable={editor.pk}&amp;cargo=social"
+    assert enlace in detalle
+    formulario = client.get(reverse('gestion:actividad_crear'), {'caso': caso.pk, 'responsable': editor.pk, 'cargo': 'social'})
+    assert formulario.context['form']['caso'].value() == str(caso.pk)
+    response = client.post(reverse('gestion:actividad_crear'), datos_actividad(mundo, item=visita.pk, caso=caso.pk,
+                           descripcion='Visita domiciliaria'), follow=True)
+    assert response.status_code == 200 and response.request['PATH_INFO'] == reverse('gestion:detalle', args=['casos', caso.pk])
+    caso = CasoSocial.objects.get(pk=caso.pk)
+    assert caso.fecha_visita == hoy
+    assert next(p for p in caso.plazos() if p['clave'] == 'programada_visita')['cumple'] is True
+
+
+def test_sin_permiso_de_tubo_no_se_ofrece_ingresar_al_tubo(client, mundo):
+    from django.contrib.auth.models import Group
+    editor = mundo['users']['editor_a']
+    grupo = Group.objects.get(name='Operador / Funcionario')
+    grupo.permissions.remove(Permission.objects.get(codename='add_gestiontubo'))
+    client.force_login(editor)
+    form = client.get(reverse('gestion:actividad_crear')).context['form']
+    assert 'ingresar_tubo' not in form.fields
+    client.post(reverse('gestion:actividad_crear'), datos_actividad(mundo, ingresar_tubo='on'))
+    assert ActividadSGR.objects.count() == 1 and not GestionTubo.objects.exists()

@@ -235,7 +235,10 @@ class ActividadSGRForm(RelacionesForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.instance.responsable = self.user
+        if not self.user.has_perm('gestion.add_gestiontubo'):
+            self.fields.pop('ingresar_tubo')
         self.fields['caso'].queryset = self.relaciones(CasoSocial).filter(estado='Abierto').order_by('-fecha_ingreso')
+        self.fields['caso'].widget.attrs['data-solo-cargo'] = 'social'
         self.fields['caso'].label_from_instance = lambda caso: f'{caso.codigo} · {caso.nombre}'
         self.fields['solicitante_telefono'].help_text = 'Indica un número, por ejemplo +56 9 1234 5678. Sin nombre y teléfono del usuario no hay puntaje.'
         if not self.user.has_perm('gestion.validar_delegado'):

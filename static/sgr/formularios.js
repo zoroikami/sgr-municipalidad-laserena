@@ -55,14 +55,15 @@
   const cargo = form.querySelector('[data-actividad-cargo]');
   const responsable = form.querySelector('[data-actividad-responsable]');
   if (!itemsUrl || !item || !cargo) return;
-  // El tipo de gestión DISERCO solo corresponde al coordinador de servicios comunitarios.
-  const soloCargo = form.querySelector('[data-solo-cargo]');
+  // Campos de un solo cargo: tipo de gestión DISERCO (servicios) y caso social (gestor social).
+  const soloCargo = [...form.querySelectorAll('[data-solo-cargo]')];
   function mostrarSegunCargo() {
-    if (!soloCargo) return;
-    const visible = cargo.value === soloCargo.dataset.soloCargo;
-    const contenedor = soloCargo.closest('.form-field') || soloCargo.parentElement;
-    contenedor.hidden = !visible;
-    if (!visible) soloCargo.value = '';
+    soloCargo.forEach(campo => {
+      const visible = cargo.value === campo.dataset.soloCargo;
+      const contenedor = campo.closest('.form-field') || campo.parentElement;
+      contenedor.hidden = !visible;
+      if (!visible) campo.value = '';
+    });
   }
   mostrarSegunCargo();
   let controller;
