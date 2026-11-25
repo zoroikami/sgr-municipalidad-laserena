@@ -269,3 +269,7 @@ button, .btn, input, select { min-height: 2.75rem; }
 .tubo-resumen .estado-aprobada h2, .tubo-resumen .estado-aprobada strong { color: var(--action-view-ink); }
 .tubo-resumen .estado-no-aplica { border-left-color: var(--brand-muted); }
 .tubo-resumen .estado-no-aplica h2, .tubo-resumen .estado-no-aplica strong { color: var(--brand-muted); }
+
+/* Contador de caracteres bajo los textos largos */
+.contador-caracteres { margin-top: var(--space-xs); text-align: right; font-size: var(--type-caption); color: var(--brand-muted); font-variant-numeric: tabular-nums; }
+.contador-caracteres.cerca-del-limite { color: var(--action-edit-ink); font-weight: 700; }
