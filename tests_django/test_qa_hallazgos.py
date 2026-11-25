@@ -60,3 +60,10 @@ def test_listado_de_usuarios_muestra_el_cargo_municipal(client, mundo):
     client.force_login(mundo['users']['admin_a'])
     html = client.get(reverse('cuentas:usuarios')).content.decode()
     assert 'Cargo municipal' in html and 'Gestor social' in html and 'Sin cargo asignado' in html
+
+
+def test_resumen_de_cartas_no_repite_los_conteos_de_las_columnas(client, mundo):
+    client.force_login(mundo['users']['editor_a'])
+    html = client.get(reverse('gestion:cartas_tablero')).content.decode()
+    assert 'Cartas en este estado' not in html and 'Carta en este estado' not in html
+    assert 'Cartas en seguimiento' in html and 'Tasa de cierre' in html and 'Vencidos' in html

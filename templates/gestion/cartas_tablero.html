@@ -4,12 +4,14 @@
 {% block extra_js %}<script src="{% static 'sgr/tablero-dnd.js' %}" defer></script>{% endblock %}
 {% block content %}
 <div class="module-breadcrumb"><a href="{% url 'gestion:inicio' %}">Gestión municipal</a> / Cartas</div>
-<div class="page-heading"><div><h1>Tubo de cartas</h1><p>{{ total }} carta{{ total|pluralize:'s' }} en seguimiento. Ordenadas por fecha de actividad.</p></div><div class="heading-actions">
+<div class="page-heading"><div><h1>Tubo de cartas</h1><p>Revisa las cartas de oficina de partes, ordenadas por fecha de actividad.</p></div><div class="heading-actions">
   <a class="btn btn-outline-secondary" href="{% url 'gestion:listado' 'cartas' %}">Ver listado</a>
   {% if perms.gestion.add_carta %}<a class="btn btn-primary" href="{% url 'gestion:crear' 'cartas' %}">Crear carta</a>{% endif %}
 </div></div>
-<section class="tubo-resumen" aria-label="Resumen de cartas">
-{% for columna in columnas %}<article class="{{ columna.color }}"><h2>{{ columna.estado }}</h2><strong>{{ columna.cantidad }}</strong><p>Carta{{ columna.cantidad|pluralize:'s' }} en este estado</p></article>{% endfor %}
+{# Los conteos por estado ya figuran en cada columna: el resumen solo muestra datos que no se repiten. #}
+<section class="tubo-resumen tubo-resumen-3" aria-label="Resumen de cartas">
+<article><h2>Cartas en seguimiento</h2><strong>{{ total }}</strong><p>Ingresadas por oficina de partes</p></article>
+<article class="realizado"><h2>Tasa de cierre</h2><strong>{% widthratio cerradas total 100 %}%</strong><p>{{ cerradas }} de {{ total }} finalizada{{ cerradas|pluralize:'s' }} o sin aplicación</p></article>
 <article class="pendiente"><h2>Vencidos</h2><strong>{{ vencidos }}</strong><p>Cartas en proceso con actividad anterior a hoy</p></article>
 </section>
 {% if perms.gestion.change_carta %}<p class="tubo-dnd-ayuda">Arrastra una tarjeta a una columna habilitada o usa su botón para cambiar de estado.</p>{% endif %}

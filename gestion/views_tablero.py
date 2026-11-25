@@ -27,6 +27,8 @@ def cartas_tablero(request):
     return render(request, 'gestion/cartas_tablero.html', {
         'titulo': 'Tubo de cartas', 'modulo': 'cartas', 'columnas': columnas, 'total': query.count(),
         'vencidos': contar_vencidos(query, hoy),
+        # Cerradas: finalizadas o sin aplicación; los conteos por estado ya están en las columnas.
+        'cerradas': sum(c['cantidad'] for c in columnas if c['estado'] in ('Finalizada', 'No aplica')),
     })
 
 
