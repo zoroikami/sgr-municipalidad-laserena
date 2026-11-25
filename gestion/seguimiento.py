@@ -16,7 +16,8 @@ TRANSICIONES_TUBO = {
 
 
 class ObservacionCambioForm(forms.Form):
-    observacion = forms.CharField(required=False, max_length=2000)
+    observacion = forms.CharField(required=False, max_length=2000,
+        help_text='Explica el cambio, si corresponde; tu comentario quedará en el historial.')
 
 
 def configurar_estado_formulario(form, obj):
@@ -28,14 +29,16 @@ def configurar_estado_formulario(form, obj):
     elif isinstance(obj, GestionTubo):
         permitidos = (obj.estado, *TRANSICIONES_TUBO.get(obj.estado, ()))
         form.fields['estado'] = forms.ChoiceField(label='Estado', choices=[(s, s) for s in permitidos],
-            initial=obj.estado, widget=forms.Select(attrs={'class': 'form-select'}))
+            initial=obj.estado, help_text='Selecciona la etapa actual o la siguiente para avanzar la gestión.',
+            widget=forms.Select(attrs={'class': 'form-select', 'aria-describedby': 'id_estado_help id_estado_errors'}))
         form.initial['estado'] = obj.estado
     else:
         return
     if obj:
         form.fields['observacion_estado'] = forms.CharField(label='Observación del cambio de estado',
-            required=False, max_length=2000, help_text='Opcional. Se conserva en el historial si cambia el estado.',
-            widget=forms.Textarea(attrs={'class': 'form-control', 'rows': 2}))
+            required=False, max_length=2000, help_text='Explica el cambio, si corresponde; se conserva en el historial solo si cambia el estado.',
+            widget=forms.Textarea(attrs={'class': 'form-control', 'rows': 2,
+                'aria-describedby': 'id_observacion_estado_help id_observacion_estado_errors'}))
 
 
 def registrar_cambio(obj, anterior, autor, observacion=''):
