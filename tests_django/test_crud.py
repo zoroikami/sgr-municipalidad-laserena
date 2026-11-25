@@ -6,6 +6,8 @@ import pytest
 from django.urls import reverse
 from openpyxl import load_workbook
 
+from gestion.exportacion import FILA_ENCABEZADO
+
 from gestion.models import Atencion, ItemMeta
 
 pytestmark = pytest.mark.django_db
@@ -158,7 +160,7 @@ def test_export_contains_all_filtered_rows_no_other_scope_or_archived(client, mu
     response = client.get(reverse('gestion:exportar', args=['metas']))
     assert response.status_code == 200
     sheet = load_workbook(BytesIO(response.content)).active
-    assert sheet.max_row == 36
+    assert sheet.max_row == FILA_ENCABEZADO + 35
     values = str(list(sheet.values))
     assert 'ajeno' not in values and 'archivado' not in values
     assert 'password' not in values
@@ -169,8 +171,8 @@ def test_excel_preserves_user_input_as_text_instead_of_executable_formula(client
     ItemMeta.objects.create(delegacion=mundo['a'], nombre='=1+1', unidad_medida='Visitas')
     response = client.get(reverse('gestion:exportar', args=['metas']), {'q': '=1+1'})
     sheet = load_workbook(BytesIO(response.content)).active
-    assert sheet['B2'].value == '=1+1'
-    assert sheet['B2'].data_type == 's'
+    celda = sheet.cell(row=FILA_ENCABEZADO + 1, column=2)
+    assert celda.value == '=1+1' and celda.data_type == 's'
 
 
 def test_attention_export_is_filtered_unpaginated_and_excludes_archive(client, mundo):
@@ -186,8 +188,8 @@ def test_attention_export_is_filtered_unpaginated_and_excludes_archive(client, m
     client.get(reverse('gestion:listado', args=['atenciones']), {'q': 'Exportar atención', 'estado': 'Resuelta', 'tamano': 5})
     response = client.get(reverse('gestion:exportar', args=['atenciones']))
     sheet = load_workbook(BytesIO(response.content)).active
-    assert sheet.max_row == 31
-    assert all(row[3] == 'Resuelta' for row in list(sheet.values)[1:])
+    assert sheet.max_row == FILA_ENCABEZADO + 30
+    assert all(row[3] == 'Resuelta' for row in list(sheet.values)[FILA_ENCABEZADO:])
     assert 'Bernarda Norte' not in str(list(sheet.values))
 
 
@@ -235,7 +237,7 @@ def test_attention_date_and_responsible_filters_are_shared_by_list_refresh_and_e
     client.get(url, {'desde': '2026-11-06', 'hasta': '', 'responsable': ''})
     response = client.get(page_two.context['export_url'])
     sheet = load_workbook(BytesIO(response.content)).active
-    assert {row[0] for row in list(sheet.values)[1:]} == {item.folio for item in expected}
+    assert {row[0] for row in list(sheet.values)[FILA_ENCABEZADO:]} == {item.folio for item in expected}
 
 
 @pytest.mark.parametrize('invalid', [

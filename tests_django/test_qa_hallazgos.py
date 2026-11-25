@@ -6,6 +6,8 @@ from django.contrib.auth import get_user_model
 from django.urls import reverse
 from django.utils import timezone
 from openpyxl import load_workbook
+
+from gestion.exportacion import FILA_ENCABEZADO
 from io import BytesIO
 
 from gestion.models import GestionTubo
@@ -44,7 +46,7 @@ def test_exportacion_del_tubo_incluye_las_columnas_de_la_hoja_tubo(client, mundo
                                observaciones='Se coordina con DISERCO')
     client.force_login(mundo['users']['editor_a'])
     response = client.get(reverse('gestion:exportar', args=['tubo']))
-    filas = list(load_workbook(BytesIO(response.content)).active.iter_rows(values_only=True))
+    filas = list(load_workbook(BytesIO(response.content)).active.iter_rows(values_only=True))[FILA_ENCABEZADO - 1:]
     encabezado = filas[0]
     for columna in ('Fecha de solicitud', 'RUT solicitante', 'Teléfono solicitante', 'Responsable',
                     'Fecha de compromiso', 'Avance, observaciones', 'Estatus'):

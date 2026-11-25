@@ -7,6 +7,8 @@ from django.urls import reverse
 from django.utils import timezone
 from openpyxl import load_workbook
 
+from gestion.exportacion import FILA_ENCABEZADO
+
 from gestion.integrado import titulo_item
 from gestion.models import ActividadSGR, CasoSocial, GestionTubo, ItemMeta, SubAtencion, TipoAtencion
 
@@ -201,7 +203,7 @@ def test_busqueda_estados_exportacion_y_archivo(client, mundo, caso):
     assert caso.codigo not in response.content.decode()
     response = client.get(url('exportar'), {'estado': ''})
     book = load_workbook(BytesIO(response.content), read_only=True)
-    rows = list(book.active.values)
+    rows = list(book.active.values)[FILA_ENCABEZADO - 1:]
     assert 'Teléfono del usuario' in rows[0]
     assert any(caso.codigo in row for row in rows[1:])
     book.close()
