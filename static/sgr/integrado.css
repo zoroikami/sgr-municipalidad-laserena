@@ -99,3 +99,5 @@
 .tubo-tarjeta.tubo-vencido { border-left-color: var(--error-ink); background: var(--action-delete-bg); }
 .tubo-vencido .tubo-plazo, .tubo-fuera-plazo .tubo-plazo { color: var(--error-ink); }
 .tubo-proximo .tubo-plazo { color: var(--action-edit-ink); }
+/* Sobre el fondo de vencido el gris atenuado no alcanza 4,5:1; se usa la tinta principal. */
+.tubo-vencido footer span, .tubo-vencido .tubo-observacion { color: var(--brand-ink); }
