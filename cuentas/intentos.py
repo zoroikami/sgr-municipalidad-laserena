@@ -1,7 +1,8 @@
 """Límite de intentos de autenticación (CWE-307) con contadores atómicos en Redis.
 
-Se cuentan los fallos por cuenta y por dirección IP antes de comprobar la contraseña. Las claves son HMAC del
-identificador: Redis no guarda usuarios, correos ni direcciones en claro.
+Cada intento reserva su lugar ANTES de comprobar la contraseña: INCR y EXPIRE ocurren en un solo script Lua,
+así varias peticiones simultáneas no pueden leer el mismo contador ni dejar una clave sin vencimiento.
+Las claves son HMAC del identificador: Redis no guarda usuarios, correos ni direcciones en claro.
 """
 import ipaddress
 import logging
@@ -23,6 +24,20 @@ LIMITES = {
 MENSAJE_BLOQUEO = ('Hiciste demasiados intentos. Por seguridad, espera 15 minutos antes de volver a intentarlo '
                    'o recupera tu contraseña.')
 
+# Suma y asegura el vencimiento sin alargar una ventana vigente (TTL -1 = clave sin vencimiento).
+_SUMAR = """
+local valor = redis.call('INCR', KEYS[1])
+if redis.call('TTL', KEYS[1]) < 0 then redis.call('EXPIRE', KEYS[1], ARGV[1]) end
+return valor
+"""
+# Devuelve un lugar reservado sin crear claves nuevas ni dejar valores negativos.
+_DEVOLVER = """
+if redis.call('EXISTS', KEYS[1]) == 1 and tonumber(redis.call('GET', KEYS[1])) > 0 then
+  return redis.call('DECR', KEYS[1])
+end
+return 0
+"""
+
 
 def direccion(request):
     """IP del cliente. Detrás del Nginx incluido se usa X-Real-IP, que el proxy siempre sobrescribe."""
@@ -37,45 +52,45 @@ def direccion(request):
         return 'desconocida'
 
 
-def _clave(tipo, identificador):
-    return 'intentos:' + salted_hmac(f'sgr.intentos.{tipo}', str(identificador).strip().casefold(),
-                                     algorithm='sha256').hexdigest()
-
-
-def excedido(tipo, identificador):
-    """True si el identificador ya agotó sus intentos. Si Redis no responde se permite y se registra:
-    la autenticación no debe caerse por el contador, que es una protección adicional."""
-    try:
-        return int(caches[CACHE].get(_clave(tipo, identificador)) or 0) >= LIMITES[tipo]
-    except Exception:  # noqa: BLE001 - Redis caído o ilegible
-        logger.exception('No se pudo leer el contador de intentos %s.', tipo)
-        return False
-
-
-def registrar(tipo, identificador):
-    """Suma un intento sin alargar la ventana vigente; devuelve el total (0 si Redis no responde)."""
+def _redis(tipo, identificador):
+    """Cliente Redis y clave final (con el prefijo del caché) del contador."""
     cache = caches[CACHE]
-    clave = _clave(tipo, identificador)
+    clave = cache.make_and_validate_key('intentos:' + salted_hmac(
+        f'sgr.intentos.{tipo}', str(identificador).strip().casefold(), algorithm='sha256').hexdigest())
+    return cache._cache.get_client(clave, write=True), clave
+
+
+def reservar(tipo, identificador):
+    """Suma un intento antes de verificar y devuelve el total; 0 si Redis no responde."""
     try:
-        if cache.add(clave, 1, timeout=VENTANA):
-            return 1
-        try:
-            return cache.incr(clave)
-        except ValueError:  # venció entre add e incr
-            cache.add(clave, 1, timeout=VENTANA)
-            return 1
-    except Exception:  # noqa: BLE001
+        cliente, clave = _redis(tipo, identificador)
+        return int(cliente.eval(_SUMAR, 1, clave, VENTANA))
+    except Exception:  # noqa: BLE001 - Redis caído: la autenticación no depende del contador
         logger.exception('No se pudo registrar el intento %s.', tipo)
         return 0
 
 
+def devolver(tipo, identificador):
+    """Libera un lugar reservado (por ejemplo, el de un ingreso correcto en el contador por IP)."""
+    try:
+        cliente, clave = _redis(tipo, identificador)
+        cliente.eval(_DEVOLVER, 1, clave)
+    except Exception:  # noqa: BLE001
+        logger.exception('No se pudo liberar el intento %s.', tipo)
+
+
 def limpiar(tipo, identificador):
     try:
-        caches[CACHE].delete(_clave(tipo, identificador))
+        cliente, clave = _redis(tipo, identificador)
+        cliente.delete(clave)
     except Exception:  # noqa: BLE001
         logger.exception('No se pudo limpiar el contador de intentos %s.', tipo)
 
 
+def excede(tipo, total):
+    return total > LIMITES[tipo]
+
+
 def permitir(tipo, identificador):
-    """Registra el intento y responde si todavía está dentro del límite (para solicitudes, no contraseñas)."""
-    return registrar(tipo, identificador) <= LIMITES[tipo]
+    """Reserva el intento y responde si todavía está dentro del límite (para solicitudes, no contraseñas)."""
+    return not excede(tipo, reservar(tipo, identificador))

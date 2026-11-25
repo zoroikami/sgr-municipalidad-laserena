@@ -6,6 +6,7 @@ from django import forms
 from django.conf import settings
 from django.core.validators import RegexValidator
 from django.contrib.auth import password_validation
+from django.contrib.auth.hashers import make_password
 from django.contrib.auth.forms import AuthenticationForm, PasswordChangeForm, PasswordResetForm, SetPasswordForm
 from django.contrib.auth.models import Group, Permission, User
 from django.core.exceptions import ValidationError
@@ -57,32 +58,41 @@ class MunicipalAuthenticationForm(AuthenticationForm):
         super().__init__(*args, **kwargs)
         self.fields['password'].help_text = 'Escribe la contraseña de tu cuenta; distingue mayúsculas y minúsculas.'
 
+    error_messages = {
+        **AuthenticationForm.error_messages,
+        # Un solo mensaje para clave errada, cuenta desconocida y cuenta en pausa: no revela cuál es el caso.
+        'invalid_login': ('Usuario o contraseña incorrectos. Revisa mayúsculas y minúsculas. Tras varios intentos '
+                          'fallidos la cuenta se pausa 15 minutos; si no recuerdas tu contraseña, recupérala.'),
+    }
+
     def clean(self):
         identifier = self.cleaned_data.get('username', '')
+        password = self.cleaned_data.get('password')
+        if not identifier or not password:
+            return super().clean()  # campos obligatorios: no se intenta ingresar ni se cuenta
         matches = User.objects.filter(Q(username__iexact=identifier) | Q(email__iexact=identifier))
-        identified = bool(identifier) and matches.count() == 1
+        identified = matches.count() == 1
         # Usuario y correo de una misma cuenta comparten contador: un alias no reinicia los intentos.
         cuenta = matches.first().username if identified else identifier
         ip = intentos.direccion(self.request)
-        if intentos.excedido('login-cuenta', cuenta) or intentos.excedido('login-ip', ip):
+        # Cada intento reserva su lugar antes de comprobar la contraseña (también con peticiones simultáneas).
+        # El 429 solo depende de la IP; el bloqueo de una cuenta responde igual que una contraseña errada.
+        if intentos.excede('login-ip', intentos.reservar('login-ip', ip)):
             raise ValidationError(intentos.MENSAJE_BLOQUEO, code='bloqueado')
+        if intentos.excede('login-cuenta', intentos.reservar('login-cuenta', cuenta)):
+            make_password(password)  # mismo costo que verificar: el tiempo tampoco delata el bloqueo
+            raise self.get_invalid_login_error()
         if identified:
             self.cleaned_data['username'] = matches.first().username
-        elif identifier:
+        else:
             # Preserve Django's dummy hash and neutral invalid-login error for unknown/ambiguous IDs.
             self.cleaned_data['username'] = '__sgr_unknown_identity__'
-        try:
-            result = super().clean()
-            if not identified:
-                raise self.get_invalid_login_error()
-        except ValidationError:
-            if identifier and self.cleaned_data.get('password'):
-                intentos.registrar('login-cuenta', cuenta)
-                intentos.registrar('login-ip', ip)
-            raise
-        if self.get_user() is not None:
-            # Solo un ingreso correcto reinicia el contador; un envío sin contraseña no lo borra.
-            intentos.limpiar('login-cuenta', cuenta)
+        result = super().clean()
+        if not identified or self.get_user() is None:
+            raise self.get_invalid_login_error()
+        # Solo un ingreso correcto reinicia la cuenta y devuelve el lugar reservado de la IP.
+        intentos.limpiar('login-cuenta', cuenta)
+        intentos.devolver('login-ip', ip)
         return result
 
 
@@ -101,19 +111,20 @@ class MunicipalPasswordChangeForm(NewPasswordHelpMixin, PasswordChangeForm):
 
     def clean_old_password(self):
         # Una sesión abierta en un equipo ajeno tampoco permite adivinar la contraseña actual sin límite.
-        if intentos.excedido('clave-actual', self.user.pk):
+        # Es la propia cuenta: el aviso de bloqueo no revela nada a terceros.
+        if intentos.excede('clave-actual', intentos.reservar('clave-actual', self.user.pk)):
             raise ValidationError(intentos.MENSAJE_BLOQUEO, code='bloqueado')
-        try:
-            valor = super().clean_old_password()
-        except ValidationError:
-            intentos.registrar('clave-actual', self.user.pk)
-            raise
+        valor = super().clean_old_password()
         intentos.limpiar('clave-actual', self.user.pk)
         return valor
 
 
 class MunicipalSetPasswordForm(NewPasswordHelpMixin, SetPasswordForm):
-    pass
+    def save(self, commit=True):
+        user = super().save(commit=commit)
+        # Recuperar la contraseña con el enlace del correo es la salida del dueño ante una cuenta en pausa.
+        intentos.limpiar('login-cuenta', user.username)
+        return user
 
 
 class MunicipalPasswordResetForm(PasswordResetForm):

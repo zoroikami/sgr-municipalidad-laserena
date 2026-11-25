@@ -16,14 +16,14 @@ def ingresar(client, usuario, clave, ip='203.0.113.7'):
     return client.post(reverse('cuentas:login'), {'username': usuario, 'password': clave}, REMOTE_ADDR=ip)
 
 
-def test_cinco_fallos_bloquean_la_cuenta_tambien_por_su_correo(client, mundo):
-    for _ in range(intentos.LIMITES['login-cuenta']):
-        assert ingresar(client, 'admin_a', 'clave-equivocada').status_code == 200
-    bloqueado = ingresar(client, 'admin_a', CLAVE)
-    assert bloqueado.status_code == 429 and bloqueado['Retry-After'] == str(intentos.VENTANA)
-    assert 'demasiados intentos' in bloqueado.content.decode()
+def test_cinco_fallos_pausan_la_cuenta_tambien_por_su_correo(client, mundo):
+    for numero in range(intentos.LIMITES['login-cuenta']):
+        assert ingresar(client, 'admin_a', 'clave-equivocada', ip=f'203.0.113.{numero + 1}').status_code == 200
+    # Con la clave correcta tampoco entra, y la respuesta es la de una clave errada (no revela la pausa).
+    pausado = ingresar(client, 'admin_a', CLAVE, ip='198.51.100.8')
+    assert pausado.status_code == 200 and 'Usuario o contraseña incorrectos' in pausado.content.decode()
     # El correo de la misma cuenta comparte contador: el alias no reinicia los intentos.
-    assert ingresar(client, 'ADMIN_A@example.test', CLAVE, ip='198.51.100.9').status_code == 429
+    assert ingresar(client, 'ADMIN_A@example.test', CLAVE, ip='198.51.100.9').status_code == 200
     assert '_auth_user_id' not in client.session
     # Otra cuenta desde otra IP no se ve afectada.
     assert ingresar(client, 'editor_a', CLAVE, ip='198.51.100.10').status_code == 302
@@ -42,7 +42,9 @@ def test_ingreso_correcto_reinicia_el_contador_de_la_cuenta(client, mundo):
 def test_una_ip_que_prueba_muchas_cuentas_queda_bloqueada(client, mundo):
     for numero in range(intentos.LIMITES['login-ip']):
         ingresar(client, f'cuenta-inventada-{numero}', 'clave-equivocada', ip='192.0.2.50')
-    assert ingresar(client, 'editor_a', CLAVE, ip='192.0.2.50').status_code == 429
+    bloqueada = ingresar(client, 'editor_a', CLAVE, ip='192.0.2.50')
+    assert bloqueada.status_code == 429 and bloqueada['Retry-After'] == str(intentos.VENTANA)
+    assert 'demasiados intentos' in bloqueada.content.decode()
     assert ingresar(client, 'editor_a', CLAVE, ip='192.0.2.51').status_code == 302
 
 
@@ -81,8 +83,7 @@ def test_recuperacion_envia_fuera_de_la_peticion_con_smtp(mundo, settings):
 
 
 def test_si_redis_no_responde_el_ingreso_sigue_funcionando(client, mundo):
-    with patch.object(caches['autenticacion'], 'get', side_effect=ConnectionError), \
-         patch.object(caches['autenticacion'], 'add', side_effect=ConnectionError):
+    with patch('cuentas.intentos._redis', side_effect=ConnectionError):
         assert ingresar(client, 'editor_a', CLAVE).status_code == 302
 
 
@@ -111,4 +112,69 @@ def test_envio_sin_contrasena_no_reinicia_el_contador(client, mundo):
     client.post(reverse('cuentas:login'), {'username': 'admin_a', 'password': ''}, REMOTE_ADDR='198.51.100.30')
     client.post(reverse('cuentas:login'), {'username': 'admin_a'}, REMOTE_ADDR='198.51.100.31')
     ingresar(client, 'admin_a', 'clave-equivocada', ip='198.51.100.32')
-    assert ingresar(client, 'admin_a', CLAVE, ip='198.51.100.33').status_code == 429
+    assert ingresar(client, 'admin_a', CLAVE, ip='198.51.100.33').status_code == 200
+    assert '_auth_user_id' not in client.session
+
+
+def test_la_pausa_de_una_cuenta_no_revela_su_correo(client, mundo):
+    for numero in range(intentos.LIMITES['login-cuenta']):
+        ingresar(client, 'admin_a', 'clave-equivocada', ip=f'203.0.113.{numero + 1}')
+    # Correo de la cuenta pausada frente a uno inexistente: misma respuesta, sin 429.
+    propio = ingresar(client, 'admin_a@example.test', 'otra-clave', ip='198.51.100.40')
+    ajeno = ingresar(client, 'nadie@example.test', 'otra-clave', ip='198.51.100.41')
+    assert propio.status_code == ajeno.status_code == 200
+    assert propio.context['form'].non_field_errors() == ajeno.context['form'].non_field_errors()
+    # Sin contraseña no hay intento ni respuesta distinta.
+    vacio_propio = client.post(reverse('cuentas:login'), {'username': 'admin_a@example.test', 'password': ''})
+    vacio_ajeno = client.post(reverse('cuentas:login'), {'username': 'nadie@example.test', 'password': ''})
+    assert vacio_propio.status_code == vacio_ajeno.status_code == 200
+    assert vacio_propio.context['form'].errors == vacio_ajeno.context['form'].errors
+
+
+def test_contador_siempre_tiene_vencimiento(mundo):
+    # Aunque una clave haya quedado sin vencimiento, el siguiente intento se lo devuelve.
+    cliente, clave = intentos._redis('login-cuenta', 'admin_a')
+    cliente.set(clave, 3)
+    assert cliente.ttl(clave) == -1
+    assert intentos.reservar('login-cuenta', 'admin_a') == 4
+    assert 0 < cliente.ttl(clave) <= intentos.VENTANA
+    cliente.expire(clave, 100)
+    intentos.reservar('login-cuenta', 'admin_a')
+    assert cliente.ttl(clave) <= 100  # no alarga una ventana vigente
+
+
+def test_ingreso_correcto_devuelve_el_lugar_de_la_ip(client, mundo):
+    for _ in range(intentos.LIMITES['login-ip'] + 3):
+        assert ingresar(client, 'editor_a', CLAVE, ip='192.0.2.70').status_code == 302
+        client.post(reverse('cuentas:logout'))
+
+
+def test_reserva_concurrente_admite_solo_el_limite(mundo):
+    import threading
+    hilos, admitidos, barrera = 12, [], threading.Barrier(12)
+
+    def intentar():
+        barrera.wait()  # todos reservan al mismo tiempo
+        admitidos.append(not intentos.excede('login-cuenta', intentos.reservar('login-cuenta', 'concurrente')))
+
+    trabajadores = [threading.Thread(target=intentar) for _ in range(hilos)]
+    for hilo in trabajadores:
+        hilo.start()
+    for hilo in trabajadores:
+        hilo.join()
+    assert admitidos.count(True) == intentos.LIMITES['login-cuenta']
+
+
+def test_recuperar_la_contrasena_libera_la_pausa(client, mundo):
+    from django.contrib.auth.tokens import default_token_generator
+    from django.utils.encoding import force_bytes
+    from django.utils.http import urlsafe_base64_encode
+    editor = mundo['users']['editor_a']
+    for numero in range(intentos.LIMITES['login-cuenta']):
+        ingresar(client, 'editor_a', 'clave-equivocada', ip=f'203.0.113.{numero + 1}')
+    url = reverse('cuentas:password_reset_confirm',
+                  args=[urlsafe_base64_encode(force_bytes(editor.pk)), default_token_generator.make_token(editor)])
+    formulario = client.get(url, follow=True)
+    nueva = 'Nueva#Clave2026xy'
+    client.post(formulario.redirect_chain[-1][0], {'new_password1': nueva, 'new_password2': nueva})
+    assert ingresar(client, 'editor_a', nueva, ip='198.51.100.60').status_code == 302
