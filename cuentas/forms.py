@@ -80,7 +80,9 @@ class MunicipalAuthenticationForm(AuthenticationForm):
                 intentos.registrar('login-cuenta', cuenta)
                 intentos.registrar('login-ip', ip)
             raise
-        intentos.limpiar('login-cuenta', cuenta)
+        if self.get_user() is not None:
+            # Solo un ingreso correcto reinicia el contador; un envío sin contraseña no lo borra.
+            intentos.limpiar('login-cuenta', cuenta)
         return result
 
 

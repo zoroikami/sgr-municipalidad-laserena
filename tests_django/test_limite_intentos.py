@@ -103,3 +103,12 @@ def test_solicitudes_de_cambio_de_correo_tienen_limite_por_cuenta(client, mundo)
     assert len(mail.outbox) == intentos.LIMITES['cambio-correo']
     editor.refresh_from_db()
     assert editor.email == 'editor_a@example.test'
+
+
+def test_envio_sin_contrasena_no_reinicia_el_contador(client, mundo):
+    for _ in range(intentos.LIMITES['login-cuenta'] - 1):
+        ingresar(client, 'admin_a', 'clave-equivocada')
+    client.post(reverse('cuentas:login'), {'username': 'admin_a', 'password': ''}, REMOTE_ADDR='198.51.100.30')
+    client.post(reverse('cuentas:login'), {'username': 'admin_a'}, REMOTE_ADDR='198.51.100.31')
+    ingresar(client, 'admin_a', 'clave-equivocada', ip='198.51.100.32')
+    assert ingresar(client, 'admin_a', CLAVE, ip='198.51.100.33').status_code == 429
