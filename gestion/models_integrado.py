@@ -121,6 +121,19 @@ class GestionTubo(RegistroDelegacion):
             raise ValidationError(errores)
 
 
+# Hoja COOR DISERCO, lista de la columna de tipo de gestión.
+TIPOS_GESTION_DISERCO = [
+    ('alumbrado', 'Alumbrado público'), ('plazas', 'Áreas verdes: plazas'), ('podas', 'Áreas verdes: podas'),
+    ('informe_cuadrilla', 'Informe de cuadrilla'), ('informe_tecnico', 'Informe técnico'),
+    ('punto_reciclaje', 'Punto de reciclaje'), ('retiro_basuras', 'Retiro de basuras y limpieza'),
+    ('salida_terreno', 'Salida a terreno'), ('aguas', 'Aguas y sanitaria'), ('maquinarias', 'Maquinarias'),
+    ('obras_civiles', 'Obras civiles'), ('taller_compostaje', 'Taller de compostaje'),
+    ('taller_medio_ambiente', 'Taller de medio ambiente'), ('taller_reciclaje', 'Taller de reciclaje'),
+    ('tolva', 'Tolva'), ('emergencia', 'Emergencia'), ('sumideros', 'Limpieza de sumideros y drenes'),
+    ('otras', 'Otras'),
+]
+
+
 class ActividadSGR(models.Model):
     delegacion = models.ForeignKey('gestion.Delegacion', on_delete=models.PROTECT)
     responsable = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT)
@@ -128,6 +141,10 @@ class ActividadSGR(models.Model):
     cargo = models.CharField(max_length=30, choices=CARGOS)
     fecha = models.DateField(default=timezone.localdate)
     descripcion = models.TextField(max_length=500)
+    # Columnas ACCIÓN (hojas T OC), DETALLE y DERIVADO A (hoja AP ADM): informativas, no cambian el puntaje.
+    accion = models.CharField('Acción realizada', max_length=200, blank=True)
+    derivado_a = models.CharField('Derivado a', max_length=140, blank=True)
+    tipo_gestion = models.CharField('Tipo de gestión DISERCO', max_length=30, blank=True, choices=TIPOS_GESTION_DISERCO)
     solicitante_nombre = models.CharField(max_length=140, blank=True)
     solicitante_telefono = models.CharField(max_length=25, blank=True,
         validators=[RegexValidator(r'^\+?[0-9 ()-]{7,25}$', 'Ingresa un teléfono válido.')])
@@ -165,6 +182,8 @@ class ActividadSGR(models.Model):
             raise ValidationError({'item': 'Selecciona un ítem activo de la misma delegación.'})
         if self.item_id and self.item.cargo_sgr and self.item.cargo_sgr != self.cargo:
             raise ValidationError({'item': 'El ítem no corresponde al cargo de la actividad.'})
+        if self.tipo_gestion and self.cargo != 'servicios':
+            raise ValidationError({'tipo_gestion': 'El tipo de gestión DISERCO corresponde al coordinador de servicios comunitarios.'})
         if self.responsable_id:
             perfil = getattr(self.responsable, 'perfil', None)
             if not self.responsable.is_superuser and (not perfil or perfil.delegacion_id != self.delegacion_id):
@@ -199,8 +218,10 @@ class AusenciaSGR(models.Model):
     responsable = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT)
     desde = models.DateField()
     hasta = models.DateField()
+    # Hoja SEMAFORO: licencias, vacaciones, emergencias y compensatorios o administrativos descuentan días.
     motivo = models.CharField(max_length=20, choices=[('libre', 'Día libre'), ('vacaciones', 'Vacaciones'),
-        ('administrativo', 'Día administrativo'), ('licencia', 'Licencia')])
+        ('administrativo', 'Día administrativo'), ('licencia', 'Licencia'), ('emergencia', 'Emergencia'),
+        ('compensatorio', 'Día compensatorio')])
     registrado_por = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name='ausencias_registradas', editable=False)
 
     class Meta:

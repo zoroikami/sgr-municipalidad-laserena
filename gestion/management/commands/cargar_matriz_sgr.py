@@ -4,7 +4,7 @@ from decimal import Decimal
 from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
 
-from gestion.integrado import CARGOS
+from gestion.integrado import titulo_item
 from gestion.models import Delegacion, ItemMeta
 
 TUBO = 'SOLUCIONES DE INGRESOS AL TUBO'
@@ -78,12 +78,11 @@ class Command(BaseCommand):
         if org is None:
             raise CommandError('La delegación indicada no existe.')
         creados = existentes = 0
-        cargos = dict(CARGOS)
         with transaction.atomic():
             for cargo, (hoja, items) in MATRIZ.items():
                 for nombre, ponderador, meta, unidad in items:
                     # El nombre es único por delegación: se distingue el ítem común de cada cargo.
-                    titulo = f'{nombre.capitalize()} ({cargos[cargo]})'
+                    titulo = titulo_item(cargo, nombre)
                     if ItemMeta.all_objects.filter(delegacion=org, nombre=titulo).exists():
                         existentes += 1
                         continue

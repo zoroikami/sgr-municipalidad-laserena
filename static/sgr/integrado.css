@@ -78,6 +78,7 @@
 .tubo-resumen .sgr-objetivo-rojo { border-left-color: var(--error-ink); }
 .tubo-resumen .sgr-objetivo p { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-sm); }
 .tubo-resumen .pendiente strong { color: var(--error-ink); }
+.tubo-resumen strong.sgr-delegacion-nombre { display: block; font-size: var(--type-section); line-height: 1.25; overflow-wrap: anywhere; }
 .sgr-alerta {
   background: var(--action-delete-bg); color: var(--error-ink); border: 1px solid var(--action-delete-border);
   border-left: var(--space-xs) solid var(--error-ink); border-radius: var(--legacy-radius-control);

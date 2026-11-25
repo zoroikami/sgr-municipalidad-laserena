@@ -15,7 +15,7 @@ from django.views.decorators.http import require_GET, require_POST
 
 from .access import authorize, scoped
 from .forms_integrado import ActividadSGRForm, AusenciaSGRForm, PeriodoSGRForm, MetaSGRForm, ReclamoSGRForm
-from .integrado import (resultado_final, resultado_item, semaforo, trimestres_anteriores, limites_trimestre,
+from .integrado import (resultado_delegacion, resultado_final, resultado_item, semaforo, trimestres_anteriores, limites_trimestre,
                         CARGOS, MAX_FELICITACIONES)
 from .models import ActividadSGR, AusenciaSGR, GestionTubo, ItemMeta, ReclamoSGR
 from .seguimiento import ObservacionCambioForm, registrar_cambio, TRANSICIONES_TUBO
@@ -147,6 +147,7 @@ def resultados(request):
     rows, actividades, ausencias, reclamos = [], [], [], []
     total = base = None
     equipo, detalle, objetivo_equipo = [], None, None
+    metricas_delegacion, salon = [], None
     if form.is_valid():
         anio, trimestre = form.cleaned_data['anio'], form.cleaned_data['trimestre']
         inicio, fin = limites_trimestre(anio, trimestre)
@@ -155,7 +156,8 @@ def resultados(request):
         metas = list(scoped(request.user, ItemMeta).filter(delegacion_id=org, estado='Activo'))
         todos = list(scoped(request.user, ActividadSGR).filter(fecha__range=(inicio, fin)).select_related('item', 'responsable'))
         todas_ausencias = list(scoped(request.user, AusenciaSGR).filter(desde__lte=fin, hasta__gte=inicio))
-        gestiones = list(scoped(request.user, GestionTubo).filter(fecha_solicitud__range=(inicio, fin)).only('responsable_id', 'estado', 'solicitante', 'solicitante_telefono', 'solicitante_cargo'))
+        gestiones = list(scoped(request.user, GestionTubo).filter(fecha_solicitud__range=(inicio, fin)).only(
+            'delegacion_id', 'responsable_id', 'estado', 'solicitante', 'solicitante_telefono', 'solicitante_cargo'))
         todos_reclamos = list(scoped(request.user, ReclamoSGR).filter(fecha__range=(inicio, fin)).select_related('responsable'))
         # Hoja RECLAMOS: no pueden repetirse más de dos trimestres seguidos (se informa a RRHH).
         previos = [limites_trimestre(a, t) for a, t in trimestres_anteriores(anio, trimestre, 2)]
@@ -172,6 +174,7 @@ def resultados(request):
             quejas = [r for r in todos_reclamos if r.responsable_id == user.pk]
             metricas = [resultado_item(meta, registros, libres, inicio, fin, propias) for meta in metas
                         if not meta.cargo_sgr or meta.cargo_sgr == user.perfil.cargo_sgr]
+            metricas_delegacion.extend(metricas)
             peso = sum(row['meta'].ponderador for row in metricas if row['porcentaje'] is not None)
             parcial = sum(row['ponderado'] for row in metricas if row['ponderado'] is not None) * 100 / peso if peso else None
             felicitaciones = sum(1 for a in registros if a.felicitacion and a.puntuable)
@@ -188,6 +191,11 @@ def resultados(request):
             equipo.append(fila)
             if user.pk == funcionario.pk:
                 rows, actividades, ausencias, reclamos, total, base, detalle = metricas, registros, libres, quejas, final, parcial, fila
+        # Hoja SALON: el equipo listado es toda la delegación, porque el ámbito de cada rol es su delegación.
+        if equipo:
+            salon = resultado_delegacion(metas, metricas_delegacion, [g for g in gestiones if g.delegacion_id == org])
+            salon['semaforo'] = semaforo(salon['total'], inicio, fin, hoy, [])
+            salon['delegacion'] = funcionario.perfil.delegacion
     valores = [r['porcentaje'] for r in equipo if r['porcentaje'] is not None]
     total_equipo = sum(valores) / len(valores) if valores else None
     equipo.sort(key=lambda r: (r['porcentaje'] is None, -(r['porcentaje'] or 0)))
@@ -195,7 +203,7 @@ def resultados(request):
     return render(request, 'gestion/resultados_sgr.html', {'titulo': 'Resultados SGR', 'sgr_section': True, 'filter_form': form,
         'resultados': rows, 'actividades': actividades, 'ausencias': ausencias, 'reclamos': reclamos, 'total': total, 'base': base,
         'detalle': detalle, 'equipo': equipo, 'total_equipo': total_equipo, 'resumen_semaforo': resumen,
-        'objetivo_equipo': objetivo_equipo})
+        'objetivo_equipo': objetivo_equipo, 'salon': salon})
 
 
 @login_required

@@ -37,6 +37,44 @@ DESCUENTO_RECLAMO = Decimal('20')
 TOPE_FINAL = Decimal('150')
 # Hojas SEMAFORO y RESUMEN: naranjo desde el 60% del objetivo al día de hoy.
 FACTOR_NARANJO = Decimal('0.6')
+# Nuevo requerimiento, punto 7: ningún ítem puede superar 120% de cumplimiento.
+TOPE_ITEM = Decimal('120')
+
+# Hoja SALON: cumplimiento de la delegación con ponderadores propios, que suman 1,0 sin el gestor de
+# seguridad (la hoja lo evalúa en un bloque aparte, G SEGUR). Cada fila suma avances y metas de todos los
+# funcionarios del cargo (por ejemplo, las cuatro hojas T OC) y algunas agrupan dos ítems de la hoja del cargo.
+# (área, ítem, ponderador, cargo, ítems de la matriz por cargo que suma)
+SALON = [
+    ('Apoyo administrativo', 'Atención de usuario teléfono y presencial', '0.06', 'administrativo',
+     ['ATENCIÓN DE USUARIO TELÉFONO Y PRESENCIAL']),
+    ('Apoyo administrativo', 'Llamadas preventivas a usuarios', '0.05', 'administrativo', ['LLAMADAS PREVENTIVAS A USUARIOS']),
+    ('Apoyo administrativo', 'Informe de inventarios', '0.03', 'administrativo', ['INFORME DE INVENTARIOS']),
+    ('Apoyo administrativo', 'Informe a comunicaciones', '0.05', 'administrativo', ['INFORME A COMUNICACIONES']),
+    ('Organizaciones comunitarias', 'Atención de usuario teléfono y presencial', '0.05', 'organizaciones',
+     ['ATENCIÓN DE USUARIO TELÉFONO Y PRESENCIAL']),
+    ('Organizaciones comunitarias', 'Visitas, reuniones con organizaciones', '0.04', 'organizaciones',
+     ['VISITAS, REUNIONES CON ORGANIZACIONES']),
+    ('Organizaciones comunitarias', 'Conformación de directivas definitivas', '0.05', 'organizaciones',
+     ['CONFORMACIÓN DE ORGANIZACIONES']),
+    ('Organizaciones comunitarias', 'Gestión de talleres y actividades', '0.05', 'organizaciones',
+     ['GESTIÓN DE TALLERES Y ACTIVIDADES']),
+    ('DISERCO', 'Informes', '0.03', 'servicios', ['INFORMES PERSONAL', 'INFORME TRABAJO']),
+    ('DISERCO', 'Operativos', '0.04', 'servicios', ['OPERATIVO DELEGACIÓN', 'OPERATIVO DISERCO']),
+    ('DISERCO', 'Talleres', '0.05', 'servicios', ['TALLERES']),
+    ('DISERCO', 'Terreno', '0.04', 'servicios', ['TERRENO']),
+    ('DISERCO', 'Atención requerimiento usuario', '0.05', 'servicios', ['ATENCIÓN REQUERIMIENTO USUARIO']),
+    ('Gestión social', 'Atención social a usuario presencial', '0.05', 'social', ['ATENCIÓN SOCIAL A USUARIO PRESENCIAL']),
+    ('Gestión social', 'Visita social en terreno', '0.05', 'social', ['VISITA TERRENO']),
+    ('Gestión social', 'Entrega informe', '0.04', 'social', ['ENTREGA INFORME']),
+    ('Gestión social', 'Entrega beneficio', '0.04', 'social', ['ENTREGA BENEFICIO']),
+    ('Planificación y control', 'Reunión semanal con el equipo', '0.04', 'planificacion', ['REUNIÓN SEMANAL CON EL EQUIPO']),
+    ('Planificación y control', 'Solución de problemas a usuarios particulares', '0.04', 'planificacion',
+     ['SOLUCIÓN DE PROBLEMAS A USUARIOS PARTICULARES']),
+]
+SALON_TUBO = Decimal('0.05')         # Soluciones de ingresos al tubo: meta 80% realizado.
+SALON_PENDIENTES = Decimal('0.05')   # Pendientes en tubo menor a 10%.
+SALON_EMERGENCIA = Decimal('0.05')
+META_TUBO_DELEGACION = Decimal('80')
 
 
 def primera_fecha_admisible(hoy=None):
@@ -101,7 +139,7 @@ def resultado_item(meta, actividades, ausencias, inicio, fin, gestiones=None):
     # Las felicitaciones se bonifican sobre el resultado final (hoja RECLAMOS), no como acción del ítem.
     validas = sum(1 for actividad in actividades
                   if actividad.item_id == meta.pk and actividad.puntuable and not actividad.felicitacion)
-    porcentaje = min(Decimal('120'), Decimal(validas) * 100 / ajustada) if ajustada else None
+    porcentaje = min(TOPE_ITEM, Decimal(validas) * 100 / ajustada) if ajustada else None
     return {'meta': meta, 'cantidad': validas, 'ajustada': ajustada,
             'porcentaje': porcentaje, 'ponderado': porcentaje * meta.ponderador / 100 if porcentaje is not None else None}
 
@@ -111,19 +149,23 @@ def con_datos_usuario(gestion):
                 and str(getattr(gestion, 'solicitante_telefono', '') or '').strip())
 
 
+def gestiones_contables(gestiones):
+    """Nuevo requerimiento, punto 1: las solicitudes del delegado son «otra gestión» y no se contabilizan."""
+    return [gestion for gestion in gestiones if getattr(gestion, 'solicitante_cargo', '') != 'delegado']
+
+
 def resultado_tubo(meta, gestiones):
     """Soluciones al ingreso al tubo: gestiones realizadas / ingresadas frente a la tasa meta (p. ej. 80%).
 
-    Nuevo requerimiento, punto 1: las solicitudes del delegado son «otra gestión» y no se contabilizan.
     Punto 2: una solicitud sin nombre y teléfono del usuario no da puntaje; sigue contando como ingresada
     para que omitir esos datos no mejore la tasa."""
-    gestiones = [gestion for gestion in gestiones if getattr(gestion, 'solicitante_cargo', '') != 'delegado']
+    gestiones = gestiones_contables(gestiones)
     total = len(gestiones)
     realizadas = sum(1 for gestion in gestiones if gestion.estado == 'Realizado' and con_datos_usuario(gestion))
     objetivo = Decimal(meta.meta_cantidad)
     porcentaje = None
     if total and objetivo:
-        porcentaje = min(Decimal('120'), Decimal(realizadas) * 100 / total * 100 / objetivo)
+        porcentaje = min(TOPE_ITEM, Decimal(realizadas) * 100 / total * 100 / objetivo)
     return {'meta': meta, 'cantidad': realizadas, 'ajustada': Decimal(total), 'tasa': True,
             'porcentaje': porcentaje, 'ponderado': porcentaje * meta.ponderador / 100 if porcentaje is not None else None}
 
@@ -134,6 +176,65 @@ def resultado_final(base, felicitaciones, reclamos):
         return None
     bono = BONO_FELICITACION * min(felicitaciones, MAX_FELICITACIONES)
     return max(Decimal('0'), min(TOPE_FINAL, Decimal(base) + bono - DESCUENTO_RECLAMO * reclamos))
+
+
+def titulo_item(cargo, nombre):
+    """Nombre con que cargar_matriz_sgr crea el ítem de un cargo (el nombre es único por delegación)."""
+    return f'{nombre.capitalize()} ({dict(CARGOS)[cargo]})'
+
+
+def puntaje_pendientes(tasa):
+    """Hoja SALON: 100% si los pendientes son hasta 10% del tubo, 50% hasta 50% y 0% sobre eso."""
+    if tasa is None:
+        return None
+    return Decimal(100) if tasa <= 10 else Decimal(50) if tasa <= 50 else Decimal(0)
+
+
+def resultado_delegacion(metas, metricas, gestiones):
+    """Hoja SALON: cumplimiento ponderado de la delegación.
+
+    `metas` son los ítems activos de la delegación, `metricas` las filas de resultado_item de todos sus
+    funcionarios y `gestiones` las del tubo de la delegación en el período. Una fila sin datos no se pondera
+    y el peso considerado se informa, para que nadie lea un total inflado sin saber por qué."""
+    nombres = {meta.nombre for meta in metas}
+    filas = []
+
+    def agregar(area, nombre, ponderador, tipo, meta, avance, porcentaje, nota=''):
+        filas.append({'area': area, 'nombre': nombre, 'ponderador': ponderador * 100, 'tipo': tipo, 'meta': meta,
+                      'avance': avance, 'porcentaje': porcentaje, 'nota': nota,
+                      'ponderado': porcentaje * ponderador if porcentaje is not None else None})
+
+    for area, nombre, ponderador, cargo, fuentes in SALON:
+        titulos = {titulo_item(cargo, fuente) for fuente in fuentes}
+        propias = [fila for fila in metricas if fila['meta'].nombre in titulos and fila['meta'].cargo_sgr == cargo]
+        meta = sum((fila['ajustada'] for fila in propias), Decimal(0))
+        avance = sum(fila['cantidad'] for fila in propias)
+        nota = ('La delegación no tiene este ítem activo.' if not titulos & nombres else
+                'Sin funcionarios con este cargo.' if not propias else 'Meta en cero.' if not meta else '')
+        porcentaje = min(TOPE_ITEM, Decimal(avance) * 100 / meta) if meta else None
+        agregar(area, nombre, Decimal(ponderador), 'cantidad', meta, avance, porcentaje, nota)
+
+    contables = gestiones_contables(gestiones)
+    total = len(contables)
+    realizadas = sum(1 for gestion in contables if gestion.estado == 'Realizado' and con_datos_usuario(gestion))
+    pendientes = sum(1 for gestion in contables if gestion.estado == 'Pendiente')
+    tasa = Decimal(realizadas) * 100 / total if total else None
+    agregar('Tubo de trabajo', 'Soluciones de ingresos al tubo', SALON_TUBO, 'tubo', META_TUBO_DELEGACION,
+            {'realizadas': realizadas, 'total': total, 'tasa': tasa},
+            min(TOPE_ITEM, tasa * 100 / META_TUBO_DELEGACION) if tasa is not None else None,
+            '' if total else 'Sin gestiones en el tubo.')
+    tasa_pendientes = Decimal(pendientes) * 100 / total if total else None
+    agregar('Tubo de trabajo', 'Pendientes en tubo menor a 10%', SALON_PENDIENTES, 'pendientes', Decimal(10),
+            {'pendientes': pendientes, 'total': total, 'tasa': tasa_pendientes}, puntaje_pendientes(tasa_pendientes),
+            '' if total else 'Sin gestiones en el tubo.')
+    emergencias = {titulo_item(cargo, 'EMERGENCIA') for cargo, _ in CARGOS}
+    atendidas = sum(fila['cantidad'] for fila in metricas if fila['meta'].nombre in emergencias)
+    agregar('Emergencias', 'Emergencia', SALON_EMERGENCIA, 'emergencia', None, atendidas,
+            Decimal(100) if atendidas else None, '' if atendidas else 'Sin emergencias en el período: no aplica.')
+
+    peso = sum((fila['ponderador'] for fila in filas if fila['porcentaje'] is not None), Decimal(0))
+    suma = sum((fila['ponderado'] for fila in filas if fila['ponderado'] is not None), Decimal(0))
+    return {'filas': filas, 'peso': peso, 'total': suma * 100 / peso if peso else None}
 
 
 def dias_calendario(ausencias, inicio, fin):

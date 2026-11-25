@@ -191,14 +191,17 @@ class GestionTuboForm(RelacionesForm):
 class ActividadSGRForm(RelacionesForm):
     class Meta:
         model = ActividadSGR
-        fields = ['item', 'cargo', 'fecha', 'descripcion', 'solicitante_nombre', 'solicitante_telefono',
-                  'solicitante_delegado', 'es_accion', 'felicitacion', 'respaldo_formal']
+        fields = ['item', 'cargo', 'fecha', 'descripcion', 'accion', 'derivado_a', 'tipo_gestion', 'solicitante_nombre',
+                  'solicitante_telefono', 'solicitante_delegado', 'es_accion', 'felicitacion', 'respaldo_formal']
         labels = {'item': 'Ítem', 'descripcion': 'Descripción', 'solicitante_nombre': 'Nombre del solicitante',
                   'solicitante_telefono': 'Teléfono del solicitante'}
         widgets = {'fecha': forms.DateInput(format='%Y-%m-%d', attrs={'type': 'date'})}
         help_texts = {
             'item': 'Selecciona el ítem de la matriz que corresponde a la actividad y al cargo.',
             'descripcion': 'Describe la acción realizada y el resultado obtenido.',
+            'accion': 'Opcional. Resume en pocas palabras qué hiciste, por ejemplo «Orientación telefónica» o «Gestionar poda».',
+            'derivado_a': 'Opcional. Indica la persona, oficina o servicio al que derivaste el caso; déjalo vacío si no hubo derivación.',
+            'tipo_gestion': 'Solo para el coordinador DISERCO: elige el tipo de gestión de la hoja COOR DISERCO.',
             'solicitante_nombre': 'Escribe los nombres y apellidos del usuario atendido para acreditar la actividad.',
             'solicitante_delegado': 'Marca si la solicitud proviene del delegado; cuenta como otra gestión.',
             'es_accion': 'Marca si ejecutaste la acción; una coordinación por sí sola no suma puntaje.',
@@ -228,6 +231,7 @@ class ActividadSGRForm(RelacionesForm):
         cargo = cargo if cargo in dict(CARGOS) else ''
         campo_cargo = self.fields['cargo']
         campo_cargo.widget.attrs['data-actividad-cargo'] = ''
+        self.fields['tipo_gestion'].widget.attrs['data-solo-cargo'] = 'servicios'
         if self.cargo_asignado:
             campo_cargo.disabled = True
             campo_cargo.initial = self.cargo_asignado
