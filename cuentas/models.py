@@ -44,5 +44,10 @@ class Perfil(models.Model):
         self.rut = None if self.user.is_superuser and not self.rut else normalize_rut(self.rut)
         super().save(*args, **kwargs)
 
+    @property
+    def cargo_nombre(self):
+        from gestion.integrado import CARGOS
+        return dict(CARGOS).get(self.cargo_sgr, 'Sin cargo asignado')
+
     def __str__(self):
         return self.user.get_full_name() or self.user.username

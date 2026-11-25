@@ -51,3 +51,12 @@ def test_exportacion_del_tubo_incluye_las_columnas_de_la_hoja_tubo(client, mundo
         assert columna in encabezado
     fila = dict(zip(encabezado, filas[1]))
     assert fila['RUT solicitante'] == '12.345.678-5' and fila['Avance, observaciones'] == 'Se coordina con DISERCO'
+
+
+def test_listado_de_usuarios_muestra_el_cargo_municipal(client, mundo):
+    perfil = mundo['users']['editor_a'].perfil
+    perfil.cargo_sgr = 'social'
+    perfil.save()
+    client.force_login(mundo['users']['admin_a'])
+    html = client.get(reverse('cuentas:usuarios')).content.decode()
+    assert 'Cargo municipal' in html and 'Gestor social' in html and 'Sin cargo asignado' in html
