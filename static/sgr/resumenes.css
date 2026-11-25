@@ -40,7 +40,7 @@
   font-size: var(--type-small);
   font-weight: 700;
   line-height: 1.4;
-  overflow-wrap: anywhere;
+  overflow-wrap: normal;
 }
 .resumen-compacto > article > h2::before {
   content: '';
@@ -69,6 +69,14 @@
   font-size: var(--type-caption);
   line-height: 1.5;
   overflow-wrap: anywhere;
+}
+/* Los detalles amplios y los grupos numerosos necesitan todo el ancho del artículo. */
+.resumen-compacto[data-disposicion='apilada'] > article,
+.resumen-compacto:has(> article:nth-child(4)) > article {
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-areas: 'label' 'value' 'detail';
+  align-content: start;
+  row-gap: var(--space-sm);
 }
 @media (max-width: 700px) {
   .resumen-compacto { grid-template-columns: minmax(0, 1fr); }
