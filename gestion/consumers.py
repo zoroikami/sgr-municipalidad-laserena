@@ -7,13 +7,16 @@ from django.utils.crypto import constant_time_compare
 
 from .access import delegation_id, is_cliente
 from .delegation import SESSION_KEY, has_global_scope, session_delegation
-from .realtime import GLOBAL_SCOPE, group_for
+from .realtime import GLOBAL_SCOPE, TEMAS, group_for
 
 
 @database_sync_to_async
-def viewer_scope(user_id, session_key):
+def viewer_scope(user_id, session_key, modulo='atenciones'):
+    permission = TEMAS.get(modulo)
+    if permission is None:
+        return None
     user = get_user_model().objects.filter(pk=user_id, is_active=True).first()
-    if not user or is_cliente(user) or not user.has_perm('gestion.view_atencion'):
+    if not user or is_cliente(user) or not user.has_perm(f'gestion.{permission}'):
         return None
     session = SessionStore(session_key=session_key).load() if session_key else {}
     if (str(session.get('_auth_user_id')) != str(user.pk)
@@ -28,7 +31,7 @@ def viewer_scope(user_id, session_key):
         return None
 
 
-class AtencionesConsumer(AsyncJsonWebsocketConsumer):
+class ModulosConsumer(AsyncJsonWebsocketConsumer):
     async def connect(self):
         user = self.scope.get('user')
         if not user or not user.is_authenticated:
@@ -36,11 +39,12 @@ class AtencionesConsumer(AsyncJsonWebsocketConsumer):
             return
         self.user_id = user.pk
         self.session_key = self.scope['session'].session_key
-        self.org_id = await viewer_scope(self.user_id, self.session_key)
+        self.modulo = self.scope.get('url_route', {}).get('kwargs', {}).get('modulo', 'atenciones')
+        self.org_id = await viewer_scope(self.user_id, self.session_key, self.modulo)
         if not self.org_id:
             await self.close(code=4403)
             return
-        self.group_name = group_for(self.org_id)
+        self.group_name = group_for(self.org_id, self.modulo)
         await self.channel_layer.group_add(self.group_name, self.channel_name)
         await self.accept()
 
@@ -53,7 +57,11 @@ class AtencionesConsumer(AsyncJsonWebsocketConsumer):
         await self.close(code=4400)
 
     async def tabla_cambio(self, event):
-        if await viewer_scope(self.user_id, self.session_key) != self.org_id:
+        if await viewer_scope(self.user_id, self.session_key, self.modulo) != self.org_id:
             await self.close(code=4403)
             return
         await self.send_json({'type': 'tabla.cambio'})
+
+
+class AtencionesConsumer(ModulosConsumer):
+    """Conserva el endpoint y los avisos del listado de atenciones existente."""

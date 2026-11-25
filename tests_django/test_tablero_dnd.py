@@ -102,13 +102,17 @@ def test_arrastre_real_confirmacion_cancelacion_y_responsive(client, mundo, live
         source = page.locator('.tubo-columna').filter(has=card)
         target = page.locator(f'.tubo-columna[data-estado="{dest}"]')
         expect(card).to_have_attribute('draggable', 'true')
+        # El centro de una tarjeta larga puede ser un input: arrastrar desde su código.
+        handle = card.locator('.tubo-codigos')
         # Invalid columns neither ask for confirmation nor submit a transition.
-        card.drag_to(page.locator(f'.tubo-columna[data-estado="{invalid}"]'))
+        handle.drag_to(page.locator(f'.tubo-columna[data-estado="{invalid}"]'), target_position={'x': 40, 'y': 80})
+        expect(page.locator('.swal2-popup')).to_have_count(0)
+        card.locator('[name=observacion]').first.drag_to(target)
         expect(page.locator('.swal2-popup')).to_have_count(0)
         page.reload()
         expect(page.locator(f'.tubo-columna[data-estado="{origin}"]').locator('.tubo-tarjeta')).to_have_count(1)
         # A cancelled drop leaves state, history and board untouched.
-        card.drag_to(target)
+        handle.drag_to(target, target_position={'x': 40, 'y': 80})
         expect(page.get_by_role('dialog')).to_be_visible()
         page.get_by_role('button', name='Cancelar', exact=True).click()
         expect(source.locator('.tubo-tarjeta')).to_have_count(1)
@@ -117,7 +121,7 @@ def test_arrastre_real_confirmacion_cancelacion_y_responsive(client, mundo, live
         # The existing note is offered and its edited value reaches the real POST.
         form = card.locator(f'form[data-destino="{dest}"]')
         form.locator('[name=observacion]').fill('Nota previa')
-        card.drag_to(target)
+        handle.drag_to(target, target_position={'x': 40, 'y': 80})
         expect(page.get_by_role('textbox', name='Observación (opcional)')).to_have_value('Nota previa')
         page.get_by_role('textbox', name='Observación (opcional)').fill('Seguimiento mediante arrastre')
         page.get_by_role('button', name='Mover tarjeta', exact=True).click()
