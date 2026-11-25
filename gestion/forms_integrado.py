@@ -50,6 +50,19 @@ class OrganizacionForm(ScopedModelForm):
                   'registro_pj', 'fecha_inscripcion', 'registro_directiva', 'verificada', 'descripcion', 'estado']
         widgets = {key: forms.DateInput(format='%Y-%m-%d', attrs={'type': 'date'})
                    for key in ['fecha_constitucion', 'fecha_inscripcion']}
+        help_texts = {
+            'nombre': 'Escribe el nombre oficial de la organización.',
+            'familia': 'Selecciona si la organización es territorial o funcional según su objetivo.',
+            'domicilio': 'Indica la calle, el número y el sector de su sede o domicilio.',
+            'socios_activos': 'Indica la cantidad actual de integrantes activos, sin decimales.',
+            'fecha_constitucion': 'Selecciona el día, mes y año en que se constituyó la organización.',
+            'registro_pj': 'Escribe el número de registro de su personalidad jurídica.',
+            'fecha_inscripcion': 'Selecciona el día, mes y año de su inscripción en el registro.',
+            'registro_directiva': 'Escribe el número o referencia del registro de la directiva vigente.',
+            'verificada': 'Marca la casilla si ya comprobaste los antecedentes de la organización.',
+            'descripcion': 'Describe el objetivo y las actividades principales de la organización.',
+            'estado': 'Selecciona Activo para poder vincularla a nuevas gestiones.',
+        }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -60,7 +73,7 @@ class OrganizacionForm(ScopedModelForm):
             opciones.append(('Registrada', [(actual, actual)]))
         self.fields['subfamilia'].choices = opciones
         self.fields['subfamilia'].widget.attrs['class'] = 'form-select'
-        self.fields['subfamilia'].help_text = 'Clasificación del nuevo requerimiento según el objetivo de la organización.'
+        self.fields['subfamilia'].help_text = 'Elige la clasificación del nuevo requerimiento según su objetivo y la familia elegida.'
 
     def clean(self):
         data = super().clean()
@@ -99,6 +112,20 @@ class GestionTuboForm(RelacionesForm):
                   'responsable', 'fecha_compromiso', 'apoyo', 'observaciones', 'atencion', 'organizacion']
         widgets = {key: forms.DateInput(format='%Y-%m-%d', attrs={'type': 'date'})
                    for key in ['fecha_solicitud', 'fecha_compromiso']}
+        help_texts = {
+            'nombre': 'Resume el asunto de la solicitud en un título breve.',
+            'descripcion': 'Explica qué se solicita y los antecedentes para gestionar una solución.',
+            'fecha_solicitud': 'Selecciona cuándo recibiste la solicitud; no puede ser una fecha futura.',
+            'origen': 'Indica si la solicitud proviene del municipio (interno) o de la comunidad (externo).',
+            'solicitante': 'Escribe los nombres y apellidos de quien solicita la gestión.',
+            'territorio': 'Indica la localidad o el sector de la solicitud; puedes usar una sugerencia.',
+            'responsable': 'Selecciona al funcionario que se hará cargo del seguimiento.',
+            'fecha_compromiso': 'Selecciona el plazo acordado, igual o posterior a la fecha de solicitud.',
+            'apoyo': 'Indica el área municipal o la persona que colaborará en la solución.',
+            'observaciones': 'Agrega antecedentes o avances que ayuden al seguimiento.',
+            'atencion': 'Vincula la atención abierta que originó esta gestión, si corresponde.',
+            'organizacion': 'Vincula la organización relacionada con la solicitud, si corresponde.',
+        }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -128,7 +155,7 @@ class GestionTuboForm(RelacionesForm):
         telefono.widget.attrs.update({'type': 'tel', 'autocomplete': 'off', 'placeholder': '+56 9 1234 5678'})
         if not self.instance.pk:
             telefono.required = True
-        telefono.help_text = 'Las solicitudes sin nombre y teléfono del usuario no tienen puntaje.'
+        telefono.help_text = 'Indica un número, por ejemplo +56 9 1234 5678. Sin nombre y teléfono del usuario no hay puntaje.'
 
     def territorios(self):
         if not self.rel_org:
@@ -163,17 +190,28 @@ class ActividadSGRForm(RelacionesForm):
         fields = ['item', 'cargo', 'fecha', 'descripcion', 'solicitante_nombre', 'solicitante_telefono',
                   'solicitante_delegado', 'es_accion', 'felicitacion', 'respaldo_formal']
         widgets = {'fecha': forms.DateInput(format='%Y-%m-%d', attrs={'type': 'date'})}
+        help_texts = {
+            'item': 'Selecciona el ítem de la matriz que corresponde a la actividad y al cargo.',
+            'descripcion': 'Describe la acción realizada y el resultado obtenido.',
+            'solicitante_nombre': 'Escribe los nombres y apellidos del usuario atendido para acreditar la actividad.',
+            'solicitante_delegado': 'Marca si la solicitud proviene del delegado; cuenta como otra gestión.',
+            'es_accion': 'Marca si ejecutaste la acción; una coordinación por sí sola no suma puntaje.',
+            'felicitacion': 'Marca si registras una felicitación; requiere información del delegado para sumar.',
+            'respaldo_formal': 'Indica la referencia del documento que respalda la felicitación informada al delegado.',
+        }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.instance.responsable = self.user
-        self.fields['solicitante_telefono'].help_text = 'Sin nombre y teléfono del usuario, la actividad no suma puntaje.'
+        self.fields['solicitante_telefono'].help_text = 'Indica un número, por ejemplo +56 9 1234 5678. Sin nombre y teléfono del usuario no hay puntaje.'
         if not self.user.has_perm('gestion.validar_delegado'):
             self.fields.pop('respaldo_formal')
         else:
             self.fields['responsable'] = forms.ModelChoiceField(label='Funcionario responsable',
                 queryset=cuentas_ambito(self.rel_org, todas=self.rel_global), initial=self.user.pk,
-                widget=forms.Select(attrs={'class': 'form-select', 'data-actividad-responsable': ''}))
+                help_text='Selecciona al funcionario que realizó la actividad para cargar su cargo e ítems.',
+                widget=forms.Select(attrs={'class': 'form-select', 'data-actividad-responsable': '',
+                                           'aria-describedby': 'id_responsable_help id_responsable_errors'}))
             self.fields['responsable'].label_from_instance = nombre_cuenta
             self.order_fields(['delegacion', 'responsable'])
         # RF-003: al conocer el cargo se cargan únicamente sus ítems de medición vigentes.
@@ -236,6 +274,12 @@ class AusenciaSGRForm(RelacionesForm):
         model = AusenciaSGR
         fields = ['responsable', 'desde', 'hasta', 'motivo']
         widgets = {key: forms.DateInput(format='%Y-%m-%d', attrs={'type': 'date'}) for key in ['desde', 'hasta']}
+        help_texts = {
+            'responsable': 'Selecciona al funcionario que estuvo o estará ausente.',
+            'desde': 'Selecciona el primer día de la ausencia, incluido.',
+            'hasta': 'Selecciona el último día de la ausencia, incluido; no puede ser anterior al inicio.',
+            'motivo': 'Selecciona la causa de la ausencia que ajustará los días hábiles de su meta.',
+        }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -248,17 +292,27 @@ class ReclamoSGRForm(RelacionesForm):
         model = ReclamoSGR
         fields = ['responsable', 'fecha', 'usuario_nombre', 'contacto', 'ubicacion', 'situacion', 'medio_escrito', 'informado_a']
         widgets = {'fecha': forms.DateInput(format='%Y-%m-%d', attrs={'type': 'date'})}
+        help_texts = {
+            'responsable': 'Selecciona al funcionario al que se refiere el reclamo.',
+            'fecha': 'Selecciona el día, mes y año del reclamo.',
+            'usuario_nombre': 'Escribe los nombres y apellidos de quien presenta el reclamo.',
+            'contacto': 'Indica el teléfono o correo de quien reclama para poder contactarlo.',
+            'ubicacion': 'Indica el lugar donde ocurrió la situación reclamada.',
+            'situacion': 'Describe los hechos que motivan el reclamo por mala atención.',
+            'informado_a': 'Indica a qué persona o área se informó este reclamo.',
+        }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.instance.registrado_por = self.user
         self.fields['responsable'].queryset = cuentas_ambito(self.rel_org, todas=self.rel_global)
-        self.fields['medio_escrito'].help_text = 'Solo se aceptan reclamos escritos por mala atención del funcionario.'
+        self.fields['medio_escrito'].help_text = 'Selecciona el medio recibido: solo se aceptan reclamos escritos por mala atención del funcionario.'
 
 
 class PeriodoSGRForm(forms.Form):
     anio = forms.IntegerField(label='Año', min_value=2020, max_value=2100)
-    trimestre = forms.TypedChoiceField(label='Trimestre', choices=[(n, n) for n in range(1, 5)], coerce=int)
+    trimestre = forms.TypedChoiceField(label='Trimestre', choices=[(n, n) for n in range(1, 5)], coerce=int,
+        help_text='Elige 1: ene-mar, 2: abr-jun, 3: jul-sep o 4: oct-dic.')
     responsable = forms.ModelChoiceField(label='Funcionario', queryset=get_user_model().objects.none())
 
     def __init__(self, *args, user, **kwargs):
@@ -268,11 +322,23 @@ class PeriodoSGRForm(forms.Form):
         self.fields['responsable'].label_from_instance = lambda account: account.get_full_name() or account.username
         for field in self.fields.values():
             field.widget.attrs['class'] = 'form-select' if isinstance(field.widget, forms.Select) else 'form-control'
+        self.fields['trimestre'].widget.attrs['aria-describedby'] = 'id_trimestre_help id_trimestre_errors'
         self.fields['responsable'].widget.attrs['aria-describedby'] = 'id_responsable_errors'
 
 
 class MetaSGRForm(forms.ModelForm):
-    cargo_sgr = forms.ChoiceField(label='Cargo municipal', required=False, choices=[('', 'Común a todos los cargos')] + CARGOS)
+    cargo_sgr = forms.ChoiceField(label='Cargo municipal', required=False, choices=[('', 'Común a todos los cargos')] + CARGOS,
+        help_text='Selecciona el cargo al que aplica el ítem o déjalo común a todos los cargos.')
     class Meta:
         model = ItemMeta
         fields = ['indicador', 'meta_cantidad', 'ponderador', 'cargo_sgr']
+        help_texts = {
+            'indicador': 'Elige si medirás cantidad de acciones o porcentaje de gestiones realizadas del tubo.',
+            'meta_cantidad': 'Indica la meta trimestral: cantidad de acciones o porcentaje realizado del tubo (ej.: 80).',
+            'ponderador': 'Indica el peso del ítem en el resultado, entre 0 y 100; por ejemplo 25 para 25%.',
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for name, field in self.fields.items():
+            field.widget.attrs['aria-describedby'] = f'id_{name}_help id_{name}_errors'

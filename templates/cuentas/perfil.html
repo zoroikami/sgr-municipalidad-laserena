@@ -13,8 +13,8 @@
       <div class="form-field photo-upload-control">
         <label for="{{ form.foto.id_for_label }}">Foto de perfil</label>
         {{ form.foto }}
-        <button type="button" class="btn btn-outline-secondary" id="profile-photo-select" aria-controls="{{ form.foto.id_for_label }}" hidden>Elegir foto</button>
-        <small class="field-help" id="{{ form.foto.auto_id }}_helptext">JPEG o PNG de hasta 2 MiB. Podrás ajustar el recorte antes de guardar.</small>
+        <button type="button" class="btn btn-outline-secondary" id="profile-photo-select" aria-controls="{{ form.foto.id_for_label }}" aria-describedby="{{ form.foto.auto_id }}_helptext" hidden>Elegir foto</button>
+        <small class="field-help" id="{{ form.foto.auto_id }}_helptext">{{ form.foto.help_text }}</small>
         <span id="photo-file-name" class="photo-file-name" role="status"></span>
         {% if form.foto.errors %}<div class="field-errors" id="{{ form.foto.auto_id }}_error" role="alert">{{ form.foto.errors }}</div>{% endif %}
       </div>

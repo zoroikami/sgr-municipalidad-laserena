@@ -8,7 +8,7 @@ from .consulta import CODE_ALPHABET, normalise_code
 class PublicConsultationForm(forms.Form):
     folio = forms.CharField(label='Folio de la atención', max_length=35,
         widget=forms.TextInput(attrs={'class': 'form-control', 'autocomplete': 'off', 'autocapitalize': 'characters', 'spellcheck': 'false'}),
-        help_text='Lo encontrarás en el correo que recibiste de la municipalidad.')
+        help_text='Copia el folio del correo municipal, por ejemplo ATN-2026-0001.')
     codigo = forms.CharField(label='Código privado', max_length=64,
         widget=forms.PasswordInput(attrs={'class': 'form-control', 'autocomplete': 'one-time-code', 'autocapitalize': 'characters', 'spellcheck': 'false'}),
         help_text='Copia el código del correo. Puedes pegarlo con o sin guiones.')
