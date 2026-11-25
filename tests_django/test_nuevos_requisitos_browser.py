@@ -164,3 +164,22 @@ def test_respuesta_tardia_no_muestra_funcionario_para_rut_borrado(client, mundo,
         screenshot(page, tmp_path, 'respuesta-tardia-rut-vacio')
         api.expect(notice).to_be_hidden()
         browser.close()
+
+
+def test_tipo_de_gestion_diserco_solo_se_muestra_al_coordinador_de_servicios(client, mundo, live_server):
+    api = chromium_api()
+    worker = mundo['users']['editor_a']  # sin cargo asignado: el selector de cargo queda habilitado
+    client.force_login(worker)
+    with api.sync_playwright() as p:
+        browser = p.chromium.launch()
+        page = authenticated_context(browser, client, live_server, 1280).new_page()
+        page.goto(live_server.url + '/sgr/actividad/')
+        tipo = page.locator('#id_tipo_gestion')
+        api.expect(tipo).to_be_hidden()
+        page.select_option('#id_cargo', 'servicios')
+        api.expect(tipo).to_be_visible()
+        tipo.select_option('podas')
+        page.select_option('#id_cargo', 'social')
+        api.expect(tipo).to_be_hidden()
+        assert tipo.input_value() == ''
+        browser.close()
