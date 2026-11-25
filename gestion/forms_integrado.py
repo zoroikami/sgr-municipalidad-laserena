@@ -352,3 +352,92 @@ class MetaSGRForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         for name, field in self.fields.items():
             field.widget.attrs['aria-describedby'] = f'id_{name}_help id_{name}_errors'
+
+
+class CasoSocialForm(RelacionesForm):
+    unique_name = False  # Una persona puede tener más de un caso social.
+    ingresar_tubo = forms.BooleanField(label='Ingresar al tubo de trabajo', required=False,
+        help_text='Marca para crear también una gestión de seguimiento vinculada a este caso.')
+    devoluciones = forms.IntegerField(label='Devoluciones del informe', min_value=0, max_value=3, initial=0,
+        help_text='Indica cuántas veces se devolvió el informe para corregirlo: de 0 a 3; no cambia el puntaje.')
+
+    class Meta:
+        from .models import CasoSocial
+        model = CasoSocial
+        fields = ['nombre', 'usuario_rut', 'usuario_telefono', 'responsable', 'fecha_ingreso',
+                  'tipo', 'subatencion', 'descripcion', 'requiere_visita', 'fecha_programada_visita',
+                  'devoluciones', 'estado', 'ingresar_tubo']
+        labels = {'nombre': 'Nombre del usuario', 'descripcion': 'Descripción del caso'}
+        widgets = {key: forms.DateInput(format='%Y-%m-%d', attrs={'type': 'date'})
+                   for key in ['fecha_ingreso', 'fecha_programada_visita']}
+        help_texts = {
+            'nombre': 'Escribe los nombres y apellidos de la persona atendida.',
+            'usuario_rut': 'Indica su RUT sin puntos y con guion, por ejemplo 12345678-5; es opcional.',
+            'usuario_telefono': 'Indica un teléfono de contacto, por ejemplo +56 9 1234 5678.',
+            'responsable': 'Selecciona al funcionario de la delegación que se hará cargo del caso.',
+            'fecha_ingreso': 'Selecciona el día en que ingresó el caso; no puede ser una fecha futura.',
+            'tipo': 'Selecciona la categoría de atención que corresponde al caso.',
+            'subatencion': 'Selecciona el trámite de la categoría elegida; verás su categoría junto al nombre.',
+            'descripcion': 'Describe la situación y los antecedentes necesarios para atender el caso.',
+            'requiere_visita': 'Marca si el caso necesita una visita en terreno.',
+            'fecha_programada_visita': 'Selecciona la fecha acordada para la visita, igual o posterior al ingreso.',
+            'estado': 'Selecciona Abierto mientras el caso siga en atención o Cerrado cuando concluya.',
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.creating = not self.instance.pk
+        self.fields['responsable'].queryset = cuentas_ambito(self.rel_org)
+        self.fields['responsable'].label_from_instance = nombre_cuenta
+        if self.creating:
+            if self.fields['responsable'].queryset.filter(pk=self.user.pk).exists():
+                self.fields['responsable'].initial = self.user.pk
+        else:
+            self.fields.pop('ingresar_tubo')
+        from .models import TipoAtencion, SubAtencion
+        self.fields['tipo'].queryset = self.relaciones(TipoAtencion).filter(estado='Activo')
+        self.fields['subatencion'].queryset = self.relaciones(SubAtencion).filter(
+            estado='Activo', tipo__estado='Activo', tipo__deleted_at__isnull=True).select_related('tipo')
+        self.fields['subatencion'].label_from_instance = lambda sub: f'{sub.tipo.nombre}: {sub.nombre}'
+        self.fields['usuario_rut'].widget.attrs.update({
+            'placeholder': '12345678-5', 'spellcheck': 'false', 'autocomplete': 'off',
+            'data-rut-funcionario': reverse('gestion:rut_funcionario'),
+        })
+        self.fields['usuario_telefono'].required = True
+        self.fields['usuario_telefono'].widget.attrs.update({'type': 'tel', 'placeholder': '+56 9 1234 5678'})
+
+    def clean_usuario_rut(self):
+        from cuentas.rut import RutError, normalize_rut
+        value = self.cleaned_data.get('usuario_rut', '').strip()
+        if not value:
+            return ''
+        try:
+            return normalize_rut(value)
+        except RutError as error:
+            raise forms.ValidationError(str(error)) from error
+
+    def clean(self):
+        data = super().clean()
+        if data.get('subatencion') and not data.get('tipo'):
+            self.add_error('tipo', 'Selecciona el tipo de atención de esta subatención.')
+        if data.get('ingresar_tubo') and not self.user.has_perm('gestion.add_gestiontubo'):
+            self.add_error('ingresar_tubo', 'Tu cuenta no tiene permiso para ingresar gestiones al tubo.')
+        return data
+
+    def save(self, commit=True):
+        if not commit:
+            return super().save(commit=False)
+        from django.db import transaction
+        from .ingreso_tubo import ingresar_al_tubo
+        with transaction.atomic():
+            caso = super().save()
+            if self.creating and self.cleaned_data.get('ingresar_tubo') and not caso.gestion_tubo_id:
+                tema = ' / '.join(str(value.nombre) for value in (caso.tipo, caso.subatencion) if value)
+                caso.gestion_tubo = ingresar_al_tubo(
+                    delegacion=caso.delegacion, responsable=caso.responsable,
+                    descripcion=caso.descripcion or f'Caso social: {tema or caso.nombre}',
+                    solicitante=caso.nombre, telefono=caso.usuario_telefono,
+                    fecha=caso.fecha_ingreso, sufijo=caso.codigo, rut=caso.usuario_rut,
+                )
+                caso.save(update_fields=['gestion_tubo', 'updated_at'])
+            return caso

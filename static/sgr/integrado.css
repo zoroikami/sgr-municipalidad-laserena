@@ -72,6 +72,17 @@
 .sgr-luz-verde { color: var(--status-active-ink); background: var(--status-active-bg); border-color: var(--status-active-border); }
 .sgr-luz-naranjo { color: var(--action-edit-ink); background: var(--action-edit-bg); border-color: var(--action-edit-border); }
 .sgr-luz-rojo { color: var(--error-ink); background: var(--action-delete-bg); border-color: var(--action-delete-border); }
+.caso-plazos thead th { white-space: normal; }
+@media (max-width: 700px) {
+  .caso-plazos { table-layout: fixed; width: 100%; }
+  .content-panel .table.caso-plazos :is(th, td) { padding: var(--space-md) var(--space-xs); }
+  .caso-plazos th:nth-child(1) { width: 38%; }
+  .caso-plazos th:nth-child(2) { width: 14%; }
+  .caso-plazos th:nth-child(3) { width: 16%; }
+  .caso-plazos th:nth-child(4) { width: 32%; }
+  .caso-plazos .sgr-luz { white-space: normal; }
+  .caso-plazos .sgr-luz::before { flex-shrink: 0; }
+}
 .sgr-semaforo-resumen { display: flex; flex-wrap: wrap; gap: var(--space-sm); margin-bottom: var(--space-lg); }
 .tubo-resumen .sgr-objetivo-verde { border-left-color: var(--success-ink); }
 .tubo-resumen .sgr-objetivo-naranjo { border-left-color: var(--action-edit-ink); }
