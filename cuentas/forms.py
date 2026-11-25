@@ -1,9 +1,12 @@
 from io import BytesIO
+import threading
 import warnings
 
 from django import forms
+from django.conf import settings
 from django.core.validators import RegexValidator
 from django.contrib.auth import password_validation
+from django.contrib.auth.hashers import make_password
 from django.contrib.auth.forms import AuthenticationForm, PasswordChangeForm, PasswordResetForm, SetPasswordForm
 from django.contrib.auth.models import Group, Permission, User
 from django.core.exceptions import ValidationError
@@ -13,6 +16,7 @@ from django.utils.html import format_html
 from PIL import Image, ImageOps, UnidentifiedImageError
 
 from cuentas.rut import RUT_INPUT_HELP, RutError, normalize_rut
+from . import intentos
 from .models import Perfil
 from .roles import LOCAL_ROLE_NAMES, ROLE_NAMES
 from gestion.delegation import active_delegation
@@ -54,18 +58,41 @@ class MunicipalAuthenticationForm(AuthenticationForm):
         super().__init__(*args, **kwargs)
         self.fields['password'].help_text = 'Escribe la contraseña de tu cuenta; distingue mayúsculas y minúsculas.'
 
+    error_messages = {
+        **AuthenticationForm.error_messages,
+        # Un solo mensaje para clave errada, cuenta desconocida y cuenta en pausa: no revela cuál es el caso.
+        'invalid_login': ('Usuario o contraseña incorrectos. Revisa mayúsculas y minúsculas. Tras varios intentos '
+                          'fallidos la cuenta se pausa 15 minutos; si no recuerdas tu contraseña, recupérala.'),
+    }
+
     def clean(self):
         identifier = self.cleaned_data.get('username', '')
+        password = self.cleaned_data.get('password')
+        if not identifier or not password:
+            return super().clean()  # campos obligatorios: no se intenta ingresar ni se cuenta
         matches = User.objects.filter(Q(username__iexact=identifier) | Q(email__iexact=identifier))
-        identified = bool(identifier) and matches.count() == 1
+        identified = matches.count() == 1
+        # Usuario y correo de una misma cuenta comparten contador: un alias no reinicia los intentos.
+        cuenta = matches.first().username if identified else identifier
+        ip = intentos.direccion(self.request)
+        # Cada intento reserva su lugar antes de comprobar la contraseña (también con peticiones simultáneas).
+        # El 429 solo depende de la IP; el bloqueo de una cuenta responde igual que una contraseña errada.
+        if intentos.excede('login-ip', intentos.reservar('login-ip', ip)):
+            raise ValidationError(intentos.MENSAJE_BLOQUEO, code='bloqueado')
+        if intentos.excede('login-cuenta', intentos.reservar('login-cuenta', cuenta)):
+            make_password(password)  # mismo costo que verificar: el tiempo tampoco delata el bloqueo
+            raise self.get_invalid_login_error()
         if identified:
             self.cleaned_data['username'] = matches.first().username
-        elif identifier:
+        else:
             # Preserve Django's dummy hash and neutral invalid-login error for unknown/ambiguous IDs.
             self.cleaned_data['username'] = '__sgr_unknown_identity__'
         result = super().clean()
-        if not identified:
+        if not identified or self.get_user() is None:
             raise self.get_invalid_login_error()
+        # Solo un ingreso correcto reinicia la cuenta y devuelve el lugar reservado de la IP.
+        intentos.limpiar('login-cuenta', cuenta)
+        intentos.devolver('login-ip', ip)
         return result
 
 
@@ -82,9 +109,22 @@ class MunicipalPasswordChangeForm(NewPasswordHelpMixin, PasswordChangeForm):
         super().__init__(*args, **kwargs)
         self.fields['old_password'].help_text = 'Escribe la contraseña que usas actualmente para ingresar.'
 
+    def clean_old_password(self):
+        # Una sesión abierta en un equipo ajeno tampoco permite adivinar la contraseña actual sin límite.
+        # Es la propia cuenta: el aviso de bloqueo no revela nada a terceros.
+        if intentos.excede('clave-actual', intentos.reservar('clave-actual', self.user.pk)):
+            raise ValidationError(intentos.MENSAJE_BLOQUEO, code='bloqueado')
+        valor = super().clean_old_password()
+        intentos.limpiar('clave-actual', self.user.pk)
+        return valor
+
 
 class MunicipalSetPasswordForm(NewPasswordHelpMixin, SetPasswordForm):
-    pass
+    def save(self, commit=True):
+        user = super().save(commit=commit)
+        # Recuperar la contraseña con el enlace del correo es la salida del dueño ante una cuenta en pausa.
+        intentos.limpiar('login-cuenta', user.username)
+        return user
 
 
 class MunicipalPasswordResetForm(PasswordResetForm):
@@ -92,13 +132,27 @@ class MunicipalPasswordResetForm(PasswordResetForm):
         super().__init__(*args, **kwargs)
         self.fields['email'].help_text = 'Escribe el correo asociado a tu cuenta para recibir el enlace de recuperación.'
 
+    def save(self, *args, request=None, **kwargs):
+        # Límite por IP sin mirar si el correo existe: la respuesta en pantalla es siempre la misma.
+        if not intentos.permitir('recuperacion-ip', intentos.direccion(request)):
+            return None
+        return super().save(*args, request=request, **kwargs)
+
+    def send_mail(self, *args, **kwargs):
+        # El envío SMTP sale de la petición: el tiempo de respuesta no revela si el correo tiene cuenta.
+        if settings.EMAIL_BACKEND.endswith('locmem.EmailBackend'):
+            return super().send_mail(*args, **kwargs)
+        threading.Thread(target=super().send_mail, args=args, kwargs=kwargs, daemon=True,
+                         name='sgr-recuperacion').start()
+        return None
+
 
 class ProfileForm(forms.ModelForm):
     foto = forms.FileField(label='Nueva foto', required=False,
         widget=forms.FileInput(attrs={'accept': 'image/jpeg,image/png'}),
         help_text='Selecciona una foto JPEG o PNG de hasta 2 MiB; podrás recortarla antes de guardar.')
-    email = forms.EmailField(label='Correo electrónico',
-        help_text='Escribe un correo personal vigente, por ejemplo nombre@correo.cl.')
+    email = forms.EmailField(label='Correo electrónico', max_length=254,
+        help_text='Si lo cambias, recibirás un enlace en el nuevo correo para confirmarlo. El enlace vence en 24 horas; hasta entonces se mantiene tu correo actual.')
     telefono = forms.CharField(label='Teléfono', max_length=25, required=False,
         validators=[RegexValidator(r'^\+?[0-9 ()-]{7,25}$', 'Ingresa un teléfono válido, por ejemplo +56 9 1234 5678.')],
         widget=forms.TextInput(attrs={'type': 'tel', 'placeholder': '+56 9 1234 5678', 'autocomplete': 'tel'}),
@@ -113,15 +167,29 @@ class ProfileForm(forms.ModelForm):
             'last_name': 'Escribe tus apellidos completos.',
         }
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.correo_actual = self.instance.email
+        self.correo_propuesto = ''
+
     def clean_foto(self):
         upload = self.cleaned_data.get('foto')
         return validated_photo(upload) if upload else None
 
     def clean_email(self):
-        email = self.cleaned_data['email']
-        if User.objects.filter(email__iexact=email).exclude(pk=self.instance.pk).exists():
-            raise ValidationError('Ya existe una cuenta con este correo electrónico.')
-        return email
+        # No consultar disponibilidad antes de demostrar control del buzón.
+        self.correo_propuesto = self.cleaned_data['email']
+        return self.correo_actual
+
+    def save(self, commit=True):
+        user = super().save(commit=False)
+        # Model.clean() normaliza el dominio; la firma necesita el valor aún guardado.
+        user.email = self.correo_actual
+        if commit:
+            # El correo solo lo actualiza la confirmación, incluso si cambió en otra sesión.
+            user.save(update_fields=['first_name', 'last_name'])
+            self.save_m2m()
+        return user
 
 
 class ManagedUserForm(forms.ModelForm):

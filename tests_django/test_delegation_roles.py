@@ -7,6 +7,8 @@ from django.contrib.auth.models import Group
 from django.urls import reverse
 from openpyxl import load_workbook
 
+from gestion.exportacion import FILA_ENCABEZADO
+
 from cuentas.roles import configure_groups
 from gestion.models import Atencion
 
@@ -41,7 +43,7 @@ def test_superadmin_selection_filters_home_lists_details_exports_and_catalog(cli
     catalog = client.get('/catalogos/subatenciones/', {'tipo': mundo['tipo_a'].pk})
     assert catalog.json()['results'] == []
     export = client.get(reverse('gestion:exportar', args=['atenciones']))
-    rows = list(load_workbook(BytesIO(export.content)).active.values)
+    rows = list(load_workbook(BytesIO(export.content)).active.values)[FILA_ENCABEZADO - 1:]
     assert len(rows) == 2 and rows[1][1] == 'Bernarda Norte'
     assert select(client, '').status_code == 302
     assert client.get(reverse('gestion:listado', args=['atenciones'])).context['page_obj'].paginator.count == 3

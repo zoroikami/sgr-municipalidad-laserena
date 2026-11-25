@@ -9,6 +9,8 @@ from django.urls import reverse
 from django.utils import timezone
 from openpyxl import load_workbook
 
+from gestion.exportacion import FILA_ENCABEZADO
+
 pytestmark = pytest.mark.django_db
 
 
@@ -117,7 +119,7 @@ def test_cartas_filtros_resumen_y_excel_incluyen_todos_los_campos_autorizados(cl
     assert [r['cantidad'] for r in response.context['cartas_resumen']] == [1, 0, 1, 0, 2]
     export = client.get('/gestion/cartas/exportar/')
     assert export.status_code == 200
-    rows = list(load_workbook(BytesIO(export.content)).active.values)
+    rows = list(load_workbook(BytesIO(export.content)).active.values)[FILA_ENCABEZADO - 1:]
     assert len(rows) == 2 and 'OP-2026-12' in rows[1]
     assert 'Para conocimiento' in rows[1] and 'Confirmar disponibilidad' in rows[1]
     assert 'Actividad finalizada' not in str(rows) and 'Carta ajena' not in str(rows)

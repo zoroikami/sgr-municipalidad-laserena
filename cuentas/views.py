@@ -1,18 +1,49 @@
+import logging
+from smtplib import SMTPException
+
+from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import Group, User
+from django.contrib.auth.views import LoginView
+from django.core import signing
+from django.core.exceptions import NON_FIELD_ERRORS
 from django.core.exceptions import BadRequest, PermissionDenied
+from django.core.mail import send_mail
 from django.db import transaction
 from django.http import FileResponse, Http404
 from django.shortcuts import get_object_or_404, redirect, render
+from django.template.loader import render_to_string
+from django.urls import reverse
+from django.views.decorators.cache import never_cache
 from django.views.decorators.http import require_http_methods, require_POST
 from django.utils.http import url_has_allowed_host_and_scheme
 from gestion.delegation import SESSION_KEY, active_delegation, has_global_scope
 from gestion.funcionarios import FUNCIONES, cargo_de, nombre_cargo
 
-from .forms import GroupPermissionsForm, ManagedUserForm, ProfileForm
+from .forms import GroupPermissionsForm, ManagedUserForm, MunicipalAuthenticationForm, ProfileForm
 from .models import Perfil
 from .roles import can_manage_users
+from . import intentos
+
+
+class IngresoView(LoginView):
+    """Login municipal: al agotar los intentos responde 429 con Retry-After, con el mismo mensaje para todos."""
+    template_name = 'cuentas/login.html'
+    authentication_form = MunicipalAuthenticationForm
+    extra_context = {'public_layout': True}
+
+    def form_invalid(self, form):
+        respuesta = super().form_invalid(form)
+        if form.has_error(NON_FIELD_ERRORS, 'bloqueado'):
+            respuesta.status_code = 429
+            respuesta['Retry-After'] = str(intentos.VENTANA)
+        return respuesta
+
+
+logger = logging.getLogger(__name__)
+CAMBIO_CORREO_SALT = 'cuentas.cambio-correo'
+CAMBIO_CORREO_VIGENCIA = 24 * 60 * 60
 
 
 @login_required
@@ -51,6 +82,17 @@ def cambiar_delegacion(request):
     return redirect('gestion:inicio')
 
 
+def _enviar_cambio_correo(request, user, nuevo):
+    token = signing.dumps({'user': user.pk, 'actual': user.email, 'nuevo': nuevo}, salt=CAMBIO_CORREO_SALT)
+    enlace = request.build_absolute_uri(reverse('cuentas:confirmar_correo', kwargs={'token': token}))
+    body = render_to_string('cuentas/cambio_correo_email.txt', {'enlace': enlace, 'correo_nuevo': nuevo})
+    try:
+        # También se envía si está ocupado: ni el mensaje ni la entrega revelan disponibilidad.
+        send_mail('Confirma tu cambio de correo SGR', body, settings.DEFAULT_FROM_EMAIL, [nuevo], fail_silently=False)
+    except (SMTPException, OSError, ValueError):
+        logger.warning('No se pudo enviar la confirmación de correo del usuario %s.', user.pk)
+
+
 @login_required
 @require_http_methods(['GET', 'POST'])
 def perfil(request):
@@ -76,7 +118,14 @@ def perfil(request):
                 if previous:
                     storage = profile.foto.storage
                     transaction.on_commit(lambda: storage.delete(previous))
-        messages.success(request, 'Tu perfil se guardó.')
+        nuevo = form.correo_propuesto
+        if nuevo.casefold() != form.correo_actual.casefold():
+            # Límite por cuenta: el mismo mensaje aunque se supere, para no enviar enlaces sin control.
+            if intentos.permitir('cambio-correo', request.user.pk):
+                _enviar_cambio_correo(request, request.user, nuevo)
+            messages.info(request, f'Te enviamos un enlace a {nuevo} para confirmar el cambio; tu correo actual se mantiene hasta entonces.')
+        else:
+            messages.success(request, 'Tu perfil se guardó.')
         return redirect('cuentas:perfil')
     cargo = cargo_de(request.user)
     return render(request, 'cuentas/perfil.html', {
@@ -85,6 +134,41 @@ def perfil(request):
         'funciones_fuente': ('Funciones según la matriz SGR (hoja GES SEG)' if cargo == 'seguridad'
                              else 'Descriptor de funciones 2026'),
     })
+
+
+@login_required
+@never_cache
+@require_http_methods(['GET', 'POST'])
+def confirmar_correo(request, token):
+    try:
+        datos = signing.loads(token, salt=CAMBIO_CORREO_SALT, max_age=CAMBIO_CORREO_VIGENCIA)
+    except signing.BadSignature:
+        datos = None
+    valido = (isinstance(datos, dict) and datos.get('user') == request.user.pk
+              and datos.get('actual') == request.user.email and isinstance(datos.get('nuevo'), str)
+              and bool(datos['nuevo']) and datos['nuevo'].casefold() != request.user.email.casefold())
+    error = ''
+    status = 200 if valido else 400
+    if valido and request.method == 'POST':
+        with transaction.atomic():
+            user = User.objects.select_for_update().get(pk=request.user.pk)
+            # Revalidar bajo bloqueo evita reutilizar el enlace entre dos confirmaciones.
+            if user.email != datos['actual']:
+                valido, status = False, 400
+            elif User.objects.filter(email__iexact=datos['nuevo']).exclude(pk=user.pk).exists():
+                error = 'Este correo ya está asociado a otra cuenta. Solicita el cambio a un correo diferente desde Mi perfil.'
+                status = 409
+            else:
+                user.email = datos['nuevo']
+                user.save(update_fields=['email'])
+                messages.success(request, 'Tu correo electrónico se actualizó.')
+                return redirect('cuentas:perfil')
+    response = render(request, 'cuentas/cambio_correo_confirmar.html', {
+        'titulo': 'Confirmar cambio de correo', 'validlink': valido, 'error': error,
+        'correo_actual': request.user.email, 'correo_nuevo': datos['nuevo'] if valido else '',
+    }, status=status)
+    response['Referrer-Policy'] = 'no-referrer'
+    return response
 
 
 @login_required

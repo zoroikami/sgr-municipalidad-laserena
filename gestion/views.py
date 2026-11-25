@@ -1,4 +1,3 @@
-from io import BytesIO
 from urllib.parse import urlencode
 
 from django.conf import settings
@@ -12,14 +11,13 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
 from django.views.decorators.http import require_GET, require_POST
-from openpyxl import Workbook
-from openpyxl.cell import WriteOnlyCell
 
 from .access import authorize, delegation_id, is_cliente, scoped
 from .delegation import active_delegation, has_global_scope
 from .forms import FORMS, PortalDateFilterForm
 from .models import Atencion, Delegacion, ItemMeta, SubAtencion, TipoAtencion
 from .queries import MODULES, casos_con_gestiones, display_value, list_context, query_for, state_for
+from .exportacion import libro_excel
 from .realtime import notify_after_commit
 from .public_views import consulta_publica, schedule_access_email
 from .forms_integrado import CasoSocialForm, OrganizacionForm, GestionTuboForm
@@ -221,22 +219,10 @@ def exportar(request, modulo):
     if filter_form and filter_form.errors:
         raise BadRequest('Los filtros de la exportación son inválidos.')
     query = query_for(request.user, modulo, state)
-    book = Workbook(write_only=True)
-    sheet = book.create_sheet(config['title'][:31])
     columns = config.get('export_columns', config['columns'])
-    sheet.append([title for title, _ in columns])
-    for obj in query.iterator(chunk_size=1000):
-        cells = []
-        for _, key in columns:
-            value = display_value(obj, key)
-            # Treat user-entered =,+,-,@ text as text, never as spreadsheet formulas.
-            cell = WriteOnlyCell(sheet, value=value)
-            cell.data_type = 's'
-            cells.append(cell)
-        sheet.append(cells)
-    stream = BytesIO()
-    book.save(stream)
-    response = HttpResponse(stream.getvalue(), content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    filas = ([display_value(obj, key) for _, key in columns] for obj in query.iterator(chunk_size=1000))
+    contenido = libro_excel(request, modulo, config['title'], columns, filas)
+    response = HttpResponse(contenido, content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
     response['Content-Disposition'] = f'attachment; filename="sgr-{modulo}.xlsx"'
     response['Cache-Control'] = 'no-store'
     return response

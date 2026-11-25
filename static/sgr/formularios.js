@@ -2,6 +2,28 @@
    cada lista muestra solo las opciones de la delegación y del cargo que corresponden. */
 (() => {
   'use strict';
+  // Contador bajo cada texto largo: muestra cuánto queda antes del límite que también valida el servidor.
+  document.querySelectorAll('form textarea[maxlength]').forEach(area => {
+    const limite = Number(area.getAttribute('maxlength'));
+    if (!limite || area.dataset.contadorListo) return;
+    area.dataset.contadorListo = '1';
+    const contador = document.createElement('div');
+    contador.className = 'contador-caracteres';
+    contador.id = `${area.id || area.name}-contador`;
+    area.setAttribute('aria-describedby', `${area.getAttribute('aria-describedby') || ''} ${contador.id}`.trim());
+    area.insertAdjacentElement('afterend', contador);
+    const actualizar = () => {
+      const usados = area.value.length;
+      contador.textContent = `${usados.toLocaleString('es-CL')} de ${limite.toLocaleString('es-CL')} caracteres`;
+      const cerca = usados >= limite * 0.9;
+      contador.classList.toggle('cerca-del-limite', cerca);
+      // Solo se anuncia al acercarse al límite, para no leer cada tecla.
+      if (cerca) contador.setAttribute('aria-live', 'polite'); else contador.removeAttribute('aria-live');
+    };
+    area.addEventListener('input', actualizar);
+    actualizar();
+  });
+
   const form = document.querySelector('#record-form');
   if (!form) return;
 

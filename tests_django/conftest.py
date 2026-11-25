@@ -45,3 +45,13 @@ def mundo(db):
         solicitante_nombre='Carolina Centro', descripcion='Solicitud Cliente 2')
     return dict(a=a, b=b, users=users, tipo_a=tipo_a, tipo_b=tipo_b, sub_a=sub_a, sub_b=sub_b,
                 meta_a=meta_a, meta_b=meta_b, atn_a=atn_a, atn_b=atn_b, atn_2=atn_2)
+
+
+@pytest.fixture(autouse=True)
+def contadores_de_intentos_aislados(settings):
+    """Cada prueba cuenta sus intentos de ingreso en un espacio propio del Redis real."""
+    import uuid
+    from copy import deepcopy
+    config = deepcopy(settings.CACHES)
+    config['autenticacion'] = {**config['autenticacion'], 'KEY_PREFIX': 'sgr-autenticacion-test-' + uuid.uuid4().hex}
+    settings.CACHES = config
