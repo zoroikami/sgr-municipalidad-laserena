@@ -265,3 +265,7 @@ button, .btn, input, select { min-height: 2.75rem; }
 .badge-status.aprobada { background: var(--action-view-bg); color: var(--action-view-ink); }
 .badge-status.finalizada { background: var(--status-active-bg); color: var(--status-active-ink); }
 .badge-status.no-aplica { background: var(--brand-soft); color: var(--brand-muted); }
+.tubo-resumen .estado-aprobada { border-left-color: var(--action-view-ink); }
+.tubo-resumen .estado-aprobada h2, .tubo-resumen .estado-aprobada strong { color: var(--action-view-ink); }
+.tubo-resumen .estado-no-aplica { border-left-color: var(--brand-muted); }
+.tubo-resumen .estado-no-aplica h2, .tubo-resumen .estado-no-aplica strong { color: var(--brand-muted); }
