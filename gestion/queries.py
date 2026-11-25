@@ -18,6 +18,14 @@ CARTA_FIELDS = [('Código', 'codigo'), ('Fecha de ingreso', 'fecha'),
     ('Estado', 'estado'), ('Pronunciamiento', 'pronunciamiento'),
     ('Derivada a', 'derivada_a'), ('Observación', 'observacion')]
 
+# Columnas de la hoja TUBO de la matriz SGR (más los datos del solicitante del nuevo requerimiento).
+TUBO_FIELDS = [('Código', 'codigo'), ('Fecha de solicitud', 'fecha_solicitud'),
+    ('Actividad / solicitud / problema', 'nombre'), ('INT/EXT', 'origen'), ('Solicitante', 'solicitante'),
+    ('RUT solicitante', 'solicitante_rut'), ('Teléfono solicitante', 'solicitante_telefono'),
+    ('Solicitante funcionario', 'solicitante_funcionario_texto'), ('Territorio', 'territorio'),
+    ('Responsable', 'responsable.get_full_name'), ('Fecha de compromiso', 'fecha_compromiso'),
+    ('Área / persona de apoyo', 'apoyo'), ('Avance, observaciones', 'observaciones'), ('Estatus', 'estado')]
+
 MODULES = {
     'cartas': {'model': Carta, 'title': 'Cartas de oficina de partes',
         'search': ['codigo', 'numero_ingreso', 'nombre', 'remite', 'derivada_a', 'pronunciamiento',
@@ -33,6 +41,7 @@ MODULES = {
     'tubo': {'model': GestionTubo, 'title': 'Gestiones en tubo',
         'search': ['codigo', 'nombre', 'solicitante', 'solicitante_rut', 'territorio', 'apoyo'],
         'columns': [('Código', 'codigo'), ('Gestión', 'nombre'), ('Solicitante', 'solicitante'), ('Territorio', 'territorio'), ('Apoyo', 'apoyo'), ('Estado', 'estado')],
+        'export_columns': TUBO_FIELDS,
         'sort': ['codigo', '-codigo', 'nombre', '-nombre', 'created_at', '-created_at']},
     'metas': {'model': ItemMeta, 'title': 'Ítems y Metas', 'search': ['codigo', 'nombre', 'descripcion'],
               'columns': [('Código', 'codigo'), ('Nombre', 'nombre'), ('Unidad', 'unidad_medida'), ('Meta', 'meta_cantidad'), ('Estado', 'estado'), ('Creación', 'created_at')],

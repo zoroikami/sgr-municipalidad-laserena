@@ -105,6 +105,10 @@ class GestionTubo(RegistroDelegacion):
                 self.solicitante_rut = normalize_rut(self.solicitante_rut)
             except RutError as error:
                 errores['solicitante_rut'] = str(error)
+        if self.fecha_solicitud and self.fecha_solicitud > timezone.localdate():
+            errores['fecha_solicitud'] = 'La fecha de solicitud no puede ser futura.'
+        if self.fecha_solicitud and self.fecha_compromiso and self.fecha_compromiso < self.fecha_solicitud:
+            errores['fecha_compromiso'] = 'La fecha de compromiso no puede ser anterior a la fecha de solicitud.'
         for campo in ('atencion', 'organizacion'):
             obj = getattr(self, campo) if getattr(self, campo + '_id') else None
             if obj and (obj.delegacion_id != self.delegacion_id or obj.deleted_at):

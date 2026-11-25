@@ -135,7 +135,14 @@ def registrar(request, ausencia=False, reclamo=False):
 def resultados(request):
     authorize(request.user, ActividadSGR)
     hoy = timezone.localdate()
-    data = request.GET or {'anio': hoy.year, 'trimestre': (hoy.month - 1) // 3 + 1, 'responsable': request.user.pk}
+    data = request.GET
+    if not data:
+        # Sin selección previa se muestra la propia cuenta; una cuenta sin delegación (p. ej. administración
+        # técnica) abre con el primer funcionario disponible en vez de un error de validación.
+        opciones = PeriodoSGRForm(user=request.user).fields['responsable'].queryset
+        propio = opciones.filter(pk=request.user.pk).exists()
+        elegido = request.user.pk if propio else opciones.order_by('perfil__delegacion_id', 'username').values_list('pk', flat=True).first()
+        data = {'anio': hoy.year, 'trimestre': (hoy.month - 1) // 3 + 1, 'responsable': elegido or ''}
     form = PeriodoSGRForm(data, user=request.user)
     rows, actividades, ausencias, reclamos = [], [], [], []
     total = base = None

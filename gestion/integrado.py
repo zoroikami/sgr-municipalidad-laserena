@@ -145,12 +145,17 @@ def dias_calendario(ausencias, inicio, fin):
 
 
 def semaforo(avance, inicio, fin, hoy, ausencias):
-    """Hoja SEMAFORO: objetivo = días transcurridos sin ausencias × porcentaje diario del trimestre."""
+    """Hoja SEMAFORO: objetivo al día = días disponibles transcurridos / días disponibles del trimestre.
+
+    Las ausencias ya prorratean la meta de cada ítem (resultado_item); por eso el objetivo se mide sobre
+    los días disponibles del funcionario y llega a 100% al cierre. Descontarlas también del objetivo sobre
+    el total del trimestre las restaría dos veces."""
     total = (fin - inicio).days + 1
     corte = min(hoy, fin)
     transcurridos = (corte - inicio).days + 1 if corte >= inicio else 0
     netos = max(0, transcurridos - dias_calendario(ausencias, inicio, corte)) if transcurridos else 0
-    objetivo = Decimal(netos) * 100 / Decimal(total)
+    disponibles = total - dias_calendario(ausencias, inicio, fin)
+    objetivo = Decimal(netos) * 100 / Decimal(disponibles) if disponibles > 0 else Decimal(0)
     umbral = objetivo * FACTOR_NARANJO
     if avance is None:
         color = None
@@ -160,7 +165,8 @@ def semaforo(avance, inicio, fin, hoy, ausencias):
         color = 'naranjo'
     else:
         color = 'rojo'
-    return {'objetivo': objetivo, 'umbral': umbral, 'color': color, 'transcurridos': transcurridos, 'netos': netos}
+    return {'objetivo': objetivo, 'umbral': umbral, 'color': color, 'transcurridos': transcurridos, 'netos': netos,
+            'disponibles': disponibles}
 
 
 def trimestre_de(fecha):

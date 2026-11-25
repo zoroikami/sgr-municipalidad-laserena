@@ -39,9 +39,16 @@ def test_semaforo_objetivo_al_dia_descuenta_ausencias_y_usa_umbral_60():
     assert luz['objetivo'] == Decimal(50) and luz['color'] == 'verde'
     assert semaforo(Decimal(40), inicio, fin, hoy, [])['color'] == 'naranjo'
     assert semaforo(Decimal(20), inicio, fin, hoy, [])['color'] == 'rojo'
+    # 23 días de ausencia: el objetivo se mide sobre los 69 días disponibles (la meta ya viene prorrateada).
     ausencias = [SimpleNamespace(desde=date(2026, 11, 1), hasta=date(2026, 11, 23))]
-    luz = semaforo(Decimal(40), inicio, fin, hoy, ausencias)
-    assert luz['netos'] == 31 and luz['color'] == 'verde'
+    luz = semaforo(Decimal(45), inicio, fin, hoy, ausencias)
+    assert luz['netos'] == 31 and luz['disponibles'] == 69 and luz['color'] == 'verde'
+    assert semaforo(Decimal(40), inicio, fin, hoy, ausencias)['color'] == 'naranjo'
+    # Al cierre, con meta prorrateada, se exige el 100% aunque haya ausencias (no se descuentan dos veces).
+    cierre = semaforo(Decimal('48.5'), inicio, fin, fin, [SimpleNamespace(desde=date(2026, 10, 1), hasta=date(2026, 11, 15))])
+    assert cierre['objetivo'] == Decimal(100) and cierre['color'] == 'rojo'
+    completo = [SimpleNamespace(desde=inicio, hasta=fin)]
+    assert semaforo(None, inicio, fin, hoy, completo)['objetivo'] == Decimal(0)
     assert semaforo(Decimal(100), inicio, fin, date(2027, 2, 1), [])['objetivo'] == Decimal(100)
     assert semaforo(None, inicio, fin, hoy, [])['color'] is None
 
