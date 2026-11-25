@@ -1,0 +1,26 @@
+<section class="content-panel mt-4" aria-labelledby="caso-plazos-title">
+  <h2 id="caso-plazos-title">Plazos de atención</h2>
+  <p>Los tiempos y las devoluciones del informe son informativos. El puntaje se calcula con las actividades SGR.</p>
+  <div class="table-responsive" role="region" aria-label="Plazos del caso social" tabindex="0">
+    <table class="table caso-plazos">
+      <thead><tr><th scope="col">Tramo</th><th scope="col" title="Días transcurridos">Días</th><th scope="col" title="Límite en días">Límite</th><th scope="col">Resultado</th></tr></thead>
+      <tbody>{% for plazo in plazos_caso %}<tr>
+        <th scope="row">{{ plazo.etiqueta }}</th>
+        <td>{{ plazo.dias|default_if_none:'Sin dato' }}</td><td>{{ plazo.limite }}</td>
+        <td>{% if plazo.cumple == None %}<span class="sgr-luz">Pendiente</span>{% elif plazo.cumple %}<span class="sgr-luz sgr-luz-verde">Cumple</span>{% else %}<span class="sgr-luz sgr-luz-rojo">Fuera de plazo</span>{% endif %}</td>
+      </tr>{% endfor %}</tbody>
+    </table>
+  </div>
+</section>
+<section class="content-panel mt-4" aria-labelledby="caso-gestiones-title">
+  <div class="page-heading"><h2 id="caso-gestiones-title">Gestiones vinculadas</h2>
+    {% if perms.gestion.add_actividadsgr %}<a class="btn btn-primary" href="{% url 'gestion:actividad_crear' %}?caso={{ obj.pk }}">Registrar gestión</a>{% endif %}
+  </div>
+  {% if obj.gestion_tubo and perms.gestion.view_gestiontubo %}<p><a href="{% url 'gestion:detalle' 'tubo' obj.gestion_tubo_id %}">Ver gestión {{ obj.gestion_tubo.codigo }} en el tubo de trabajo</a></p>{% endif %}
+  <div class="table-responsive" role="region" aria-label="Gestiones del caso social" tabindex="0">
+    <table class="table"><thead><tr><th scope="col">Fecha</th><th scope="col">Ítem</th><th scope="col">Puntaje</th></tr></thead>
+      <tbody>{% for actividad in gestiones_caso %}<tr><td>{{ actividad.fecha|date:'d/m/Y' }}</td><td>{{ actividad.item.nombre }}</td><td>{{ actividad.motivo_puntaje }}</td></tr>
+      {% empty %}<tr><td colspan="3">Aún no hay gestiones vinculadas a este caso.</td></tr>{% endfor %}</tbody>
+    </table>
+  </div>
+</section>

@@ -19,16 +19,16 @@ from .access import authorize, delegation_id, is_cliente, scoped
 from .delegation import active_delegation, has_global_scope
 from .forms import FORMS, PortalDateFilterForm
 from .models import Atencion, Delegacion, ItemMeta, SubAtencion, TipoAtencion
-from .queries import MODULES, display_value, list_context, query_for, state_for
+from .queries import MODULES, casos_con_gestiones, display_value, list_context, query_for, state_for
 from .realtime import notify_after_commit
 from .public_views import consulta_publica, schedule_access_email
-from .forms_integrado import OrganizacionForm, GestionTuboForm
+from .forms_integrado import CasoSocialForm, OrganizacionForm, GestionTuboForm
 
 from .forms_cartas import CartaForm
 from .seguimiento import configurar_estado_formulario, registrar_cambio
 from .views_integrado import initial_formulario
 
-FORMS.update(organizaciones=OrganizacionForm, tubo=GestionTuboForm, cartas=CartaForm)
+FORMS.update(organizaciones=OrganizacionForm, tubo=GestionTuboForm, cartas=CartaForm, casos=CasoSocialForm)
 
 
 def module_config(modulo):
@@ -170,7 +170,10 @@ def details_for(obj, modulo):
 def detalle(request, modulo, pk):
     config = module_config(modulo)
     authorize(request.user, config['model'])
-    obj = get_object_or_404(scoped(request.user, config['model']), pk=pk)
+    query = scoped(request.user, config['model'])
+    if modulo == 'casos':
+        query = casos_con_gestiones(query)
+    obj = get_object_or_404(query, pk=pk)
     name = config['model']._meta.model_name
     return render(request, 'gestion/detalle.html', {
         'obj': obj, 'modulo': modulo, 'titulo': str(obj), 'details': details_for(obj, modulo),
@@ -178,6 +181,8 @@ def detalle(request, modulo, pk):
         'can_delete': modulo != 'delegaciones' and request.user.has_perm(f'gestion.delete_{name}'),
         'return_url': reverse('gestion:listado', args=[modulo]),
         'historial': obj.historial_estados.select_related('autor') if modulo in ('tubo', 'cartas') else None,
+        'plazos_caso': obj.plazos() if modulo == 'casos' else None,
+        'gestiones_caso': obj.gestiones.all() if modulo == 'casos' else None,
     })
 
 
