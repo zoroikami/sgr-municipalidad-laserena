@@ -197,6 +197,14 @@ def choices_for(modulo):
     return GestionTubo.ESTADOS if modulo == 'tubo' else ESTADOS_ATENCION if modulo == 'atenciones' else ESTADOS
 
 
+SORT_LABELS = {
+    # Etiquetas breves: caben en el filtro sin recortar y distinguen la dirección del orden.
+    'created_at': ('Más antiguos', 'Más recientes'), 'fecha': ('Ingreso más antiguo', 'Ingreso más reciente'),
+    'nombre': ('Nombre A–Z', 'Nombre Z–A'), 'solicitante_nombre': ('Solicitante A–Z', 'Solicitante Z–A'),
+    'codigo': ('Código menor primero', 'Código mayor primero'), 'folio': ('Folio menor primero', 'Folio mayor primero'),
+}
+
+
 def sort_label(key):
-    names = {'nombre': 'Nombre', 'codigo': 'Código', 'folio': 'Folio', 'solicitante_nombre': 'Solicitante', 'created_at': 'Fecha de creación', 'fecha': 'Fecha de ingreso'}
-    return names[key.lstrip('-')] + (' descendente' if key.startswith('-') else ' ascendente')
+    ascendente, descendente = SORT_LABELS[key.lstrip('-')]
+    return descendente if key.startswith('-') else ascendente

@@ -242,3 +242,8 @@ button, .btn, input, select { min-height: 2.75rem; }
 /* Resumen del tubo sin repetir los conteos de las columnas. */
 .tubo-resumen.tubo-resumen-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 @media (max-width: 700px) { .tubo-resumen.tubo-resumen-3 { grid-template-columns: minmax(0, 1fr); } }
+
+/* Filtros de listados: los selectores muestran su valor completo (legacy.css carga después). */
+.filter-form > div:not(.filter-search):not(.filter-size) { flex: 1 1 11.5rem; }
+.filter-form select.form-select { text-overflow: ellipsis; }
+@media (max-width: 700px) { .filter-form > div:not(.filter-search):not(.filter-size) { flex-basis: 100%; } }
