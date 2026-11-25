@@ -196,11 +196,11 @@ def list_context(request, modulo):
         totals = {row['estado']: row['cantidad'] for row in scoped(request.user, Carta)
                   .values('estado').annotate(cantidad=Count('pk'))}
         # Mismos tonos que la insignia de estado del listado: ámbar, azul, verde y gris.
-        styles = ['proceso', 'estado-aprobada', 'realizado', 'estado-no-aplica']
+        tonos = ['ambar', 'azul', 'verde', 'gris']
         context['cartas_resumen'] = [
-            {'label': label, 'cantidad': totals.get(value, 0), 'clase': style}
-            for (value, label), style in zip(Carta.ESTADOS, styles)]
-        context['cartas_resumen'].append({'label': 'Total', 'cantidad': sum(totals.values()), 'clase': ''})
+            {'label': label, 'cantidad': totals.get(value, 0), 'tono': tono}
+            for (value, label), tono in zip(Carta.ESTADOS, tonos)]
+        context['cartas_resumen'].append({'label': 'Total', 'cantidad': sum(totals.values()), 'tono': 'neutro'})
     return context
 
 

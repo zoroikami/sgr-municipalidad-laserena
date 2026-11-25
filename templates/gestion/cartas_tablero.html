@@ -11,10 +11,10 @@
 {% include 'shared/realtime_status.html' %}
 <div class="tablero-seguimiento" data-realtime-panel data-realtime-module="cartas">
 {# Los conteos por estado ya figuran en cada columna: el resumen solo muestra datos que no se repiten. #}
-<section class="tubo-resumen tubo-resumen-3" aria-label="Resumen de cartas">
-<article><h2>Cartas en seguimiento</h2><strong>{{ total }}</strong><p>Ingresadas por oficina de partes</p></article>
-<article class="realizado"><h2>Tasa de cierre</h2><strong>{% widthratio cerradas total 100 %}%</strong><p>{{ cerradas }} de {{ total }} finalizada{{ cerradas|pluralize:'s' }} o sin aplicación</p></article>
-<article{% if vencidos %} class="tubo-metrica-alerta"{% endif %}><h2>Vencidos</h2><strong>{{ vencidos }}</strong><p>Cartas en proceso con actividad anterior a hoy</p></article>
+<section class="resumen-compacto" aria-label="Resumen de cartas">
+<article data-tono="neutro"><h2>Cartas en seguimiento</h2><strong>{{ total }}</strong><p>Ingresadas por oficina de partes</p></article>
+<article data-tono="verde"><h2>Tasa de cierre</h2><strong>{% widthratio cerradas total 100 %}%</strong><p>{{ cerradas }} de {{ total }} finalizada{{ cerradas|pluralize:'s' }} o sin aplicación</p></article>
+<article data-tono="{% if vencidos %}rojo{% else %}gris{% endif %}"><h2>Vencidos</h2><strong>{{ vencidos }}</strong><p>Cartas en proceso con actividad anterior a hoy</p></article>
 </section>
 {% if perms.gestion.change_carta %}<p class="tubo-dnd-ayuda">Arrastra una tarjeta a una columna habilitada o usa su botón para cambiar de estado.</p>{% endif %}
 <section class="tubo-columnas" aria-label="Tablero de seguimiento de cartas" data-tablero-dnd>
