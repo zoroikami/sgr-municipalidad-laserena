@@ -1,22 +1,23 @@
 {% if periodo_sgr %}{% with p=periodo_sgr %}
-<section class="periodo-sgr" aria-label="Período de medición vigente">
-  <div class="periodo-item">
-    <span class="periodo-label">Trimestre en curso</span>
+<section class="resumen-compacto periodo-sgr" aria-label="Período de medición vigente">
+  <article data-tono="vino">
+    <h2>Trimestre en curso</h2>
     <strong>{{ p.nombre }}</strong>
-    <span>Inicio {{ p.inicio|date:'d/m/Y' }} · término {{ p.fin|date:'d/m/Y' }}</span>
-  </div>
-  <div class="periodo-item">
-    <span class="periodo-label">Avance del período</span>
+    <p>Inicio {{ p.inicio|date:'d/m/Y' }} · término {{ p.fin|date:'d/m/Y' }}</p>
+  </article>
+  <article data-tono="azul">
+    <h2>Avance del período</h2>
     <strong>Día {{ p.dia }} de {{ p.dias_totales }}</strong>
-    <span>Quedan {{ p.restantes }} días · meta esperada al día {{ p.meta_esperada|floatformat:1 }}%</span>
+    <p>Quedan {{ p.restantes }} días · meta esperada al día {{ p.meta_esperada|floatformat:1 }}%
     <progress class="periodo-progreso" max="100" value="{{ p.meta_esperada|floatformat:'1u' }}" aria-label="Meta esperada al día: {{ p.meta_esperada|floatformat:1 }}%"></progress>
-  </div>
-  <div class="periodo-item periodo-plazo{% if p.cierra_hoy %} periodo-alerta{% endif %}">
-    <span class="periodo-label">Plazo de ingreso semanal</span>
+    </p>
+  </article>
+  <article data-tono="{% if p.cierra_hoy %}rojo{% else %}ambar{% endif %}"{% if p.cierra_hoy %} class="periodo-alerta"{% endif %}>
+    <h2>Plazo de ingreso semanal</h2>
     {% if p.cierra_hoy %}<strong>Hoy vence la semana del {{ p.semana_anterior_inicio|date:'d/m' }}</strong>
-    <span>Desde mañana solo se aceptan actividades desde el {{ p.semana_inicio|date:'d/m/Y' }}.</span>
+    <p>Desde mañana solo se aceptan actividades desde el {{ p.semana_inicio|date:'d/m/Y' }}.</p>
     {% else %}<strong>Semana del {{ p.semana_inicio|date:'d/m' }} al {{ p.semana_fin|date:'d/m' }}</strong>
-    <span>Ingresa hasta el lunes {{ p.cierre_semana|date:'d/m/Y' }}; desde el martes la semana se cierra.</span>{% endif %}
-  </div>
+    <p>Ingresa hasta el lunes {{ p.cierre_semana|date:'d/m/Y' }}; desde el martes la semana se cierra.</p>{% endif %}
+  </article>
 </section>
 {% endwith %}{% endif %}
