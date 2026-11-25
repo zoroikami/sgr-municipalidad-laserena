@@ -25,7 +25,7 @@ def delegado(mundo):
 def test_resultado_final_bonifica_felicitaciones_descuenta_reclamos_y_tope_150():
     assert resultado_final(Decimal(90), 1, 0) == Decimal(100)
     assert resultado_final(Decimal(90), 5, 0) == Decimal(120)  # máximo 3 felicitaciones
-    assert resultado_final(Decimal(90), 0, 1) == Decimal(70)
+    assert resultado_final(Decimal(90), 0, 1) == Decimal(60)
     assert resultado_final(Decimal(120), 3, 0) == Decimal(150)
     assert resultado_final(Decimal(145), 3, 0) == Decimal(150)
     assert resultado_final(Decimal(10), 0, 2) == Decimal(0)
@@ -142,7 +142,7 @@ def test_resultados_muestran_semaforo_reclamos_y_alerta_rrhh(client, mundo):
     assert response.status_code == 200
     detalle = response.context['detalle']
     assert detalle['reclamos'] == 1 and detalle['ingresos'] == 1 and detalle['ultimo'] == hoy
-    assert detalle['porcentaje'] == detalle['base'] - 20
+    assert detalle['porcentaje'] == max(0, detalle['base'] - 30)
     assert detalle['semaforo']['color'] in ('verde', 'naranjo', 'rojo')
     assert detalle['rrhh']
     contenido = response.content.decode()

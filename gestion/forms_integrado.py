@@ -1,4 +1,5 @@
 from django import forms
+from django.core.exceptions import ValidationError
 from django.db.models import Q
 from django.contrib.auth import get_user_model
 from django.urls import reverse
@@ -10,7 +11,7 @@ from .delegation import has_global_scope
 from .forms import ScopedModelForm
 from .integrado import primera_fecha_admisible, validar_fecha
 from .integrado import CARGOS, SUBFAMILIAS, TERRITORIOS_TUBO
-from .models import ActividadSGR, AusenciaSGR, Delegacion, GestionTubo, Organizacion, Atencion, ItemMeta, ReclamoSGR
+from .models import ActividadSGR, AusenciaSGR, CasoSocial, Delegacion, MetaFuncionario, GestionTubo, Organizacion, Atencion, ItemMeta, ReclamoSGR
 
 
 def nombre_cuenta(account):
@@ -160,6 +161,22 @@ class GestionTuboForm(RelacionesForm):
         if not self.instance.pk:
             telefono.required = True
         telefono.help_text = 'Indica un número, por ejemplo +56 9 1234 5678. Sin nombre y teléfono del usuario no hay puntaje.'
+        # Nuevo requerimiento, punto 4: las gestiones de la semana se ingresan hasta el lunes siguiente.
+        if not self.instance.pk:
+            hoy = timezone.localdate()
+            primera = primera_fecha_admisible(hoy)
+            self.fields['fecha_solicitud'].widget.attrs.update({'min': primera.isoformat(), 'max': hoy.isoformat()})
+            self.fields['fecha_solicitud'].help_text = (f'Puedes ingresar solicitudes desde el {primera:%d/%m/%Y} hasta hoy: '
+                                                        'la semana se cierra el lunes siguiente.')
+
+    def clean_fecha_solicitud(self):
+        fecha = self.cleaned_data.get('fecha_solicitud')
+        if fecha and not self.instance.pk:
+            try:
+                validar_fecha(fecha)
+            except ValidationError as error:
+                raise forms.ValidationError(error.messages) from error
+        return fecha
 
     def territorios(self):
         if not self.rel_org:
@@ -191,8 +208,9 @@ class GestionTuboForm(RelacionesForm):
 class ActividadSGRForm(RelacionesForm):
     class Meta:
         model = ActividadSGR
-        fields = ['item', 'cargo', 'fecha', 'descripcion', 'accion', 'derivado_a', 'tipo_gestion', 'solicitante_nombre',
-                  'solicitante_telefono', 'solicitante_delegado', 'es_accion', 'felicitacion', 'respaldo_formal']
+        fields = ['item', 'cargo', 'fecha', 'caso', 'descripcion', 'accion', 'derivado_a', 'tipo_gestion', 'solicitante_nombre',
+                  'solicitante_telefono', 'solicitante_delegado', 'es_accion', 'imagen_verificacion', 'felicitacion',
+                  'respaldo_formal']
         labels = {'item': 'Ítem', 'descripcion': 'Descripción', 'solicitante_nombre': 'Nombre del solicitante',
                   'solicitante_telefono': 'Teléfono del solicitante'}
         widgets = {'fecha': forms.DateInput(format='%Y-%m-%d', attrs={'type': 'date'})}
@@ -207,11 +225,18 @@ class ActividadSGRForm(RelacionesForm):
             'es_accion': 'Marca si ejecutaste la acción; una coordinación por sí sola no suma puntaje.',
             'felicitacion': 'Marca si registras una felicitación; requiere información del delegado para sumar.',
             'respaldo_formal': 'Indica la referencia del documento que respalda la felicitación informada al delegado.',
+            'caso': 'Opcional. Si es la 1.ª, 2.ª o 3.ª gestión de un caso del gestor social, elige el caso abierto.',
+            'imagen_verificacion': 'Marca si guardaste una foto de respaldo; nómbrala con el código que muestra la actividad.',
         }
+
+    ingresar_tubo = forms.BooleanField(label='Ingresar al tubo de trabajo', required=False,
+        help_text='Marca si la solicitud queda pendiente de solución: se crea la gestión en el tubo con estos datos.')
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.instance.responsable = self.user
+        self.fields['caso'].queryset = self.relaciones(CasoSocial).filter(estado='Abierto').order_by('-fecha_ingreso')
+        self.fields['caso'].label_from_instance = lambda caso: f'{caso.codigo} · {caso.nombre}'
         self.fields['solicitante_telefono'].help_text = 'Indica un número, por ejemplo +56 9 1234 5678. Sin nombre y teléfono del usuario no hay puntaje.'
         if not self.user.has_perm('gestion.validar_delegado'):
             self.fields.pop('respaldo_formal')
@@ -278,6 +303,13 @@ class ActividadSGRForm(RelacionesForm):
         validar_fecha(fecha)
         return fecha
 
+    def clean_ingresar_tubo(self):
+        # Punto 2: el tubo exige nombre y teléfono del usuario; se valida antes de guardar la actividad.
+        ingresar = self.cleaned_data.get('ingresar_tubo')
+        if ingresar and not (self.data.get('solicitante_nombre', '').strip() and self.data.get('solicitante_telefono', '').strip()):
+            raise forms.ValidationError('Para ingresar al tubo escribe el nombre y el teléfono del usuario.')
+        return ingresar
+
 
 class AusenciaSGRForm(RelacionesForm):
     class Meta:
@@ -334,6 +366,25 @@ class PeriodoSGRForm(forms.Form):
             field.widget.attrs['class'] = 'form-select' if isinstance(field.widget, forms.Select) else 'form-control'
         self.fields['trimestre'].widget.attrs['aria-describedby'] = 'id_trimestre_help id_trimestre_errors'
         self.fields['responsable'].widget.attrs['aria-describedby'] = 'id_responsable_errors'
+
+
+class MetaFuncionarioForm(forms.ModelForm):
+    """Ajuste individual: las hojas G SOC2, G SOC3, G SOC5 y T OC 3 usan metas o ponderadores propios."""
+    quitar = forms.BooleanField(label='Volver a la meta del cargo', required=False,
+        help_text='Marca para eliminar el ajuste y usar la meta y el ponderador comunes del cargo.')
+
+    class Meta:
+        model = MetaFuncionario
+        fields = ['meta_cantidad', 'ponderador']
+        help_texts = {
+            'meta_cantidad': 'Indica la meta trimestral de este funcionario para el ítem (por ejemplo, 15 beneficios).',
+            'ponderador': 'Indica el peso del ítem en el resultado de este funcionario, entre 0 y 100 (por ejemplo, 25).',
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for field in self.fields.values():
+            field.widget.attrs['class'] = 'form-control' if not isinstance(field.widget, forms.CheckboxInput) else ''
 
 
 class MetaSGRForm(forms.ModelForm):

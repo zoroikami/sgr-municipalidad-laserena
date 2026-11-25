@@ -1,4 +1,9 @@
-"""Carga el catálogo de atención social de la hoja LISTA de la matriz SGR: tipos de atención y subatenciones."""
+"""Carga el catálogo de atención social de la matriz SGR: tipos de atención y subatenciones.
+
+La hoja LISTA define las subatenciones de «Informes sociales» y «Gestión de subsidios». Las listas desplegables
+de las hojas G SOC (columnas TIPO ATENCION y SUB ATENCION) agregan los demás tipos; ahí se asocian solo los
+pares evidentes, porque esas dos listas no están enlazadas en la planilla.
+"""
 import re
 import unicodedata
 
@@ -7,11 +12,16 @@ from django.db import transaction
 
 from gestion.models import Delegacion, SubAtencion, TipoAtencion
 
-# Hoja LISTA: tipo de atención, subatención y forma de la ayuda.
+# Tipo de atención: [(subatención, forma de la ayuda de la hoja LISTA o None)].
 CATALOGO = {
     'Informes sociales': [('Informe aporte económico', 'Dinero'), ('Informe aporte material', 'Material'),
                           ('Informe institución', 'Documento')],
-    'Gestión de subsidios': [('IPS', 'Documento'), ('PGU', 'Aporte'), ('SUF', 'Aporte'), ('SAP', 'Aporte')],
+    'Gestión de subsidios': [('IPS', 'Documento'), ('PGU', 'Aporte'), ('SUF', 'Aporte'), ('SAP', 'Aporte'),
+                             ('Exención pago aseo domiciliario', None)],
+    # El nombre de la subatención es único por delegación: se distinguen las de derivación.
+    'Derivaciones': [('Derivación con orientación social', None), ('Otras derivaciones', None)],
+    'Otras gestiones sociales': [('Orientación social', None), ('Otras gestiones', None)],
+    'Entrega de emergencia': [('Emergencia', None)],
 }
 
 
@@ -42,7 +52,7 @@ class Command(BaseCommand):
                     tipo = tipos.get(clave(nombre_tipo))
                     if tipo is None:
                         tipo = TipoAtencion.objects.create(delegacion=org, nombre=nombre_tipo,
-                            descripcion='Catálogo de atención social, hoja LISTA de la matriz SGR.')
+                            descripcion='Catálogo de atención social de la matriz SGR (hojas LISTA y G SOC).')
                         tipos_nuevos += 1
                     else:
                         existentes += 1
@@ -50,13 +60,18 @@ class Command(BaseCommand):
                             # Un tipo archivado o inactivo lo decidió alguien: no se reactiva ni se duplica.
                             self.stdout.write(f'{org.nombre}: «{tipo.nombre}» está archivado o inactivo; se omite.')
                             continue
-                    actuales = {clave(s.nombre) for s in SubAtencion.all_objects.filter(delegacion=org, tipo=tipo)}
+                    propias = {clave(s.nombre) for s in SubAtencion.all_objects.filter(delegacion=org, tipo=tipo)}
+                    otras = {clave(s.nombre) for s in SubAtencion.all_objects.filter(delegacion=org).exclude(tipo=tipo)}
                     for nombre, forma in subatenciones:
-                        if clave(nombre) in actuales:
+                        if clave(nombre) in propias:
                             existentes += 1
                             continue
-                        SubAtencion.objects.create(delegacion=org, tipo=tipo, nombre=nombre,
-                            descripcion=f'Hoja LISTA de la matriz SGR. Forma de la ayuda: {forma.lower()}.')
+                        if clave(nombre) in otras:
+                            self.stdout.write(f'{org.nombre}: «{nombre}» ya existe en otro tipo de atención; se omite.')
+                            continue
+                        origen = (f'Hoja LISTA de la matriz SGR. Forma de la ayuda: {forma.lower()}.' if forma
+                                  else 'Lista desplegable de las hojas G SOC de la matriz SGR.')
+                        SubAtencion.objects.create(delegacion=org, tipo=tipo, nombre=nombre, descripcion=origen)
                         subs_nuevas += 1
             if not aplicar:
                 transaction.set_rollback(True)

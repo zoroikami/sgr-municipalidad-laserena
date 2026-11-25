@@ -52,15 +52,27 @@ MATRIZ = {
         ('EMERGENCIA', '0.05', 0, 'Emergencias'),
         (TUBO, '0.35', 80, '% realizado'),
     ]),
-    'seguridad': ('Gestor de seguridad ciudadana (hoja GES SEG)', [
-        ('FORMACIÓN DE COMITÉS DE SEGURIDAD', '0.20', 36, 'Comités'),
-        ('LEVANTAMIENTO DE INCIVILIDADES', '0.20', 40, 'Levantamientos'),
-        ('GESTIÓN DE MEDIACIÓN', '0.10', 50, 'Mediaciones'),
+    # Seguridad: la hoja SALON (bloque G SEGUR) puntúa con sus propias metas y ponderadores y toma el avance
+    # de GES SEG; las celdas de cumplimiento de GES SEG apuntan a filas equivocadas (H6 a H9) y su total omite
+    # filas, por eso rige SALON. «Salidas a terreno» no pondera en SALON: queda con ponderador 0, informativo.
+    'seguridad': ('Gestor de seguridad ciudadana (hoja SALON, bloque G SEGUR)', [
+        ('FORMACIÓN DE COMITÉS DE SEGURIDAD', '0.25', 6, 'Comités'),
+        ('LEVANTAMIENTO DE INCIVILIDADES', '0.25', 45, 'Levantamientos'),
+        ('GESTIÓN DE MEDIACIÓN', '0.10', 12, 'Mediaciones'),
         ('RECUPERACIÓN DE ESPACIOS PÚBLICOS', '0.10', 50, 'Espacios'),
-        ('INFRACCIONES VARIAS', '0.15', 45, 'Infracciones'),
-        ('SALIDAS A TERRENO', '0.10', 45, 'Salidas'),
+        ('INFRACCIONES VARIAS', '0.15', 60, 'Infracciones'),
+        ('SALIDAS A TERRENO', '0', 45, 'Salidas'),
         (TUBO, '0.15', 80, '% realizado'),
     ]),
+}
+
+# Valores que cargó la versión anterior del comando. --actualizar solo cambia ítems que aún los conservan,
+# para no pisar lo que un delegado haya configurado con «Configurar meta».
+ANTERIORES = {
+    'seguridad': {
+        'FORMACIÓN DE COMITÉS DE SEGURIDAD': ('0.20', 36), 'LEVANTAMIENTO DE INCIVILIDADES': ('0.20', 40),
+        'GESTIÓN DE MEDIACIÓN': ('0.10', 50), 'INFRACCIONES VARIAS': ('0.15', 45), 'SALIDAS A TERRENO': ('0.10', 45),
+    },
 }
 
 
@@ -70,21 +82,35 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument('--delegacion', type=int, required=True)
         parser.add_argument('--aplicar', action='store_true')
+        parser.add_argument('--actualizar', action='store_true',
+            help='Actualiza meta y ponderador de los ítems que conservan los valores de la versión anterior.')
         parser.add_argument('--desactivar-comunes', action='store_true',
             help='Deja inactivos los ítems sin cargo de la delegación para que solo rija la matriz por cargo.')
 
-    def handle(self, *args, delegacion, aplicar, desactivar_comunes=False, **options):
+    def handle(self, *args, delegacion, aplicar, desactivar_comunes=False, actualizar=False, **options):
         org = Delegacion.objects.filter(pk=delegacion).first()
         if org is None:
             raise CommandError('La delegación indicada no existe.')
-        creados = existentes = 0
+        creados = existentes = actualizados = 0
+        conservados = []
         with transaction.atomic():
             for cargo, (hoja, items) in MATRIZ.items():
                 for nombre, ponderador, meta, unidad in items:
                     # El nombre es único por delegación: se distingue el ítem común de cada cargo.
                     titulo = titulo_item(cargo, nombre)
-                    if ItemMeta.all_objects.filter(delegacion=org, nombre=titulo).exists():
+                    actual = ItemMeta.all_objects.filter(delegacion=org, nombre=titulo).first()
+                    if actual is not None:
                         existentes += 1
+                        nuevo = (Decimal(ponderador) * 100, meta)
+                        if actualizar and (actual.ponderador, actual.meta_cantidad) != nuevo:
+                            previo = ANTERIORES.get(cargo, {}).get(nombre)
+                            if previo and (actual.ponderador, actual.meta_cantidad) == (Decimal(previo[0]) * 100, previo[1]):
+                                actual.ponderador, actual.meta_cantidad = nuevo
+                                actual.descripcion = f'Matriz SGR, {hoja}.'
+                                actual.save(update_fields=['ponderador', 'meta_cantidad', 'descripcion', 'updated_at'])
+                                actualizados += 1
+                            else:
+                                conservados.append(titulo)
                         continue
                     ItemMeta.objects.create(
                         delegacion=org, cargo_sgr=cargo, nombre=titulo, unidad_medida=unidad, meta_cantidad=meta,
@@ -97,5 +123,7 @@ class Command(BaseCommand):
             if not aplicar:
                 transaction.set_rollback(True)
         modo = 'Aplicado' if aplicar else 'Simulación (sin cambios)'
-        self.stdout.write(f'{modo}: {creados} ítems nuevos, {existentes} ya existentes, {inactivos} ítems comunes '
-                          f'desactivados en {org.nombre}.')
+        self.stdout.write(f'{modo}: {creados} ítems nuevos, {existentes} ya existentes, {actualizados} actualizados, '
+                          f'{inactivos} ítems comunes desactivados en {org.nombre}.')
+        for titulo in conservados:
+            self.stdout.write(f'  Se conserva (configurado por el delegado): {titulo}')

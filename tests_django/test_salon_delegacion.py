@@ -112,8 +112,8 @@ def test_catalogo_social_simula_carga_y_no_duplica(mundo):
     call_command('cargar_catalogo_social', todas=True, aplicar=True, stdout=salida)
     for org in (mundo['a'], mundo['b']):
         tipos = TipoAtencion.objects.filter(delegacion=org).exclude(nombre__in=['Social', 'Salud'])
-        assert tipos.count() == 2
-        assert SubAtencion.objects.filter(delegacion=org, tipo__in=tipos).count() == 7
+        assert tipos.count() == 5
+        assert SubAtencion.objects.filter(delegacion=org, tipo__in=tipos).count() == 13
     subsidio = SubAtencion.objects.get(delegacion=mundo['a'], nombre='SUF')
     assert subsidio.tipo.nombre == 'Gestión de subsidios' and 'aporte' in subsidio.descripcion
     assert TipoAtencion.objects.filter(delegacion=mundo['a'], nombre='  INFORMES  sociales ').count() == 1

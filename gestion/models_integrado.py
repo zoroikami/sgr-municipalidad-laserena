@@ -267,7 +267,18 @@ class ActividadSGR(models.Model):
         permissions = [('validar_delegado', 'Puede informar felicitaciones y registrar ausencias como delegado')]
 
     @property
+    def codigo(self):
+        """Código de verificación de la matriz (ÁREA + mes + día + número): nombra la foto de respaldo."""
+        from .integrado import AREAS_VERIFICACION
+        if not self.pk:
+            return ''
+        return f'{AREAS_VERIFICACION.get(self.cargo, "SGR")}-{self.fecha:%m%d}-{self.pk}'
+
+    @property
     def motivo_puntaje(self):
+        if self.verificacion == 'no_valida':
+            motivo = f': {self.verificacion_motivo}' if self.verificacion_motivo else ''
+            return f'Sin puntaje: el verificador la marcó no válida{motivo}.'
         if self.solicitante_delegado:
             return 'Otra gestión: el solicitante es el delegado.'
         if not self.solicitante_nombre.strip() or not self.solicitante_telefono.strip():
@@ -344,7 +355,7 @@ class AusenciaSGR(models.Model):
 
 
 class ReclamoSGR(models.Model):
-    """Hoja RECLAMOS: reclamo escrito por mala atención de un funcionario; descuenta 20% de su resultado."""
+    """Hoja RECLAMOS: reclamo escrito por mala atención de un funcionario; descuenta 30% de su resultado."""
     MEDIOS = [('whatsapp', 'WhatsApp'), ('correo', 'Correo electrónico'), ('libro', 'Libro de observaciones')]
     delegacion = models.ForeignKey('gestion.Delegacion', on_delete=models.PROTECT)
     responsable = models.ForeignKey(settings.AUTH_USER_MODEL, verbose_name='Funcionario involucrado', on_delete=models.PROTECT,

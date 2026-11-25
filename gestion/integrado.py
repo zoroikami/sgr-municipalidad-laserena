@@ -6,6 +6,10 @@ from django.core.exceptions import ValidationError
 from django.utils import timezone
 
 
+# Columna AREA del código de verificación en cada hoja (APA, COS, COM1-4, SOC, PYG, SEG).
+AREAS_VERIFICACION = {'delegado': 'DEL', 'social': 'SOC', 'administrativo': 'APA', 'organizaciones': 'COM',
+                      'compras': 'CYP', 'planificacion': 'PYG', 'servicios': 'COS', 'seguridad': 'SEG'}
+
 CARGOS = [
     ('delegado', 'Delegado'), ('social', 'Gestor social'),
     ('administrativo', 'Apoyo administrativo'), ('organizaciones', 'Organizaciones comunitarias'),
@@ -29,11 +33,13 @@ TERRITORIOS_TUBO = {
     'LA ANTENA - LA FLORIDA': ['Alfalfares', 'Antena', 'Ceres', 'La Florida'],
 }
 
-# Hoja RECLAMOS de la matriz: cada felicitación vale 10% (máximo 3), cada reclamo
-# descuenta 20% y el sobrecumplimiento del colaborador no puede superar 150%.
+# Hoja RECLAMOS de la matriz: cada felicitación vale 10% (máximo 3) y el sobrecumplimiento del colaborador no
+# puede superar 150%. Cada reclamo descuenta 30%: así lo calculan 11 de las 13 hojas por funcionario (celda
+# RECLAMOS = -0,3) y el reclamo registrado en la hoja RECLAMOS; el -0,2 del encabezado y de COOR DISERCO y
+# G SOC 1 corresponde a la versión anterior de la plantilla.
 BONO_FELICITACION = Decimal('10')
 MAX_FELICITACIONES = 3
-DESCUENTO_RECLAMO = Decimal('20')
+DESCUENTO_RECLAMO = Decimal('30')
 TOPE_FINAL = Decimal('150')
 # Hojas SEMAFORO y RESUMEN: naranjo desde el 60% del objetivo al día de hoy.
 FACTOR_NARANJO = Decimal('0.6')
@@ -171,7 +177,7 @@ def resultado_tubo(meta, gestiones):
 
 
 def resultado_final(base, felicitaciones, reclamos):
-    """Aplica la hoja RECLAMOS: +10% por felicitación (máx. 3), -20% por reclamo, entre 0% y 150%."""
+    """Aplica la hoja RECLAMOS: +10% por felicitación (máx. 3), -30% por reclamo, entre 0% y 150%."""
     if base is None:
         return None
     bono = BONO_FELICITACION * min(felicitaciones, MAX_FELICITACIONES)
