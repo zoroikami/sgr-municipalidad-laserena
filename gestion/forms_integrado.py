@@ -48,6 +48,8 @@ class OrganizacionForm(ScopedModelForm):
         model = Organizacion
         fields = ['nombre', 'familia', 'subfamilia', 'domicilio', 'socios_activos', 'fecha_constitucion',
                   'registro_pj', 'fecha_inscripcion', 'registro_directiva', 'verificada', 'descripcion', 'estado']
+        labels = {'fecha_constitucion': 'Fecha de constitución', 'fecha_inscripcion': 'Fecha de inscripción',
+                  'registro_directiva': 'Registro de directiva', 'descripcion': 'Descripción'}
         widgets = {key: forms.DateInput(format='%Y-%m-%d', attrs={'type': 'date'})
                    for key in ['fecha_constitucion', 'fecha_inscripcion']}
         help_texts = {
@@ -110,6 +112,8 @@ class GestionTuboForm(RelacionesForm):
         fields = ['nombre', 'descripcion', 'fecha_solicitud', 'origen', 'solicitante', 'solicitante_rut',
                   'solicitante_telefono', 'territorio',
                   'responsable', 'fecha_compromiso', 'apoyo', 'observaciones', 'atencion', 'organizacion']
+        labels = {'nombre': 'Actividad, solicitud o problema', 'descripcion': 'Descripción', 'fecha_solicitud': 'Fecha de solicitud',
+                  'fecha_compromiso': 'Fecha de compromiso', 'atencion': 'Atención vinculada', 'organizacion': 'Organización'}
         widgets = {key: forms.DateInput(format='%Y-%m-%d', attrs={'type': 'date'})
                    for key in ['fecha_solicitud', 'fecha_compromiso']}
         help_texts = {
@@ -189,6 +193,8 @@ class ActividadSGRForm(RelacionesForm):
         model = ActividadSGR
         fields = ['item', 'cargo', 'fecha', 'descripcion', 'solicitante_nombre', 'solicitante_telefono',
                   'solicitante_delegado', 'es_accion', 'felicitacion', 'respaldo_formal']
+        labels = {'item': 'Ítem', 'descripcion': 'Descripción', 'solicitante_nombre': 'Nombre del solicitante',
+                  'solicitante_telefono': 'Teléfono del solicitante'}
         widgets = {'fecha': forms.DateInput(format='%Y-%m-%d', attrs={'type': 'date'})}
         help_texts = {
             'item': 'Selecciona el ítem de la matriz que corresponde a la actividad y al cargo.',
