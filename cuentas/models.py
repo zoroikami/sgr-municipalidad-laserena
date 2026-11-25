@@ -3,6 +3,7 @@ from pathlib import Path
 
 from django.conf import settings
 from django.core.exceptions import ValidationError
+from django.core.validators import RegexValidator
 from django.db import models
 
 from cuentas.rut import RutError, normalize_rut
@@ -20,6 +21,8 @@ class Perfil(models.Model):
     cargo_sgr = models.CharField('Cargo municipal', max_length=30, blank=True)
     rut = models.CharField('RUT', max_length=12, unique=True, blank=True, null=True)
     foto = models.ImageField('Foto', upload_to=photo_upload_path, storage=private_photo_storage, blank=True)
+    telefono = models.CharField('Teléfono', max_length=25, blank=True,
+        validators=[RegexValidator(r'^\+?[0-9 ()-]{7,25}$', 'Ingresa un teléfono válido, por ejemplo +56 9 1234 5678.')])
 
     class Meta:
         permissions = [

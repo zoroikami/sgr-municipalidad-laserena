@@ -247,3 +247,21 @@ button, .btn, input, select { min-height: 2.75rem; }
 .filter-form > div:not(.filter-search):not(.filter-size) { flex: 1 1 11.5rem; }
 .filter-form select.form-select { text-overflow: ellipsis; }
 @media (max-width: 700px) { .filter-form > div:not(.filter-search):not(.filter-size) { flex-basis: 100%; } }
+
+/* Ficha de usuario (Usuarios › Ver) */
+.user-heading { align-items: center; }
+.user-identity { display: flex; align-items: center; gap: var(--space-xl); min-width: 0; }
+.user-identity h1 { margin-bottom: var(--space-xs); overflow-wrap: anywhere; }
+.user-identity p { margin-bottom: var(--space-sm); }
+.user-photo { width: 7rem; height: 7rem; flex: 0 0 auto; object-fit: cover; border-radius: 50%; border: 1px solid var(--brand-border); background: var(--brand-soft); }
+.user-section-title { margin: var(--space-2xl) 0 var(--space-md); }
+@media (max-width: 700px) {
+  .user-identity { flex-direction: column; align-items: flex-start; gap: var(--space-md); }
+  .user-photo { width: 5.5rem; height: 5.5rem; }
+}
+
+/* Estados de cartas en el listado: mismos tonos que el tablero; el texto sigue indicando el estado. */
+.badge-status.en-proceso { background: var(--action-edit-bg); color: var(--action-edit-ink); }
+.badge-status.aprobada { background: var(--action-view-bg); color: var(--action-view-ink); }
+.badge-status.finalizada { background: var(--status-active-bg); color: var(--status-active-ink); }
+.badge-status.no-aplica { background: var(--brand-soft); color: var(--brand-muted); }

@@ -2,6 +2,7 @@ from io import BytesIO
 import warnings
 
 from django import forms
+from django.core.validators import RegexValidator
 from django.contrib.auth import password_validation
 from django.contrib.auth.forms import AuthenticationForm, PasswordChangeForm, PasswordResetForm, SetPasswordForm
 from django.contrib.auth.models import Group, Permission, User
@@ -98,6 +99,10 @@ class ProfileForm(forms.ModelForm):
         help_text='Selecciona una foto JPEG o PNG de hasta 2 MiB; podrás recortarla antes de guardar.')
     email = forms.EmailField(label='Correo electrónico',
         help_text='Escribe un correo personal vigente, por ejemplo nombre@correo.cl.')
+    telefono = forms.CharField(label='Teléfono', max_length=25, required=False,
+        validators=[RegexValidator(r'^\+?[0-9 ()-]{7,25}$', 'Ingresa un teléfono válido, por ejemplo +56 9 1234 5678.')],
+        widget=forms.TextInput(attrs={'type': 'tel', 'placeholder': '+56 9 1234 5678', 'autocomplete': 'tel'}),
+        help_text='Opcional. Tu número de contacto, por ejemplo +56 9 1234 5678.')
 
     class Meta:
         model = User
@@ -127,6 +132,10 @@ class ManagedUserForm(forms.ModelForm):
         help_text='Escribe un correo vigente y exclusivo de esta cuenta, por ejemplo nombre@correo.cl.')
     rut = forms.CharField(label='RUT', max_length=20, help_text=RUT_INPUT_HELP,
                          widget=forms.TextInput(attrs={'placeholder': '12345678-5', 'spellcheck': 'false'}))
+    telefono = forms.CharField(label='Teléfono', max_length=25, required=False,
+        validators=[RegexValidator(r'^\+?[0-9 ()-]{7,25}$', 'Ingresa un teléfono válido, por ejemplo +56 9 1234 5678.')],
+        widget=forms.TextInput(attrs={'type': 'tel', 'placeholder': '+56 9 1234 5678', 'autocomplete': 'off'}),
+        help_text='Opcional. Número de contacto de la persona, por ejemplo +56 9 1234 5678.')
     role = forms.ChoiceField(label='Rol', choices=[(name, name) for name in ROLE_NAMES],
         help_text='Selecciona el nivel de acceso y las acciones que podrá realizar la cuenta.')
     new_password = forms.CharField(label='Contraseña inicial', required=False,
@@ -162,6 +171,7 @@ class ManagedUserForm(forms.ModelForm):
         if not self.creating:
             self.initial['cargo_sgr'] = self.instance.perfil.cargo_sgr
             self.initial['rut'] = self.instance.perfil.rut
+            self.initial['telefono'] = self.instance.perfil.telefono
             self.initial['role'] = ('Superadministrador' if self.instance.is_superuser else
                 self.instance.groups.filter(name__in=ROLE_NAMES).values_list('name', flat=True).first())
             if actor.is_superuser:
@@ -214,7 +224,7 @@ class ManagedUserForm(forms.ModelForm):
         user.save()
         delegation = self.cleaned_data['delegacion'] if self.actor.is_superuser else self.actor.perfil.delegacion
         Perfil.objects.update_or_create(user=user, defaults={'delegacion': delegation, 'rut': self.cleaned_data['rut'],
-            'cargo_sgr': self.cleaned_data.get('cargo_sgr', '')})
+            'cargo_sgr': self.cleaned_data.get('cargo_sgr', ''), 'telefono': self.cleaned_data.get('telefono', '').strip()})
         user.groups.set([Group.objects.get_or_create(name=self.cleaned_data['role'])[0]])
         return user
 
