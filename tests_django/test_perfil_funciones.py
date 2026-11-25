@@ -44,7 +44,7 @@ def test_perfil_sin_cargo_indica_como_asignarlo(client, mundo):
 
     assert response.status_code == 200
     assert not response.context['funciones']
-    assert 'Sin cargo asignado: pide a administración que lo registre en Usuarios' in response.content.decode()
+    assert 'Sin cargo asignado: pide a administración que lo registre en Usuarios.' in response.content.decode()
 
 
 def test_catalogo_cubre_cada_funcion_de_los_siete_cargos_y_distingue_seguridad():
