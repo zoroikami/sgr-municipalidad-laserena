@@ -356,8 +356,9 @@ class ReclamoSGRForm(RelacionesForm):
 
 class PeriodoSGRForm(forms.Form):
     anio = forms.IntegerField(label='Año', min_value=2020, max_value=2100)
-    trimestre = forms.TypedChoiceField(label='Trimestre', choices=[(n, n) for n in range(1, 5)], coerce=int,
-        help_text='Elige 1: ene-mar, 2: abr-jun, 3: jul-sep o 4: oct-dic.')
+    # Los meses van en la opción: una ayuda bajo un solo campo descuadra la fila de filtros.
+    trimestre = forms.TypedChoiceField(label='Trimestre', coerce=int, choices=[
+        (1, '1.º · enero a marzo'), (2, '2.º · abril a junio'), (3, '3.º · julio a septiembre'), (4, '4.º · octubre a diciembre')])
     responsable = forms.ModelChoiceField(label='Funcionario', queryset=get_user_model().objects.none())
 
     def __init__(self, *args, user, **kwargs):
@@ -367,7 +368,7 @@ class PeriodoSGRForm(forms.Form):
         self.fields['responsable'].label_from_instance = lambda account: account.get_full_name() or account.username
         for field in self.fields.values():
             field.widget.attrs['class'] = 'form-select' if isinstance(field.widget, forms.Select) else 'form-control'
-        self.fields['trimestre'].widget.attrs['aria-describedby'] = 'id_trimestre_help id_trimestre_errors'
+        self.fields['trimestre'].widget.attrs['aria-describedby'] = 'id_trimestre_errors'
         self.fields['responsable'].widget.attrs['aria-describedby'] = 'id_responsable_errors'
 
 

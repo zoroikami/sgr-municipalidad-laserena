@@ -7,7 +7,7 @@
 <p>La acción realizada suma puntaje cuando tiene nombre y teléfono del usuario. Cada ítem tiene un tope de 120%; con felicitaciones y reclamos el resultado final queda entre 0% y 150%.</p></div></div>
 <div class="d-flex flex-wrap gap-2 my-3">{% if perms.gestion.add_actividadsgr %}<a class="btn btn-primary" href="{% url 'gestion:actividad_crear' %}">Registrar actividad</a>{% endif %}{% if perms.gestion.validar_delegado and perms.gestion.add_ausenciasgr %}<a class="btn btn-outline-secondary" href="{% url 'gestion:ausencia_crear' %}">Registrar ausencia</a>{% endif %}{% if perms.gestion.validar_delegado and perms.gestion.add_reclamosgr %}<a class="btn btn-outline-secondary" href="{% url 'gestion:reclamo_crear' %}">Registrar reclamo</a>{% endif %}</div>
 <form method="get" class="filter-form mb-4">
-  {% for field in filter_form %}<div class="{% if field.errors %}has-error{% endif %}">{{ field.label_tag }}{{ field }}{% if field.help_text %}<div class="field-help" id="{{ field.auto_id }}_help">{{ field.help_text }}</div>{% endif %}<div class="field-errors" id="{{ field.auto_id }}_errors">{{ field.errors }}</div></div>{% endfor %}
+  {% for field in filter_form %}<div class="{% if field.errors %}has-error{% endif %}">{{ field.label_tag }}{{ field }}{% if field.help_text %}<div class="field-help" id="{{ field.auto_id }}_help">{{ field.help_text }}</div>{% endif %}{% if field.errors %}<div class="field-errors" id="{{ field.auto_id }}_errors">{{ field.errors }}</div>{% endif %}</div>{% endfor %}
   <button class="btn btn-primary" type="submit">Consultar</button>
 </form>
 {% if detalle %}
