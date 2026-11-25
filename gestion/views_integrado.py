@@ -221,12 +221,13 @@ def resultados(request):
             salon['delegacion'] = funcionario.perfil.delegacion
     valores = [r['porcentaje'] for r in equipo if r['porcentaje'] is not None]
     total_equipo = sum(valores) / len(valores) if valores else None
+    luz_equipo = semaforo(total_equipo, inicio, fin, hoy, []) if form.is_valid() else None
     equipo.sort(key=lambda r: (r['porcentaje'] is None, -(r['porcentaje'] or 0)))
     resumen = {color: sum(1 for r in equipo if r['semaforo']['color'] == color) for color in ('verde', 'naranjo', 'rojo')}
     return render(request, 'gestion/resultados_sgr.html', {'titulo': 'Resultados SGR', 'sgr_section': True, 'filter_form': form,
         'resultados': rows, 'actividades': actividades, 'ausencias': ausencias, 'reclamos': reclamos, 'total': total, 'base': base,
         'detalle': detalle, 'equipo': equipo, 'total_equipo': total_equipo, 'resumen_semaforo': resumen,
-        'objetivo_equipo': objetivo_equipo, 'salon': salon})
+        'objetivo_equipo': objetivo_equipo, 'salon': salon, 'luz_equipo': luz_equipo})
 
 
 @login_required

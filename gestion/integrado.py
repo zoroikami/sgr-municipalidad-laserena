@@ -43,6 +43,8 @@ DESCUENTO_RECLAMO = Decimal('30')
 TOPE_FINAL = Decimal('150')
 # Hojas SEMAFORO y RESUMEN: naranjo desde el 60% del objetivo al día de hoy.
 FACTOR_NARANJO = Decimal('0.6')
+# Tono del componente de resumen (static/sgr/resumenes.css) para cada color del semáforo.
+TONO_SEMAFORO = {'verde': 'verde', 'naranjo': 'ambar', 'rojo': 'rojo'}
 # Nuevo requerimiento, punto 7: ningún ítem puede superar 120% de cumplimiento.
 TOPE_ITEM = Decimal('120')
 
@@ -273,7 +275,7 @@ def semaforo(avance, inicio, fin, hoy, ausencias):
     else:
         color = 'rojo'
     return {'objetivo': objetivo, 'umbral': umbral, 'color': color, 'transcurridos': transcurridos, 'netos': netos,
-            'disponibles': disponibles}
+            'disponibles': disponibles, 'tono': TONO_SEMAFORO.get(color, 'neutro')}
 
 
 def trimestre_de(fecha):
