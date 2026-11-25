@@ -2,8 +2,9 @@ from .roles import ROLE_NAMES, can_manage_users, is_cliente
 
 
 def account_context(request):
-    user = request.user
-    if not user.is_authenticated:
+    # Las páginas de error se pueden mostrar antes de identificar al usuario (por ejemplo, con un host no permitido).
+    user = getattr(request, 'user', None)
+    if user is None or not user.is_authenticated:
         return {'is_cliente': False, 'role_label': ''}
     label = 'Superadministrador' if user.is_superuser else next(
         (name for name in ROLE_NAMES if user.groups.filter(name=name).exists()), 'Sin rol'
