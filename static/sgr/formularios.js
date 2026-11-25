@@ -29,6 +29,21 @@
 
   const normalizar = text => text.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
 
+  // Cuenta global sin delegación elegida: las listas que dependen de ella quedan vacías hasta elegirla.
+  // Se indica en la propia lista para que no parezca un error.
+  const delegacionPendiente = form.querySelector('[data-recargar-delegacion]');
+  if (delegacionPendiente && !delegacionPendiente.value) {
+    form.querySelectorAll('select:not([data-recargar-delegacion])').forEach(select => {
+      const opciones = [...select.options].filter(option => option.value);
+      if (opciones.length || select.multiple) return;
+      const aviso = select.options[0] || new Option('', '');
+      aviso.textContent = 'Primero elige la delegación';
+      if (!select.options.length) select.add(aviso);
+      select.disabled = true;
+      select.dataset.esperaDelegacion = '';
+    });
+  }
+
   // Cuenta global: al elegir la delegación se recarga el formulario con sus opciones.
   form.querySelectorAll('[data-recargar-delegacion]').forEach(select => {
     select.addEventListener('change', () => {

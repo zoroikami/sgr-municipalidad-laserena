@@ -66,7 +66,8 @@ class ScopedModelForm(forms.ModelForm):
                     help_text='Selecciona la delegación para cargar solo sus opciones.')
                 if self.org_id is None:
                     # Requisitos 2a entrega: las listas muestran solo opciones de la delegación elegida.
-                    self.fields['delegacion'].help_text = 'Selecciona la delegación para cargar solo sus opciones.'
+                    self.fields['delegacion'].help_text = ('Elige primero la delegación del registro: al hacerlo se cargan sus '
+                                                           'tipos, subatenciones, funcionarios y demás opciones.')
                     self.fields['delegacion'].widget.attrs['data-recargar-delegacion'] = ''
                 self.order_fields(['delegacion'])
         else:
