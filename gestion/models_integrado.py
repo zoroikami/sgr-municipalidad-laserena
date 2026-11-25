@@ -1,6 +1,6 @@
 from django.conf import settings
 from django.core.exceptions import ValidationError
-from django.core.validators import RegexValidator
+from django.core.validators import MaxValueValidator, MinValueValidator, RegexValidator
 from django.db import models, transaction
 from django.utils import timezone
 
@@ -134,6 +134,99 @@ TIPOS_GESTION_DISERCO = [
 ]
 
 
+# Hojas G SOC: cada fila es un caso social con hasta tres gestiones; las fechas de visita, informe y beneficio
+# salen de las actividades vinculadas. Plazos de la fila 19 de la hoja (informativos: no ponderan).
+PLAZOS_CASO_SOCIAL = {'ingreso_programada': 10, 'programada_visita': 0, 'visita_informe': 4,
+                      'informe_beneficio': 4, 'ingreso_beneficio': 20}
+
+
+class CasoSocial(RegistroDelegacion):
+    """Caso del gestor social (hojas G SOC). `nombre` es el nombre del usuario atendido."""
+    prefijo = 'CS-'
+    ancho_codigo = 5
+    ESTADOS = [('Abierto', 'Abierto'), ('Cerrado', 'Cerrado')]
+    estado = models.CharField(max_length=20, choices=ESTADOS, default='Abierto')
+    responsable = models.ForeignKey(settings.AUTH_USER_MODEL, verbose_name='Gestor social', on_delete=models.PROTECT,
+        related_name='casos_sociales')
+    fecha_ingreso = models.DateField('Fecha de ingreso', default=timezone.localdate)
+    tipo = models.ForeignKey('gestion.TipoAtencion', verbose_name='Tipo de atención', null=True, blank=True,
+        on_delete=models.PROTECT)
+    subatencion = models.ForeignKey('gestion.SubAtencion', verbose_name='Subatención', null=True, blank=True,
+        on_delete=models.PROTECT)
+    usuario_rut = models.CharField('RUT del usuario', max_length=12, blank=True)
+    usuario_telefono = models.CharField('Teléfono del usuario', max_length=25,
+        validators=[RegexValidator(r'^\+?[0-9 ()-]{7,25}$', 'Ingresa un teléfono válido.')])
+    requiere_visita = models.BooleanField('Requiere visita', default=False)
+    fecha_programada_visita = models.DateField('Fecha programada de visita', null=True, blank=True)
+    devoluciones = models.PositiveSmallIntegerField('Devoluciones del informe', default=0,
+        help_text='Veces que el informe fue devuelto para corregirlo (reingreso 1.ª, 2.ª o 3.ª vez).')
+    gestion_tubo = models.ForeignKey('gestion.GestionTubo', null=True, blank=True, editable=False,
+        on_delete=models.SET_NULL, related_name='casos_sociales')
+
+    class Meta(RegistroDelegacion.Meta):
+        verbose_name = 'caso social'
+        verbose_name_plural = 'casos sociales'
+        # Un mismo usuario puede tener varios casos: el nombre no es único por delegación.
+        constraints = [models.CheckConstraint(condition=models.Q(devoluciones__lte=3), name='caso_social_devoluciones_max_3')]
+
+    def fecha_gestion(self, item):
+        """Primera fecha válida de la gestión vinculada de ese ítem del gestor social (VISITA TERRENO, etc.)."""
+        from .integrado import titulo_item
+        titulo = titulo_item('social', item)
+        fechas = [a.fecha for a in self.gestiones.all() if a.item.nombre == titulo and a.verificacion == 'valida']
+        return min(fechas) if fechas else None
+
+    @property
+    def fecha_visita(self):
+        return self.fecha_gestion('VISITA TERRENO')
+
+    @property
+    def fecha_informe(self):
+        return self.fecha_gestion('ENTREGA INFORME')
+
+    @property
+    def fecha_beneficio(self):
+        return self.fecha_gestion('ENTREGA BENEFICIO')
+
+    def plazos(self):
+        """Tiempos de respuesta de la hoja G SOC: días entre hitos y si cumplen el plazo (None si falta un hito)."""
+        visita, informe, beneficio = self.fecha_visita, self.fecha_informe, self.fecha_beneficio
+        tramos = [
+            ('ingreso_programada', 'Ingreso a visita programada', self.fecha_ingreso, self.fecha_programada_visita),
+            ('programada_visita', 'Visita programada a visita realizada', self.fecha_programada_visita, visita),
+            ('visita_informe', 'Visita a entrega del informe', visita, informe),
+            ('informe_beneficio', 'Informe a entrega del beneficio', informe, beneficio),
+            ('ingreso_beneficio', 'Ingreso a entrega del beneficio', self.fecha_ingreso, beneficio),
+        ]
+        filas = []
+        for clave, etiqueta, desde, hasta in tramos:
+            if clave in ('ingreso_programada', 'programada_visita') and not self.requiere_visita:
+                continue
+            dias = (hasta - desde).days if desde and hasta else None
+            limite = PLAZOS_CASO_SOCIAL[clave]
+            filas.append({'clave': clave, 'etiqueta': etiqueta, 'dias': dias, 'limite': limite,
+                          'cumple': None if dias is None else abs(dias) <= limite if limite == 0 else dias <= limite})
+        return filas
+
+    def clean(self):
+        super().clean()
+        errores = {}
+        if self.fecha_ingreso and self.fecha_ingreso > timezone.localdate():
+            errores['fecha_ingreso'] = 'La fecha de ingreso no puede ser futura.'
+        if self.fecha_programada_visita and not self.requiere_visita:
+            errores['fecha_programada_visita'] = 'Marca «Requiere visita» o deja la fecha vacía.'
+        if self.fecha_programada_visita and self.fecha_ingreso and self.fecha_programada_visita < self.fecha_ingreso:
+            errores['fecha_programada_visita'] = 'La visita no puede programarse antes del ingreso.'
+        if self.subatencion_id and self.tipo_id and self.subatencion.tipo_id != self.tipo_id:
+            errores['subatencion'] = 'La subatención no corresponde al tipo de atención.'
+        if self.responsable_id and self.delegacion_id:
+            perfil = getattr(self.responsable, 'perfil', None)
+            if not perfil or perfil.delegacion_id != self.delegacion_id:
+                errores['responsable'] = 'Selecciona un funcionario de la misma delegación.'
+        if errores:
+            raise ValidationError(errores)
+
+
 class ActividadSGR(models.Model):
     delegacion = models.ForeignKey('gestion.Delegacion', on_delete=models.PROTECT)
     responsable = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT)
@@ -155,6 +248,19 @@ class ActividadSGR(models.Model):
     informado_por = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True,
         editable=False, on_delete=models.PROTECT, related_name='felicitaciones_informadas')
     created_at = models.DateTimeField(default=timezone.now, editable=False)
+    # Hojas de la matriz: «INGRESO A TUBO» (SÍ/NO) crea la gestión en el tubo y la fila de un caso G SOC.
+    gestion_tubo = models.ForeignKey(GestionTubo, null=True, blank=True, editable=False, on_delete=models.SET_NULL,
+        related_name='actividades_origen')
+    caso = models.ForeignKey(CasoSocial, verbose_name='Caso social', null=True, blank=True, on_delete=models.SET_NULL,
+        related_name='gestiones')
+    # Columnas IMAGEN VERIF y «verificador válido» (1 válida, 0 no válida): la foto se archiva con el código.
+    imagen_verificacion = models.BooleanField('Tiene foto de respaldo', default=False)
+    VERIFICACION = [('valida', 'Válida'), ('no_valida', 'No válida')]
+    verificacion = models.CharField('Verificación', max_length=12, choices=VERIFICACION, default='valida', editable=False)
+    verificacion_motivo = models.CharField('Motivo de la verificación', max_length=200, blank=True, editable=False)
+    verificado_por = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, editable=False,
+        on_delete=models.SET_NULL, related_name='actividades_verificadas')
+    verificado_en = models.DateTimeField(null=True, blank=True, editable=False)
 
     class Meta:
         ordering = ['-fecha', '-pk']
@@ -271,3 +377,27 @@ class ReclamoSGR(models.Model):
             perfil = getattr(self.responsable, 'perfil', None)
             if not perfil or perfil.delegacion_id != self.delegacion_id:
                 raise ValidationError({'responsable': 'Selecciona un funcionario de la misma delegación.'})
+
+
+class MetaFuncionario(models.Model):
+    """Ajuste individual de meta y ponderador (las hojas G SOC2, G SOC3, G SOC5 y T OC 3 difieren de su cargo)."""
+    item = models.ForeignKey('gestion.ItemMeta', on_delete=models.CASCADE, related_name='ajustes')
+    funcionario = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='metas_individuales')
+    meta_cantidad = models.PositiveIntegerField('Meta individual')
+    ponderador = models.DecimalField('Ponderador individual (%)', max_digits=5, decimal_places=2,
+        validators=[MinValueValidator(0), MaxValueValidator(100)])
+    actualizado_por = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, editable=False,
+        on_delete=models.SET_NULL, related_name='+')
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = 'meta individual'
+        verbose_name_plural = 'metas individuales'
+        constraints = [models.UniqueConstraint(fields=['item', 'funcionario'], name='meta_funcionario_unica')]
+
+    def clean(self):
+        super().clean()
+        if self.item_id and self.funcionario_id:
+            perfil = getattr(self.funcionario, 'perfil', None)
+            if not perfil or perfil.delegacion_id != self.item.delegacion_id:
+                raise ValidationError({'funcionario': 'El funcionario debe pertenecer a la delegación del ítem.'})
