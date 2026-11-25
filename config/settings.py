@@ -84,6 +84,7 @@ TEMPLATES = [{
         'django.contrib.auth.context_processors.auth',
         'django.contrib.messages.context_processors.messages',
         'cuentas.context_processors.account_context',
+        'gestion.context_processors.periodo',
     ]},
 }]
 WSGI_APPLICATION = 'config.wsgi.application'

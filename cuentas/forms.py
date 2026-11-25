@@ -2,12 +2,14 @@ from io import BytesIO
 import warnings
 
 from django import forms
+from django.core.validators import RegexValidator
 from django.contrib.auth import password_validation
-from django.contrib.auth.forms import AuthenticationForm
+from django.contrib.auth.forms import AuthenticationForm, PasswordChangeForm, PasswordResetForm, SetPasswordForm
 from django.contrib.auth.models import Group, Permission, User
 from django.core.exceptions import ValidationError
 from django.core.files.base import ContentFile
 from django.db.models import Q
+from django.utils.html import format_html
 from PIL import Image, ImageOps, UnidentifiedImageError
 
 from cuentas.rut import RUT_INPUT_HELP, RutError, normalize_rut
@@ -45,7 +47,12 @@ def validated_photo(upload):
 
 
 class MunicipalAuthenticationForm(AuthenticationForm):
-    username = forms.CharField(label='Usuario o correo electrónico', max_length=254)
+    username = forms.CharField(label='Usuario o correo electrónico', max_length=254,
+        help_text='Escribe el nombre de usuario o el correo asociado a tu cuenta.')
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['password'].help_text = 'Escribe la contraseña de tu cuenta; distingue mayúsculas y minúsculas.'
 
     def clean(self):
         identifier = self.cleaned_data.get('username', '')
@@ -62,16 +69,49 @@ class MunicipalAuthenticationForm(AuthenticationForm):
         return result
 
 
+class NewPasswordHelpMixin:
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        field = self.fields['new_password1']
+        field.help_text = format_html('Escribe una contraseña nueva que cumpla estos requisitos.{}', field.help_text)
+        self.fields['new_password2'].help_text = 'Repite la nueva contraseña exactamente como la escribiste arriba.'
+
+
+class MunicipalPasswordChangeForm(NewPasswordHelpMixin, PasswordChangeForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['old_password'].help_text = 'Escribe la contraseña que usas actualmente para ingresar.'
+
+
+class MunicipalSetPasswordForm(NewPasswordHelpMixin, SetPasswordForm):
+    pass
+
+
+class MunicipalPasswordResetForm(PasswordResetForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['email'].help_text = 'Escribe el correo asociado a tu cuenta para recibir el enlace de recuperación.'
+
+
 class ProfileForm(forms.ModelForm):
     foto = forms.FileField(label='Nueva foto', required=False,
         widget=forms.FileInput(attrs={'accept': 'image/jpeg,image/png'}),
-        help_text='JPEG o PNG de hasta 2 MiB. Recorta la imagen antes de guardarla.')
-    email = forms.EmailField(label='Correo electrónico')
+        help_text='Selecciona una foto JPEG o PNG de hasta 2 MiB; podrás recortarla antes de guardar.')
+    email = forms.EmailField(label='Correo electrónico',
+        help_text='Escribe un correo personal vigente, por ejemplo nombre@correo.cl.')
+    telefono = forms.CharField(label='Teléfono', max_length=25, required=False,
+        validators=[RegexValidator(r'^\+?[0-9 ()-]{7,25}$', 'Ingresa un teléfono válido, por ejemplo +56 9 1234 5678.')],
+        widget=forms.TextInput(attrs={'type': 'tel', 'placeholder': '+56 9 1234 5678', 'autocomplete': 'tel'}),
+        help_text='Opcional. Tu número de contacto, por ejemplo +56 9 1234 5678.')
 
     class Meta:
         model = User
         fields = ('first_name', 'last_name', 'email')
         labels = {'first_name': 'Nombres', 'last_name': 'Apellidos'}
+        help_texts = {
+            'first_name': 'Escribe tus nombres tal como quieres que aparezcan en el sistema.',
+            'last_name': 'Escribe tus apellidos completos.',
+        }
 
     def clean_foto(self):
         upload = self.cleaned_data.get('foto')
@@ -86,11 +126,18 @@ class ProfileForm(forms.ModelForm):
 
 class ManagedUserForm(forms.ModelForm):
     from gestion.integrado import CARGOS
-    cargo_sgr = forms.ChoiceField(label='Cargo municipal', required=False, choices=[('', 'Sin cargo asignado')] + CARGOS)
-    email = forms.EmailField(label='Correo electrónico')
+    cargo_sgr = forms.ChoiceField(label='Cargo municipal', required=False, choices=[('', 'Sin cargo asignado')] + CARGOS,
+        help_text='Selecciona su función municipal para cargar los ítems correspondientes en SGR.')
+    email = forms.EmailField(label='Correo electrónico',
+        help_text='Escribe un correo vigente y exclusivo de esta cuenta, por ejemplo nombre@correo.cl.')
     rut = forms.CharField(label='RUT', max_length=20, help_text=RUT_INPUT_HELP,
                          widget=forms.TextInput(attrs={'placeholder': '12345678-5', 'spellcheck': 'false'}))
-    role = forms.ChoiceField(label='Rol', choices=[(name, name) for name in ROLE_NAMES])
+    telefono = forms.CharField(label='Teléfono', max_length=25, required=False,
+        validators=[RegexValidator(r'^\+?[0-9 ()-]{7,25}$', 'Ingresa un teléfono válido, por ejemplo +56 9 1234 5678.')],
+        widget=forms.TextInput(attrs={'type': 'tel', 'placeholder': '+56 9 1234 5678', 'autocomplete': 'off'}),
+        help_text='Opcional. Número de contacto de la persona, por ejemplo +56 9 1234 5678.')
+    role = forms.ChoiceField(label='Rol', choices=[(name, name) for name in ROLE_NAMES],
+        help_text='Selecciona el nivel de acceso y las acciones que podrá realizar la cuenta.')
     new_password = forms.CharField(label='Contraseña inicial', required=False,
         widget=forms.PasswordInput, help_text='Obligatoria para una cuenta nueva. Al editar, déjala vacía para conservar la contraseña.')
 
@@ -98,6 +145,12 @@ class ManagedUserForm(forms.ModelForm):
         model = User
         fields = ('username', 'first_name', 'last_name', 'email', 'is_active')
         labels = {'username': 'Usuario', 'first_name': 'Nombres', 'last_name': 'Apellidos', 'is_active': 'Cuenta activa'}
+        help_texts = {
+            'username': 'Elige un usuario único, de hasta 150 caracteres: letras, números y @ . + - _.',
+            'first_name': 'Escribe los nombres de la persona que usará la cuenta.',
+            'last_name': 'Escribe los apellidos completos de la persona.',
+            'is_active': 'Mantén la casilla marcada para permitir que la persona ingrese al sistema.',
+        }
 
     def __init__(self, *args, actor, **kwargs):
         super().__init__(*args, **kwargs)
@@ -112,11 +165,13 @@ class ManagedUserForm(forms.ModelForm):
             selected = active_delegation(actor)
             self.fields['delegacion'] = forms.ModelChoiceField(label='Delegación',
                 queryset=Delegacion.objects.filter(estado='Activo'), initial=selected,
-                disabled=selected is not None, required=False)
+                disabled=selected is not None, required=False,
+                help_text='Selecciona su delegación; solo una cuenta de superadministrador puede quedar sin ella.')
             self.fields['rut'].required = False
         if not self.creating:
             self.initial['cargo_sgr'] = self.instance.perfil.cargo_sgr
             self.initial['rut'] = self.instance.perfil.rut
+            self.initial['telefono'] = self.instance.perfil.telefono
             self.initial['role'] = ('Superadministrador' if self.instance.is_superuser else
                 self.instance.groups.filter(name__in=ROLE_NAMES).values_list('name', flat=True).first())
             if actor.is_superuser:
@@ -169,16 +224,18 @@ class ManagedUserForm(forms.ModelForm):
         user.save()
         delegation = self.cleaned_data['delegacion'] if self.actor.is_superuser else self.actor.perfil.delegacion
         Perfil.objects.update_or_create(user=user, defaults={'delegacion': delegation, 'rut': self.cleaned_data['rut'],
-            'cargo_sgr': self.cleaned_data.get('cargo_sgr', '')})
+            'cargo_sgr': self.cleaned_data.get('cargo_sgr', ''), 'telefono': self.cleaned_data.get('telefono', '').strip()})
         user.groups.set([Group.objects.get_or_create(name=self.cleaned_data['role'])[0]])
         return user
 
 
 class GroupPermissionsForm(forms.Form):
-    group = forms.ModelChoiceField(label='Grupo', queryset=Group.objects.order_by('name'))
+    group = forms.ModelChoiceField(label='Grupo', queryset=Group.objects.order_by('name'),
+        help_text='Selecciona el rol cuyos permisos quieres administrar.')
     permissions = forms.ModelMultipleChoiceField(label='Permisos', required=False,
         queryset=Permission.objects.select_related('content_type').order_by('content_type__app_label', 'codename'),
-        widget=forms.CheckboxSelectMultiple)
+        help_text='Marca las acciones que podrán realizar todas las cuentas de este rol.',
+        widget=forms.CheckboxSelectMultiple(attrs={'aria-describedby': 'id_permissions_helptext'}))
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

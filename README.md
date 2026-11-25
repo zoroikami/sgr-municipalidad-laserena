@@ -1,288 +1,225 @@
-# SGR · Municipalidad de La Serena
+<p align="center">
+  <img src="docs/img/banner.png" alt="SGR · Sistema de Gestión de Resultados · Ilustre Municipalidad de La Serena" width="100%">
+</p>
 
-Sistema de Gestión de Resultados para registrar atenciones ciudadanas y consultar metas por delegación municipal. El personal trabaja sobre su delegación; cada cliente consulta exclusivamente sus atenciones, incluso cuando comparte delegación con otro cliente.
+<p align="center">
+  <img alt="Django 5.2" src="https://img.shields.io/badge/Django-5.2-8B1D19?style=flat-square&logo=django&logoColor=white">
+  <img alt="Python 3.11+" src="https://img.shields.io/badge/Python-3.11%2B-8B1D19?style=flat-square&logo=python&logoColor=white">
+  <img alt="MySQL 8.4" src="https://img.shields.io/badge/MySQL-8.4-C41230?style=flat-square&logo=mysql&logoColor=white">
+  <img alt="Redis y Channels" src="https://img.shields.io/badge/Tiempo%20real-Redis%20%2B%20Channels-C41230?style=flat-square&logo=redis&logoColor=white">
+  <img alt="Despliegue en AWS" src="https://img.shields.io/badge/AWS-EC2%20%2B%20HTTPS-DB3334?style=flat-square&logo=amazonwebservices&logoColor=white">
+</p>
 
-La rama de Proyecto Integrado 3 agrega tubo de trabajo, actividades SGR, organizaciones y ajuste de metas por ausencias. Consulta [instalación, reglas y validación](docs/proyecto-integrado-3.md).
+# SGR · Sistema de Gestión de Resultados
 
-Implementación de la Evaluación Sumativa III de Programación Back End, TI3041, INACAP La Serena. El código anterior de Proyecto Integrado se conserva como antecedente; el servidor vigente es **Django**, no `server.py`.
+**La plataforma con que las delegaciones municipales de La Serena registran lo que hacen por sus vecinos, siguen cada solicitud hasta resolverla y miden el cumplimiento de la matriz SGR, al día.**
 
-## Ejecutar en este equipo
+Antes, la matriz SGR vivía en una planilla de 24 hojas por trimestre que cada delegación llenaba a mano, y el tubo de trabajo se seguía con colores y texto tachado. Las reglas de la coordinación (máximo siete ingresos diarios, cierre semanal, sin teléfono no hay puntaje…) no se podían hacer cumplir. El SGR reúne todo en un solo sistema web: cada cuenta trabaja sobre su delegación, cada cambio queda registrado y **las reglas las valida el servidor, no la buena voluntad**.
 
-Con el entorno ya preparado:
+> Proyecto Integrado de INACAP La Serena, construido sobre los requerimientos de la Coordinación de Delegaciones de la Ilustre Municipalidad de La Serena.
 
-```bash
-source .venv/bin/activate
-docker compose up -d mysql redis mailpit
-daphne -b 127.0.0.1 -p 8001 config.asgi:application
+---
+
+## Índice
+
+- [Cómo funciona](#cómo-funciona)
+- [Qué puede hacer cada persona](#qué-puede-hacer-cada-persona)
+- [Módulos](#módulos)
+- [Reglas de la matriz SGR](#reglas-de-la-matriz-sgr)
+- [Así se ve](#así-se-ve)
+- [Ponerlo en marcha](#ponerlo-en-marcha)
+- [Seguridad y privacidad](#seguridad-y-privacidad)
+- [Calidad](#calidad)
+- [Documentación](#documentación)
+
+---
+
+## Cómo funciona
+
+```mermaid
+flowchart LR
+    V([Vecina o vecino]) -->|se atiende en la delegación| A[Atención ciudadana<br/>con folio]
+    A -->|si queda pendiente| T[Tubo de trabajo<br/>Ingresado → Pendiente → En proceso → Realizado]
+    A -->|correo con folio y código| Q[Consulta pública<br/>sin crear cuenta]
+    F([Funcionaria o funcionario]) -->|registra lo que hizo| S[Actividades SGR<br/>según su cargo]
+    S -->|ingreso a tubo| T
+    S --> C[Casos sociales<br/>con plazos]
+    T --> R[Resultados SGR<br/>individual, equipo y delegación]
+    S --> R
+    R --> SEM{{Semáforo<br/>verde · naranjo · rojo}}
+
+    classDef muni fill:#FBEDED,stroke:#C41230,color:#302526;
+    classDef persona fill:#C41230,stroke:#8B1D19,color:#ffffff;
+    class A,T,Q,S,C,R,SEM muni;
+    class V,F persona;
 ```
 
-Aplicación: [http://127.0.0.1:8001](http://127.0.0.1:8001). Buzón SMTP local: [http://127.0.0.1:8025](http://127.0.0.1:8025).
+1. **La atención.** Quien atiende registra al vecino con su RUT y recibe un folio. Si el vecino dejó su correo, recibe el folio y un código privado para consultar su caso sin crear una cuenta.
+2. **El tubo de trabajo.** Lo que no se resuelve en el momento pasa al tubo y avanza de estado arrastrando su tarjeta. Cada cambio queda en un historial con autor, fecha y observación.
+3. **Las actividades SGR.** Cada funcionario registra lo que hizo, en los ítems de su cargo. El sistema indica si suma puntaje y, si no, por qué.
+4. **Los resultados.** El cumplimiento se calcula solo: por persona, por equipo y por delegación, con un semáforo que compara el avance con lo esperado al día de hoy.
 
-La página inicial ofrece **Consultar mi atención** sin cuenta. El botón **Ingreso de funcionarios** lleva al login existente. Las personas con cuenta Cliente también pueden iniciar sesión y utilizar su portal privado.
+Todo se actualiza **en tiempo real**: si alguien mueve una gestión o registra una actividad, las pantallas abiertas de su delegación se refrescan sin recargar la página.
 
-Las seis credenciales de prueba se guardan exclusivamente en `.private/cuentas-demo.json`, con permisos `600` y fuera de Git. Entregarlas al docente por un medio privado. No existen accesos automáticos ni botones para cambiar de cuenta.
+---
 
-**AWS verificado el 10 de noviembre de 2026:** [abrir SGR](https://sgr-184-195-57-121.sslip.io). Instancia existente `i-0a5533ede6cc60b7e`, región `us-east-1`, IP `184.195.57.121`. Commit de la aplicación desplegada: `8f189c8807c1d0051ab7dc6eb1c0a751c5d4369a` (merge del [PR #13](https://github.com/zoroikami/sgr-municipalidad-laserena/pull/13)); se comprueba en [/api/health/](https://sgr-184-195-57-121.sslip.io/api/health/).
+## Qué puede hacer cada persona
 
-HTTPS utiliza un certificado público de Let's Encrypt y renovación diaria mediante `sgr-tls-renew.timer`. Se verificaron las siete cuentas, permisos, WSS entre delegaciones, Croppr y recuperación con token de un uso. MySQL 8.4.13, Redis, fotos y estáticos se ejecutan en contenedores con volúmenes persistentes y `DEBUG=False`. **Gmail SMTP está configurado en AWS** con STARTTLS por el puerto 587: autenticación y checks de producción aprobados; Gmail aceptó un mensaje de prueba al destinatario autorizado. La recepción en la bandeja del destinatario debe confirmarse allí. Las credenciales se conservan únicamente en la configuración privada del host. No se exponen MySQL, Redis ni Mailpit a Internet. La dirección usa la Elastic IP `184.195.57.121` (`eipalloc-08967e7da51b66e2c`), asociada a esta instancia. Se conserva al detener e iniciar mientras no se libere la dirección ni el laboratorio elimine el recurso. La reserva de IPv4 pública tiene cargo de AWS. El enlace dinámico anterior dejó de utilizarse.
-
-## Instalación desde cero
-
-Requisitos: Python 3.11+, `uv`, Docker con Compose y las bibliotecas de compilación de mysqlclient. Versiones Python fijadas en [requirements.txt](requirements.txt); dependencias de pruebas en [requirements-dev.txt](requirements-dev.txt).
-
-En Ubuntu/Debian:
-
-```bash
-sudo apt-get update
-sudo apt-get install -y python3-dev build-essential default-libmysqlclient-dev pkg-config
-```
-
-En macOS:
-
-```bash
-brew install mysql-client pkgconf
-export PKG_CONFIG_PATH="$(brew --prefix mysql-client)/lib/pkgconfig"
-```
-
-Preparación local (Bash; en PowerShell activa con `.venv\Scripts\Activate.ps1`):
-
-```bash
-uv venv --python 3.11
-source .venv/bin/activate
-uv pip install -r requirements-dev.txt
-python scripts/configure_local.py
-docker compose up -d mysql redis mailpit
-python manage.py migrate
-python manage.py seed_demo
-python manage.py check
-python manage.py verify_environment --demo
-daphne -b 127.0.0.1 -p 8001 config.asgi:application
-```
-
-Si MySQL todavía está inicializándose, esperar a que `docker compose ps` indique `healthy` antes de migrar. `scripts/configure_local.py` genera secretos aleatorios y no sobrescribe un `.env` existente. Para un entorno distinto, usar [.env.example](.env.example) como referencia y configurar sus valores privados.
-
-El entorno local utiliza MySQL 8.4 en `127.0.0.1:3307`, Redis 7.4 en `127.0.0.1:6380` y Mailpit en los puertos locales 1025/8025. Los volúmenes conservan MySQL al detener contenedores. No ejecutar `docker compose down -v` sobre datos que se quieran conservar. MySQL es el motor predeterminado. SQLite solo se habilita explícitamente con `USE_SQLITE=true` y `DJANGO_DEBUG=true` para una revisión rápida; producción lo rechaza.
-
-`DEBUG=true` solo se utiliza para desarrollo local y permite servir los estáticos con ASGI. Producción usa `DEBUG=false`, Nginx y `collectstatic`. Las fotos no tienen URL pública bajo MEDIA: se entregan mediante una vista autenticada que comprueba su propietario.
-
-## Arquitectura y módulos
-
-- `config/`: settings por entorno, rutas, ASGI, consola técnica y errores HTTP.
-- `cuentas/`: autenticación Django, perfil, foto privada, cambio/recuperación de contraseña, grupos y administración acotada de cuentas.
-- `gestion/`: modelos de negocio, ModelForms, consultas autorizadas, CRUD, exportaciones, portal, Channels y semillas.
-- `templates/`: herencia de `base.html`, formularios en modal Bootstrap, tablas y errores 400/403/404/500.
-- `static/`: Bootstrap 5.3.3, SweetAlert2 11.14.5, Croppr 2.3.1 y código municipal, todos locales y con licencias.
-- `tests_django/`: integración sobre MySQL y Redis reales; `tests_browser/`: recorridos de Chromium.
-- `deploy/`: Nginx HTTPS/WebSocket y Compose de producción; `Dockerfile` ejecuta Daphne como usuario `sgr`, sin root.
-
-Los dos CRUD evaluados son **Ítems y Metas** y **Atenciones ciudadanas**. Incluyen crear, listar, detalle, editar, archivar con `deleted_at`, búsqueda por varios campos, filtro de negocio, orden permitido, páginas 5/15/30 y exportación `.xlsx` de todos los resultados filtrados.
-
-Los roles municipales originales están restaurados: **Superadministrador, Coordinador, Delegado Municipal, Operador / Funcionario y Consultor**. Se conserva **Cliente** para el portal ciudadano. La migración `cuentas.0004` transforma Administrador → Delegado Municipal, Editor → Operador / Funcionario y Lector → Consultor, conservando cuentas y contraseñas.
-
-Superadministrador y Coordinador pueden elegir una delegación activa o Todas las delegaciones desde la cabecera. La selección se conserva por sesión y se aplica a inicio, consultas, formularios, catálogos, Excel y actualizaciones en tiempo real. Las cuentas locales conservan su delegación asignada. El cambio de ámbito limpia filtros de listados anteriores; no cambia el perfil ni los permisos de la cuenta.
-
-| Rol | Funciones y ámbito |
+| Rol | En pocas palabras |
 | --- | --- |
-| Superadministrador | Todos los módulos, cuentas, roles y consola técnica. Puede asignar roles comunales y privilegios técnicos. |
-| Coordinador | Delegaciones, metas, catálogos y atenciones en ámbito comunal. Sin gestión de cuentas, roles ni Django Admin. |
-| Delegado Municipal | Metas, atenciones y cuentas de su delegación. Solo asigna roles locales. |
-| Operador / Funcionario | Registro y edición de atenciones de su delegación, sin archivado. |
-| Consultor | Consulta y exportación de módulos municipales de su delegación. |
-| Cliente | Solo lectura de sus propias atenciones. En Roles únicamente se ofrece Consultar atenciones; no admite permisos de escritura ni consulta de otros módulos. |
+| **Superadministrador** | Administración técnica: todas las delegaciones, cuentas, roles y consola. |
+| **Coordinador** | Mira la comuna completa: delegaciones, metas, catálogos y atenciones. |
+| **Delegado Municipal** | Dirige su delegación: equipo, metas, verificación de actividades, ausencias, reclamos y felicitaciones. |
+| **Operador / Funcionario** | Atiende, registra actividades y avanza las gestiones de su delegación. |
+| **Consultor** | Consulta y exporta la información de su delegación, sin modificarla. |
+| **Cliente** | El vecino con cuenta: ve solo sus propias atenciones. |
 
-Ninguna cuenta municipal de revisión tiene acceso a Django Admin. Para crear un superusuario técnico adicional, utilizar `python manage.py createsuperuser`. El nombre del grupo Superadministrador por sí solo no concede privilegios técnicos.
+Cada cuenta ve únicamente su delegación. Un registro ajeno no se puede abrir, editar ni exportar, aunque se conozca su dirección.
 
-Para habilitar el acceso global del sistema municipal, crea la cuenta técnica después de aplicar las migraciones con `python manage.py createsuperuser --username superadmin`. Introduce una contraseña privada cuando Django la solicite. El superadministrador ve todas las delegaciones, elige la delegación al crear un registro y conserva la delegación original al editar. Su ámbito global se aplica a los listados, Excel y la actualización en tiempo real. Las cuentas municipales de prueba conservan sus restricciones.
+---
 
-La [preevaluación III](https://github.com/zoroikami/sgr-municipalidad-laserena/tree/c61d311bd513c9ea59334ff29c172342649c5cd3) se conserva en Git con su configuración y migraciones SQLite. Para instalar esta entrega, ejecuta las migraciones de `config.settings` sobre una base MySQL nueva y conserva un respaldo independiente si tienes datos de la preevaluación. Las pruebas históricas del servidor retirado se conservan en `tests/legacy/`; sus dependencias están en revisiones anteriores de Git.
+## Módulos
 
-El modelo implementado está documentado en [diagramas/modelos_django.md](diagramas/modelos_django.md), con [fuente Mermaid](diagramas/modelos_django.mmd). Los diagramas MySQL anteriores corresponden a la primera entrega, no a estas migraciones.
+| Módulo | Para qué sirve |
+| --- | --- |
+| **Atenciones ciudadanas** | Registro de cada atención con tipo, subatención, RUT y folio. Exportación a Excel con los filtros aplicados. |
+| **Consulta del vecino** | El vecino ve el estado de su atención con su folio y un código enviado por correo. |
+| **Tubo de trabajo** | Tablero de seguimiento con arrastrar y soltar, plazos, vencidos y avance por colaborador. Al escribir un RUT avisa si el solicitante es funcionario y cuál es su cargo. |
+| **Cartas de oficina de partes** | Tablero propio para las cartas recibidas: pronunciamiento, derivación y estado. |
+| **Casos sociales** | Seguimiento de cada caso del gestor social: visita, informe y beneficio, con sus plazos. |
+| **Actividades SGR** | Registro diario por cargo, con código de verificación y motivo de puntaje visible. |
+| **Resultados SGR** | Cumplimiento por ítem, semáforo del equipo, resultado de la delegación (hoja SALON) y metas individuales. |
+| **Organizaciones comunitarias** | Juntas de vecinos y organizaciones funcionales por delegación y subfamilia; la base entregada suma 2.687. |
+| **Usuarios** | Cuentas de la delegación con su ficha completa, cargo municipal y foto. |
+| **Mi perfil** | Datos de contacto, foto y la lista de funciones del cargo según el descriptor 2026. |
 
-### Reglas aplicadas en servidor
+---
 
-- Consultas, detalle, edición, archivado, relaciones, exportación y fragmentos de tabla limitados por delegación.
-- Clientes filtrados además por `cliente=request.user`; no acceden a funciones administrativas ni a fotos ajenas.
-- Permisos de Django por acción. Operador sin eliminación/archivado ni mantenimiento de metas o catálogos; Consultor sin escrituras. Cuenta sin permiso recibe 403; objeto ajeno o inexistente recibe 404.
-- ModelForms con campos explícitos: el navegador no decide delegación, responsable, código, folio, privilegios ni cantidad de meta.
-- Nombres duplicados por delegación rechazados; cantidades no negativas; nuevas metas con cantidad automática 100; las existentes conservan su cantidad.
-- Tipo y subatención activos de la misma delegación y relación tipo/subatención coherente; cliente vinculado de la misma delegación con rol Cliente.
-- RUT normalizado y validado por módulo 11. ORM y CSRF, escape de templates y ordenamiento mediante lista explícita.
-- JPEG/PNG hasta 2 MiB completamente decodificados con Pillow. Croppr genera el recorte real antes del guardado multipart; cancelar conserva la foto anterior.
+## Reglas de la matriz SGR
 
-Al editar se conserva `created_at`; el orden inicial es creación descendente e id descendente. Búsqueda, filtros, orden, tamaño y página se conservan **en sesión, por módulo**. Una consulta nueva vuelve a página 1; una página que ya no existe se ajusta a una válida. El Excel reutiliza la consulta autorizada completa, excluye archivados y credenciales y trata el contenido del usuario como texto, no como fórmulas.
+El sistema aplica las diez reglas que la Coordinación de Delegaciones envió a los equipos:
 
-## Consulta ciudadana por correo
+| # | Regla | Cómo la aplica el sistema |
+| :-: | --- | --- |
+| 1 | Lo que pide el delegado no se contabiliza | Al reconocer su RUT, la gestión queda como «otra gestión». |
+| 2 | Sin nombre y teléfono del usuario no hay puntaje | Se exige el teléfono y se muestra el motivo en cada registro. |
+| 3 | Máximo siete ingresos diarios | El octavo ingreso del día se rechaza. |
+| 4 | La semana se cierra el lunes siguiente | Las fechas fuera de la semana abierta no se aceptan. |
+| 5 | Coordinar no suma; realizar sí | Se distingue la acción realizada de la coordinación. |
+| 6 | Registrar para cumplir no sirve | El delegado puede marcar una actividad como no válida. |
+| 7 | Tope de 120% por ítem | Sobre ese tope el ítem deja de sumar. |
+| 8 | Felicitaciones con respaldo formal | Solo las informa el delegado: +10% cada una, máximo tres. |
+| 9 | Las ausencias ajustan la meta | Licencias, vacaciones, emergencias y otros permisos descuentan días. |
+| 10 | El resultado es de equipo | Resultado de la delegación con los ponderadores de la hoja SALON. |
 
-Al crear una atención, el funcionario puede registrar el **Correo del solicitante**. Después de guardar se envían el folio y un código privado, válido por 30 días, con el enlace `/consulta/`. Agregar o cambiar ese correo en una atención existente también envía un código nuevo. Las atenciones sin correo se conservan y pueden seguir registrándose normalmente; para habilitar su consulta pública es necesario agregar el correo.
+Además: reclamos −30%, resultado final entre 0% y 150% y semáforo verde, naranjo desde el 60% del objetivo, rojo bajo eso. Las decisiones tomadas donde la planilla se contradice, con la celda que respalda cada una, están en [docs/proyecto-integrado-3.md](docs/proyecto-integrado-3.md#reglas-decididas-a-partir-de-la-matriz-25-de-noviembre-de-2026).
 
-La consulta anónima requiere ambos datos por POST y muestra solo estado, folio, delegación y fechas. No presenta nombre, RUT, correo ni descripción. El código se guarda como HMAC ligado al registro y al correo; no se muestra en el CRUD ni se incluye en URLs. Los registros archivados y los códigos incorrectos, vencidos o sustituidos dan la misma respuesta.
+---
 
-En el detalle de una atención, una cuenta con permiso de edición puede **Enviar nuevo código**. Un envío correcto sustituye al anterior. Si SMTP falla, la atención permanece guardada y la interfaz informa que el correo no se envió; un reenvío fallido al mismo destinatario conserva el código anterior. Cambiar o eliminar el correo revoca el acceso del destinatario previo.
+## Así se ve
 
-Redis limita la consulta pública a 30 intentos por IP cada 15 minutos mediante el alias `consulta_publica`. Detrás del Nginx configurado se usa su cabecera X-Real-IP; en local se usa REMOTE_ADDR. Si Redis no está disponible, la consulta pública responde temporalmente con 503. No hay reenvíos de correo anónimos. La migración `gestion.0004` incorpora los tres campos de acceso, inicialmente vacíos, sin enviar correos a registros existentes.
+<table>
+  <tr>
+    <td width="50%"><img src="docs/img/tubo.jpg" alt="Tubo de trabajo con tarjetas por estado"><br><sub><b>Tubo de trabajo.</b> Cada gestión avanza arrastrando su tarjeta.</sub></td>
+    <td width="50%"><img src="docs/img/resultados.jpg" alt="Resultados SGR con semáforo"><br><sub><b>Resultados SGR.</b> Cumplimiento y semáforo al día de hoy.</sub></td>
+  </tr>
+  <tr>
+    <td width="50%"><img src="docs/img/caso-social.jpg" alt="Detalle de un caso social con sus plazos"><br><sub><b>Casos sociales.</b> Plazos de visita, informe y beneficio.</sub></td>
+    <td width="50%"><img src="docs/img/consulta.jpg" alt="Consulta pública de una atención"><br><sub><b>Consulta del vecino.</b> Con folio y código, sin crear cuenta.</sub></td>
+  </tr>
+</table>
 
-## Datos de revisión
+<sub>Las capturas usan datos ficticios de demostración.</sub>
 
-Carga reproducible e idempotente:
+---
 
-```bash
-python manage.py seed_demo
-```
+## Ponerlo en marcha
 
-| Modelo de negocio | Registros | Distribución |
-| --- | ---: | --- |
-| Delegacion | 6 | Delegaciones municipales |
-| ItemMeta | 360 | 60 por delegación |
-| TipoAtencion | 30 | 5 por delegación |
-| SubAtencion | 90 | 15 por delegación |
-| Atencion | 1.800 | 300 por delegación |
-| **Total** | **2.286** | Ambos CRUD tienen más de 50 registros y más de una página de 30 en A y B |
-
-Los clientes 1 y 2 tienen 30 atenciones distintas cada uno dentro de las 300 de Centro. Las semillas incluyen nombres ficticios, fechas de creación variadas, distintos estados, unidades y servicios. No se cuentan usuarios, perfiles, grupos, permisos, sesiones ni secuencias en los 2.286 registros.
-
-Se crean seis cuentas activas de revisión y cuatro responsables ficticios inactivos, sin contraseña utilizable, para las otras delegaciones. Ejecutar de nuevo no duplica registros, no reinicia contraseñas y no sobrescribe ediciones o fotos existentes. Los códigos usan los formatos originales `DEL01`, `IT001`, `TA001`, `SA001` y `ATN-2026-0001`, con correlativos globales por sección y anuales en atenciones. La migración conserva el identificador previo como referencia interna y clave estable de semillas; incluye archivados al asignar números y mantiene los IDs y relaciones existentes.
-
-### Cuentas, responsabilidades y recorridos
-
-A = Centro (`DEL01`); B = Las Compañías (`DEL02`). Todos los correos iniciales son ficticios `@example.test` y llegan al buzón local Mailpit. Para una revisión con correo externo, configurar el correo de la cuenta mediante su perfil o proporcionar `DEMO_EMAIL_ADMIN_A` antes de la primera carga. La contraseña nunca se publica en esta tabla.
-
-| Alias | Rol / ámbito | Responsabilidad y acciones permitidas | Restricciones | Recorrido y resultado esperado |
-| --- | --- | --- | --- | --- |
-| `admin_a` | Delegado Municipal A | Gestionar atenciones, metas y cuentas de A; consultar/exportar, crear/editar/archivar | Sin B, mantenimiento de catálogos, permisos globales, privilegios técnicos ni Django Admin | Login → ambos CRUD → crear/editar → cancelar SweetAlert sin cambios → confirmar archivado → registro excluido de listado/Excel |
-| `editor_a` | Operador / Funcionario A | Registrar y actualizar atenciones de Centro | Sin metas, catálogos, archivado/eliminación, usuarios ni B | Login → editar atención → guardar → consultor A cambia sin F5 → intentar POST de archivado y recibir 403 |
-| `lector_a` | Consultor A | Consultar detalle y exportar datos de A | Sin escrituras ni B | Login → buscar/filtrar/ordenar/paginar → abrir detalle → regresar conserva estado → intento de creación devuelve 403 |
-| `lector_b` | Consultor B | Consultar y exportar datos de Las Compañías | Sin escrituras ni A | Abrir listado en otro perfil → operador A guarda → no recibe evento ni datos de A; URL ajena devuelve 404 |
-| `cliente_1` | Cliente / propietario 1 en A | Consultar sus 30 atenciones, detalle y perfil/foto propios | Sin administración, datos ni foto del Cliente 2 | Login → Mis atenciones → detalle propio → Croppr/guardar/recargar → persiste recorte → detalle del Cliente 2 devuelve 404 |
-| `cliente_2` | Cliente / propietario 2 en A | Consultar otras 30 atenciones, detalle y perfil/foto propios | Sin administración, datos ni foto del Cliente 1 | Login en sesión independiente → datos distintos → detalle del Cliente 1 devuelve 404 → perfil solo modifica su cuenta |
-
-## WebSocket aplicado al CRUD
-
-Ruta: `/ws/atenciones/`. Servidor: `daphne config.asgi:application`. Capa: `channels_redis.core.RedisChannelLayer`.
-
-Recorrido del evento:
-
-1. Editor guarda un ModelForm válido dentro de una transacción.
-2. `transaction.on_commit` notifica al grupo calculado por el servidor desde su delegación y al grupo de soporte global. Las cuentas limitadas nunca se unen al grupo global.
-3. El lector autenticado del mismo ámbito recibe una notificación mínima, sin registros ni datos personales.
-4. El navegador solicita `/gestion/atenciones/tabla/`, una vista HTTP protegida que reaplica ámbito, filtros, orden y página.
-5. Se reemplaza únicamente la tabla/paginación; no hay F5, recarga de la página ni polling.
-
-Las conexiones anónimas, de clientes y de orígenes no permitidos se rechazan. B no se une al grupo de A. Antes de enviar cada evento se revisan nuevamente permisos, delegación y vigencia de la sesión; logout o cambio de contraseña invalidan la recepción. La interfaz informa desconexión o fallo de actualización y conserva los datos visibles sin afirmar que están actualizados.
-
-Redis permite varios procesos ASGI; no se utiliza una capa en memoria que limite la demostración a un solo proceso.
-
-## Recuperación y contraseña
-
-Login por usuario o correo, logout exclusivamente POST con CSRF, vistas privadas protegidas, contraseña actual para cambiarla y validadores Django (mínimo 10 caracteres, similitud, claves comunes y solo numéricas).
-
-La recuperación usa enlace y token Django de una hora. Solicitarlo muestra la misma respuesta para correos registrados y desconocidos. El correo contiene una URL del host que sirve la aplicación; en AWS deben configurarse los hosts/orígenes públicos y el SMTP real o buzón de pruebas accesible. Un enlace usado o inválido no permite otro cambio. No basta con imprimir enlaces en consola.
-
-Las cuentas sembradas conservan direcciones `@example.test`. Para recuperar una cuenta mediante correo real, registrar primero su dirección válida en el perfil o en la gestión de usuarios; configurar el remitente SMTP no reemplaza los correos de las cuentas.
-
-Localmente Mailpit recibe correo SMTP real del proceso Django y permite abrirlo en su buzón web. En producción, configurar `EMAIL_HOST`, `EMAIL_PORT`, usuario/contraseña privados, TLS y remitente. La credencial SMTP incrustada de la versión anterior se retiró del código activo; como permanece en el historial, debe reemplazarse en el proveedor antes de reutilizar esa cuenta de correo.
-
-## Verificación
-
-Primero conceder a la cuenta local permiso sobre **su base aislada de pruebas**:
+### Si el equipo ya está preparado
 
 ```bash
-docker compose exec -T mysql sh -c 'MYSQL_PWD="$MYSQL_ROOT_PASSWORD" mysql -uroot -e "GRANT ALL PRIVILEGES ON test_sgr_django.* TO '\''sgr'\''@'\''%'\'';"'
-pytest tests_django
-python manage.py makemigrations --check --dry-run
-DJANGO_DEBUG=false COOKIE_SECURE=true SECURE_SSL_REDIRECT=true python manage.py check --deploy --fail-level WARNING
-python manage.py collectstatic --noinput
-python -m unittest discover -s tests -p 'test_*.py'
-node --test tests/test_*.cjs
+source .venv/bin/activate
+docker compose up -d mysql redis mailpit
+daphne -b 127.0.0.1 -p 8001 config.asgi:application
 ```
 
-Los tests Django usan MySQL real y Redis. No ejecutar varias suites pytest simultáneamente contra la misma base de pruebas. La configuración rápida de hashes se limita a `config/test_settings.py`; la aplicación usa los hashes seguros de Django.
+| Servicio | Dirección |
+| --- | --- |
+| Aplicación | <http://127.0.0.1:8001> |
+| Buzón de correo de prueba (Mailpit) | <http://127.0.0.1:8025> |
 
-Con ASGI y Mailpit funcionando, las semillas cargadas y las credenciales privadas disponibles:
+Las cuentas de prueba están en `.private/cuentas-demo.json`, fuera de Git. Se entregan por un medio privado.
+
+### Desde cero
+
+Necesitas Python 3.11 o superior, [`uv`](https://docs.astral.sh/uv/), Docker con Compose y las bibliotecas de compilación de `mysqlclient` ([detalle por sistema operativo](docs/guia-tecnica.md#instalación-desde-cero)).
 
 ```bash
-playwright install chromium
-python tests_browser/check_crop.py
-python tests_browser/check_flows.py
-python tests_browser/check_design.py
-python tests_browser/check_paneles.py
-python tests_browser/check_usability.py
-python tests_browser/check_delegation_roles.py
-python tests_browser/check_client_readonly.py
-python tests_browser/check_public_consultation.py
+uv venv --python 3.11 && source .venv/bin/activate
+uv pip install -r requirements-dev.txt
+python scripts/configure_local.py        # crea .env con secretos aleatorios
+docker compose up -d mysql redis mailpit # MySQL 8.4, Redis 7.4 y Mailpit
+python manage.py migrate
+python manage.py seed_demo               # datos ficticios de demostración
+daphne -b 127.0.0.1 -p 8001 config.asgi:application
 ```
 
-`check_delegation_roles.py` requiere también `.private/superadmin.json`, generado por `python manage.py provision_superadmin`. Comprueba cambios de delegación, roles históricos, restricciones locales y alineación de la casilla Cuenta activa a cuatro anchos, sin guardar cambios de negocio.
+### Cargar la información de la municipalidad
 
-`check_client_readonly.py` verifica que Roles solo ofrece Consultar para Cliente y que dos clientes de la misma delegación no pueden abrir las atenciones del otro. La migración `cuentas.0005` asigna únicamente `gestion.view_atencion` al grupo Cliente, sin cambiar cuentas ni contraseñas. Revocar ese permiso desde Roles impide consultar el portal.
-
-`check_public_consultation.py` se limita a local: crea una atención temporal, verifica entrega SMTP en Mailpit y consulta anónima con el código recibido, comprueba la renovación y revisa cuatro anchos. Elimina únicamente la atención temporal al terminar. No utilizarlo contra producción; allí se verifican la entrada pública y las restricciones sin enviar mensajes externos de prueba.
-
-El recorrido `check_flows.py` usa seis sesiones independientes, comprueba cambios WebSocket solo en A, filtros, cancelación de SweetAlert, errores dentro del modal, navegación, portal, foto, correo SMTP, token de un uso y cambio/logout. Modifica y restaura un nombre ficticio, guarda una foto de prueba en Cliente 1 y restaura su contraseña privada. Ejecutarlo sobre datos de demostración. Las capturas locales se escriben en `output/browser/`, excluido de Git.
-
-Las pruebas controladas de 400/500 viven exclusivamente en `tests_django/error_urls.py` con `DEBUG=False`; no hay rutas de producción para forzar fallos. Ver [docs/evaluacion3/EVALUACION_3_ESTADO.md](docs/evaluacion3/EVALUACION_3_ESTADO.md) para resultados y límites verificados.
-
-## AWS: preparación y puesta en marcha
-
-La configuración preparada utiliza EC2, MySQL persistente en volumen, Redis, Daphne sin root y Nginx con HTTPS y Upgrade WebSocket. No crea recursos AWS ni contrata servicios.
-
-Después de identificar la instancia, integrar el PR revisado a `main` y disponer de Docker/Compose:
-
-1. Clonar o actualizar el repositorio en la instancia con el commit de `main` elegido.
-2. Preparar `.env` privado a partir de `.env.example`, con secretos nuevos, `DJANGO_DEBUG=false`, `DJANGO_ALLOWED_HOSTS` público, `CSRF_TRUSTED_ORIGINS=https://dominio`, cookies seguras y SMTP externo. No usar las credenciales de desarrollo.
-3. Colocar certificados válidos en `deploy/tls/fullchain.pem` y `deploy/tls/privkey.pem`, fuera de Git. Restringir la clave privada y permitir acceso de solo lectura al proceso Nginx.
-4. Permitir HTTP/HTTPS en el recurso AWS; MySQL, Redis y Mailpit no deben exponerse públicamente. El script no detiene automáticamente un servicio anterior que ocupe 80/443.
-5. Ejecutar desde el checkout limpio de `main`:
+Cada comando simula los cambios y solo los guarda con `--aplicar`:
 
 ```bash
-./deploy_ec2.sh https://dominio-publico-de-la-instancia
+python manage.py cargar_matriz_sgr --delegacion ID --aplicar     # ítems, metas y ponderadores por cargo
+python manage.py cargar_catalogo_social --todas --aplicar        # catálogo de atención social
+python manage.py importar_organizaciones "base JJVV.xlsx" --todas --aplicar
+python manage.py asignar_delegado NOMBRE_DE_USUARIO              # atribución especial del delegado
 ```
 
-El script comprueba configuración de producción, respalda MySQL en `.private/backups/`, migra, carga semillas idempotentes, recopila estáticos e inicia servicios. Escribe credenciales nuevas únicamente en el archivo privado del host; las inyecta en un volumen temporal, no en la imagen. `APP_COMMIT` se establece desde Git y aparece en `/api/health/`.
+### En la nube
 
-6. Comprobar desde otro equipo la URL, certificados, archivos, fotos privadas, correo, 2.286 semillas, seis cuentas y WebSocket con A/B. Registrar URL pública y recurso en este README. Mostrar `git rev-parse HEAD` y `/api/health/` durante la revisión.
+El sistema está preparado para AWS EC2 con Nginx, HTTPS de Let's Encrypt, MySQL y Redis persistentes y Daphne sin privilegios de administrador. Nginx debe dejar pasar las conexiones `/ws/` para el tiempo real. El paso a paso está en la [guía técnica](docs/guia-tecnica.md#aws-preparación-y-puesta-en-marcha).
 
-`deploy/compose.production.yaml` complementa `compose.yaml`; sus rutas se resuelven desde la raíz:
+---
+
+## Seguridad y privacidad
+
+- **Cada delegación ve lo suyo.** El servidor filtra cada consulta, detalle, edición, exportación y aviso en tiempo real por delegación. Lo ajeno responde «no encontrado».
+- **Permisos por acción.** Ver, crear, editar y archivar se conceden por rol. El navegador no decide la delegación, el responsable, el folio ni el puntaje.
+- **Datos personales cuidados.** La consulta pública no muestra nombre, RUT ni descripción. Los avisos en tiempo real no llevan datos del registro. Las fotos de perfil no tienen dirección pública: las ve su dueño, el delegado que administra la cuenta y la administración técnica.
+- **Validaciones del lado del servidor.** RUT con dígito verificador, fechas de la semana abierta, teléfonos, fotos JPEG o PNG de hasta 2 MiB revisadas por completo y protección CSRF en cada formulario.
+- **Sin secretos en Git.** Contraseñas, credenciales de correo, respaldos y cuentas de prueba viven en `.env` y `.private/`, ambos excluidos.
+
+---
+
+## Calidad
 
 ```bash
-docker compose -f compose.yaml -f deploy/compose.production.yaml ps
+pytest tests_django                                 # más de 370 pruebas sobre MySQL y Redis reales
+python manage.py makemigrations --check --dry-run   # el modelo y las migraciones coinciden
+python manage.py check --deploy                     # revisión de seguridad de Django
 ```
 
-La base SQLite anterior no se importa automáticamente. Conserva una copia independiente antes de cualquier migración de datos revisada. Los scripts del servidor antiguo ya no forman parte de la instalación actual.
+- Las pruebas recorren permisos por rol, aislamiento entre delegaciones, reglas de la matriz, cálculos del semáforo, tiempo real y arrastre en el navegador.
+- Las páginas se revisaron en navegador a 375, 768, 1280 y 1600 px de ancho, sin errores de JavaScript ni elementos desbordados.
+- Los colores de texto cumplen el contraste mínimo de legibilidad (4,5:1).
 
-## Git y entrega académica
+No ejecutes dos suites de pruebas al mismo tiempo: comparten la base de pruebas.
 
-Los [PR #12](https://github.com/zoroikami/sgr-municipalidad-laserena/pull/12) y [PR #13](https://github.com/zoroikami/sgr-municipalidad-laserena/pull/13) se integraron a `main` el 10 de noviembre de 2026. El propietario autorizó el despliegue; esto no sustituye la revisión académica de un compañero. Las pruebas actuales son `tests_django` y las pruebas compartidas de RUT; las del servidor retirado están en `tests/legacy/`.
+---
 
-GitHub Actions no pudo iniciar los últimos trabajos por un bloqueo de facturación de la cuenta. Los resultados locales no se presentan como resultados de CI. La revisión de un agente tampoco sustituye la revisión de un compañero.
+## Documentación
 
-Cada integrante debe aportar al menos un PR funcional con su autoría y revisión reales. Este trabajo no crea aportes ni revisiones ficticias y no reescribe el historial previo.
+| Documento | Contenido |
+| --- | --- |
+| [docs/proyecto-integrado-3.md](docs/proyecto-integrado-3.md) | Tubo, matriz SGR, organizaciones, reglas decididas y su respaldo en la planilla. |
+| [docs/guia-tecnica.md](docs/guia-tecnica.md) | Instalación detallada, roles, consulta ciudadana, tiempo real, verificación y AWS. |
+| [docs/tablero-canvas.md](docs/tablero-canvas.md) | Tableros de seguimiento y arrastrar y soltar. |
+| [diagramas/](diagramas/) | Casos de uso, clases, modelo de datos y trazabilidad de requerimientos. |
+| [assets/municipal/README.md](assets/municipal/README.md) | Identidad visual: logo, paleta institucional y tipografía. |
 
-La entrega en la plataforma consiste en el enlace del repositorio y los nombres completos de todos los integrantes. No se exige un informe adicional. Los antecedentes de primera/segunda entrega disponibles se agrupan en `docs/antecedentes/` y en el historial de Git; no representan el estado operativo actual de Django.
+---
 
-
-### Superadministrador y cuentas de revisión
-
-`python manage.py provision_superadmin` crea una cuenta adicional `superadmin` con contraseña aleatoria guardada únicamente en `.private/superadmin.json`. Accede a todas las delegaciones, CRUD, exportaciones, usuarios, roles, portal ciudadano y consola técnica. Repetir el comando conserva su contraseña y nunca eleva una cuenta municipal existente. El portal de un cliente sigue limitado a sus propias atenciones.
-
-`python manage.py seed_demo --update-names` asigna los nombres solicitados a las cuentas de demostración existentes sin cambiar sus contraseñas ni permisos:
-
-| Usuario | Nombre | Rol / ámbito |
-| --- | --- | --- |
-| admin_a | Keoni Vergara | Delegado Municipal / Centro |
-| editor_a | Harold Concha | Operador / Funcionario / Centro |
-| lector_a | Marcos Ortiz | Consultor / Centro |
-| lector_b | Claudio Romo | Consultor / Las Compañías |
-| cliente_1 | Javier Ahumada | Cliente / registros propios |
-| cliente_2 | Jorge Cortes | Cliente / registros propios |
-
-Las cuentas conservan sus alias para mantener los recorridos de evaluación reproducibles. Los nombres de estas cuentas no constituyen evidencia de autoría académica.
-
-La renovación TLS usa `deploy/renew_tls.sh DOMINIO`, ejecutado por un temporizador del host. Nginx sirve exclusivamente el desafío ACME por HTTP y redirige las demás rutas a HTTPS. Los certificados y la cuenta ACME permanecen fuera de Git.
-
-### Comprobación de dependencias
-
-`python manage.py verify_environment --demo` comprueba MySQL, las zonas horarias de los filtros, envío/recepción en Redis y conexión SMTP real. Rechaza SQLite y capas de canales/correo en memoria o archivos. `--production` añade `DEBUG=False` y los checks de seguridad. No imprime secretos ni envía mensajes a terceros; el recorrido de navegador acredita el correo entregado al buzón de pruebas y el token.
-
-Para usar servicios nativos, conserva la misma configuración y ajusta solo los puertos privados en `.env`. La validación del 10 de noviembre se ejecutó en Windows con MySQL 8.4.7, Redis 7.4.11 (port de redis-windows para MSYS2) y Mailpit 1.27.10. Los binarios se mantuvieron fuera del repositorio. La imagen de despliegue sigue utilizando Redis oficial para Linux.
-
-Conserva las credenciales de revisión fuera del repositorio. En la revisión grupal utiliza las seis cuentas limitadas; el superusuario técnico adicional no sustituye al administrador A. Para preparar la defensa, recorre las diez comprobaciones de la pauta: AWS/commit, ambos CRUD, validaciones, consultas/Excel, permisos, aislamiento, WebSocket, correo/Croppr/clientes, Git y navegación/errores.
+<p align="center">
+  <sub>Ilustre Municipalidad de La Serena · Coordinación de Delegaciones · INACAP La Serena</sub><br>
+  <sub>Paleta institucional: rojo heráldico <code>#C41230</code>, rojo oscuro <code>#8B1D19</code> y rojo luminoso <code>#DB3334</code>.</sub>
+</p>

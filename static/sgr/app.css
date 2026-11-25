@@ -184,3 +184,88 @@ button, .btn, input, select { min-height: 2.75rem; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; animation: none !important; transition: none !important; }
 }
+
+/* Período de medición vigente (RF-005, RF-026) y plazo de ingreso semanal (nuevo requerimiento, punto 4). */
+.periodo-sgr {
+  display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-lg);
+  margin-bottom: var(--space-xl); padding: var(--space-lg) var(--space-xl);
+  background: var(--brand-white); border: 1px solid var(--brand-border);
+  border-left: var(--space-xs) solid var(--brand-wine); border-radius: var(--legacy-radius-panel, 0.75rem);
+}
+.periodo-item { display: flex; flex-direction: column; gap: var(--space-xs); min-width: 0; font-size: var(--type-small); color: var(--brand-muted); }
+.periodo-item strong { color: var(--brand-ink); font-size: var(--type-body); }
+.periodo-label { font-size: var(--type-caption); font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--brand-muted); }
+.periodo-progreso { width: 100%; height: 0.375rem; accent-color: var(--brand-wine); margin-top: var(--space-xs); }
+.periodo-alerta strong { color: var(--error-ink); }
+@media (max-width: 900px) { .periodo-sgr { grid-template-columns: minmax(0, 1fr); } }
+
+/* Buscador de listas largas en formularios (requisitos de la segunda entrega). */
+.form-field > .select-buscador { margin-bottom: var(--space-xs); }
+.select-buscador-estado { display: block; padding-top: var(--space-xs); font-size: var(--type-caption); color: var(--brand-muted); }
+
+/* Aviso de funcionario por RUT (nuevo requerimiento, punto 1): informa sin bloquear el guardado. */
+.rut-aviso {
+  margin-top: var(--space-sm); padding: var(--space-md) var(--space-lg);
+  background: var(--action-view-bg); color: var(--brand-ink);
+  border: 1px solid var(--action-view-border); border-left: var(--space-xs) solid var(--action-view-ink);
+  border-radius: var(--radius-ui); font-size: var(--type-small); line-height: 1.5;
+  animation: rut-aviso-entrada 180ms var(--ease-enter);
+}
+.rut-aviso p { margin: 0; }
+.rut-aviso p + p { margin-top: var(--space-xs); }
+.rut-aviso-titulo { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--space-sm); }
+.rut-aviso-etiqueta { font-size: var(--type-caption); font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--action-view-ink); }
+.rut-aviso-cargo { font-weight: 700; color: var(--action-view-ink); }
+.rut-aviso-funciones { color: var(--brand-muted); }
+.rut-aviso.es-delegado { background: var(--action-edit-bg); border-color: var(--action-edit-border); border-left-color: var(--action-edit-ink); }
+.rut-aviso.es-delegado :is(.rut-aviso-etiqueta, .rut-aviso-cargo) { color: var(--action-edit-ink); }
+.rut-aviso-regla { font-weight: 700; color: var(--action-edit-ink); }
+@keyframes rut-aviso-entrada { from { opacity: 0; transform: translateY(-0.25rem); } }
+@media (prefers-reduced-motion: reduce) { .rut-aviso { animation: none; } }
+
+/* Tarjeta del tubo: solicitante identificado como funcionario. */
+.tubo-funcionario {
+  display: inline-flex; align-items: center; gap: var(--space-xs); margin-left: var(--space-xs);
+  padding: 0 var(--space-sm); border: 1px solid var(--action-view-border); border-radius: var(--radius-ui);
+  background: var(--action-view-bg); color: var(--action-view-ink);
+  font-size: var(--type-caption); font-weight: 700; line-height: 1.6;
+  max-width: 100%; white-space: normal; overflow-wrap: anywhere;
+}
+.tubo-funcionario.es-delegado { background: var(--action-edit-bg); border-color: var(--action-edit-border); color: var(--action-edit-ink); }
+.tubo-otra-gestion { color: var(--action-edit-ink); font-weight: 700; }
+
+/* Tubo: avance por colaborador (cabecera de las hojas TUBO de la matriz). */
+.tubo-colaboradores { margin-top: var(--space-xl); }
+.tubo-colaboradores h2 { font-size: var(--type-section); margin-bottom: var(--space-lg); }
+.tubo-colaboradores .num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+/* Resumen del tubo sin repetir los conteos de las columnas. */
+.tubo-resumen.tubo-resumen-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+@media (max-width: 700px) { .tubo-resumen.tubo-resumen-3 { grid-template-columns: minmax(0, 1fr); } }
+
+/* Filtros de listados: los selectores muestran su valor completo (legacy.css carga después). */
+.filter-form > div:not(.filter-search):not(.filter-size) { flex: 1 1 11.5rem; }
+.filter-form select.form-select { text-overflow: ellipsis; }
+@media (max-width: 700px) { .filter-form > div:not(.filter-search):not(.filter-size) { flex-basis: 100%; } }
+
+/* Ficha de usuario (Usuarios › Ver) */
+.user-heading { align-items: center; }
+.user-identity { display: flex; align-items: center; gap: var(--space-xl); min-width: 0; }
+.user-identity h1 { margin-bottom: var(--space-xs); overflow-wrap: anywhere; }
+.user-identity p { margin-bottom: var(--space-sm); }
+.user-photo { width: 7rem; height: 7rem; flex: 0 0 auto; object-fit: cover; border-radius: 50%; border: 1px solid var(--brand-border); background: var(--brand-soft); }
+.user-section-title { margin: var(--space-2xl) 0 var(--space-md); }
+@media (max-width: 700px) {
+  .user-identity { flex-direction: column; align-items: flex-start; gap: var(--space-md); }
+  .user-photo { width: 5.5rem; height: 5.5rem; }
+}
+
+/* Estados de cartas en el listado: mismos tonos que el tablero; el texto sigue indicando el estado. */
+.badge-status.en-proceso { background: var(--action-edit-bg); color: var(--action-edit-ink); }
+.badge-status.aprobada { background: var(--action-view-bg); color: var(--action-view-ink); }
+.badge-status.finalizada { background: var(--status-active-bg); color: var(--status-active-ink); }
+.badge-status.no-aplica { background: var(--brand-soft); color: var(--brand-muted); }
+.tubo-resumen .estado-aprobada { border-left-color: var(--action-view-ink); }
+.tubo-resumen .estado-aprobada h2, .tubo-resumen .estado-aprobada strong { color: var(--action-view-ink); }
+.tubo-resumen .estado-no-aplica { border-left-color: var(--brand-muted); }
+.tubo-resumen .estado-no-aplica h2, .tubo-resumen .estado-no-aplica strong { color: var(--brand-muted); }

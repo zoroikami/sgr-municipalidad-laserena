@@ -1,4 +1,4 @@
-from calendar import monthrange
+from copy import copy
 from datetime import date
 from decimal import Decimal
 
@@ -6,23 +6,32 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.db import transaction
-from django.db.models import Max
+from django.contrib.auth import get_user_model
+from django.db.models import Count, Max
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
+from django.http import JsonResponse
+from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.http import require_GET, require_POST
 
 from .access import authorize, scoped
-from .forms_integrado import ActividadSGRForm, AusenciaSGRForm, PeriodoSGRForm, MetaSGRForm, ReclamoSGRForm
-from .integrado import resultado_final, resultado_item, semaforo, trimestres_anteriores, CARGOS, MAX_FELICITACIONES
-from .models import ActividadSGR, AusenciaSGR, GestionTubo, ItemMeta, ReclamoSGR
+from .forms_integrado import ActividadSGRForm, AusenciaSGRForm, PeriodoSGRForm, MetaFuncionarioForm, MetaSGRForm, ReclamoSGRForm
+from .integrado import (resultado_delegacion, resultado_final, resultado_item, semaforo, trimestres_anteriores, limites_trimestre,
+                        CARGOS, DESCUENTO_RECLAMO, MAX_FELICITACIONES)
+from .models import ActividadSGR, AusenciaSGR, GestionTubo, ItemMeta, MetaFuncionario, ReclamoSGR
+from .ingreso_tubo import ingresar_al_tubo
+from .senales import notificar
+from .seguimiento import ObservacionCambioForm, registrar_cambio, TRANSICIONES_TUBO
+from .plazos import con_plazos, contar_vencidos, etiquetar_plazos
 
 
 @login_required
 @require_GET
 def tablero(request):
     authorize(request.user, GestionTubo)
-    query = scoped(request.user, GestionTubo).select_related('responsable', 'atencion', 'organizacion')
+    hoy = timezone.localdate()
+    query = con_plazos(scoped(request.user, GestionTubo).select_related('responsable', 'atencion', 'organizacion'))
     total = query.count()
     realizados = query.filter(estado='Realizado').count()
     columnas = []
@@ -31,27 +40,64 @@ def tablero(request):
     for (estado, _), color in zip(GestionTubo.ESTADOS, colores):
         registros = query.filter(estado=estado)
         columnas.append({'estado': estado, 'color': color, 'cantidad': registros.count(),
-                         'registros': registros[:100], 'siguiente': siguientes.get(estado)})
+                         'registros': etiquetar_plazos(list(registros[:100]), hoy), 'siguiente': siguientes.get(estado)})
+    # Hojas TUBO de la matriz: avance por colaborador (las solicitudes del delegado no suman, punto 1).
+    conteo = query.order_by().values('responsable_id', 'estado').annotate(n=Count('pk'))
+    porcolaborador = {}
+    for fila in conteo:
+        porcolaborador.setdefault(fila['responsable_id'], dict.fromkeys(dict(GestionTubo.ESTADOS), 0))[fila['estado']] = fila['n']
+    cuentas = {u.pk: u for u in get_user_model().objects.filter(pk__in=porcolaborador)}
+    colaboradores = sorted(({'nombre': cuentas[pk].get_full_name() or cuentas[pk].username,
+                             'conteos': list(estados.values()),
+                             'total': sum(estados.values()),
+                             'porcentaje': estados['Realizado'] * 100 / sum(estados.values())}
+                            for pk, estados in porcolaborador.items() if pk in cuentas),
+                           key=lambda c: (-c['total'], c['nombre']))
     return render(request, 'gestion/tablero.html', {'titulo': 'Tubo de trabajo', 'columnas': columnas,
+        'colaboradores': colaboradores, 'estados_tubo': GestionTubo.ESTADOS,
         'total': total, 'realizados': realizados, 'porcentaje': realizados * 100 / total if total else 0,
-        'proceso': query.filter(estado='En proceso').count(), 'pendientes': query.filter(estado='Pendiente').count()})
+        'vencidos': contar_vencidos(query, hoy)})
 
 
 @login_required
 @require_POST
 def mover(request, pk):
     authorize(request.user, GestionTubo, 'change')
-    siguientes = {'Ingresado': 'Pendiente', 'Pendiente': 'En proceso', 'En proceso': 'Realizado'}
+    nota = ObservacionCambioForm(request.POST)
+    if not nota.is_valid():
+        messages.error(request, 'La observación no puede superar 2000 caracteres.')
+        return redirect('gestion:tablero')
     with transaction.atomic():
         obj = get_object_or_404(scoped(request.user, GestionTubo).select_for_update(), pk=pk)
-        destino = siguientes.get(obj.estado)
+        destinos = TRANSICIONES_TUBO.get(obj.estado, ())
+        destino = destinos[0] if destinos else None
         if not destino or request.POST.get('desde') != obj.estado:
             messages.error(request, 'La gestión cambió de estado. Revisa el tablero antes de continuar.')
         else:
+            anterior = obj.estado
             obj.estado = destino
             obj.save(update_fields=['estado', 'updated_at'])
+            registrar_cambio(obj, anterior, request.user, nota.cleaned_data['observacion'])
             messages.success(request, f'{obj.codigo}: {destino}.')
     return redirect('gestion:tablero')
+
+
+def initial_formulario(request):
+    """Selección previa (delegación, funcionario, cargo) que acota las listas dependientes."""
+    return {name: request.GET[name] for name in ('delegacion', 'responsable', 'cargo', 'caso')
+            if request.GET.get(name, '').isascii() and request.GET.get(name, '').replace('_', '').isalnum()}
+
+
+@login_required
+@require_GET
+def items_actividad(request):
+    """RF-003: ítems vigentes del cargo del funcionario elegido, para recargar el formulario."""
+    authorize(request.user, ActividadSGR, 'add')
+    form = ActividadSGRForm(user=request.user, initial=initial_formulario(request))
+    return JsonResponse({
+        'cargo': form.cargo_efectivo, 'cargo_fijo': bool(form.cargo_asignado),
+        'items': [{'id': item.pk, 'nombre': item.nombre} for item in form.fields['item'].queryset],
+    })
 
 
 @login_required
@@ -60,7 +106,7 @@ def registrar(request, ausencia=False, reclamo=False):
         from django.http import HttpResponseNotAllowed
         return HttpResponseNotAllowed(['GET', 'POST'])
     if reclamo:
-        model, form_class, titulo, aviso = ReclamoSGR, ReclamoSGRForm, 'Registrar reclamo', 'Reclamo registrado. Descuenta 20% del resultado del funcionario.'
+        model, form_class, titulo, aviso = ReclamoSGR, ReclamoSGRForm, 'Registrar reclamo', f'Reclamo registrado. Descuenta {DESCUENTO_RECLAMO}% del resultado del funcionario.'
     elif ausencia:
         model, form_class, titulo, aviso = AusenciaSGR, AusenciaSGRForm, 'Registrar ausencia', 'Ausencia registrada.'
     else:
@@ -68,7 +114,8 @@ def registrar(request, ausencia=False, reclamo=False):
     authorize(request.user, model, 'add')
     if (ausencia or reclamo) and not request.user.has_perm('gestion.validar_delegado'):
         raise PermissionDenied('Las ausencias y los reclamos deben ser registrados por el delegado.')
-    form = form_class(request.POST if request.method == 'POST' else None, user=request.user)
+    form = form_class(request.POST if request.method == 'POST' else None, user=request.user,
+                      initial=initial_formulario(request))
     if request.method == 'POST' and form.is_valid():
         obj = form.save(commit=False)
         if model is ActividadSGR and obj.felicitacion and obj.respaldo_formal and request.user.has_perm('gestion.validar_delegado'):
@@ -77,13 +124,32 @@ def registrar(request, ausencia=False, reclamo=False):
             with transaction.atomic():
                 obj.full_clean()
                 obj.save()
+                if model is ActividadSGR and form.cleaned_data.get('ingresar_tubo'):
+                    gestion = ingresar_al_tubo(delegacion=obj.delegacion, responsable=obj.responsable,
+                        descripcion=obj.descripcion, solicitante=obj.solicitante_nombre, telefono=obj.solicitante_telefono,
+                        fecha=obj.fecha, sufijo=obj.codigo, solicitante_delegado=obj.solicitante_delegado,
+                        observaciones=f'Ingresada desde la actividad {obj.codigo}.')
+                    ActividadSGR.objects.filter(pk=obj.pk).update(gestion_tubo=gestion)
+                    aviso = f'Actividad registrada e ingresada al tubo como {gestion.codigo}. {obj.motivo_puntaje}'
         except ValidationError as exc:
             form.add_error(None, exc)
         else:
-            messages.success(request, aviso or f'Actividad registrada. {obj.motivo_puntaje}')
+            messages.success(request, aviso or f'Actividad registrada ({obj.codigo}). {obj.motivo_puntaje}')
+            if model is ActividadSGR and obj.caso_id:
+                return redirect('gestion:detalle', modulo='casos', pk=obj.caso_id)
             return redirect('gestion:resultados_sgr')
     return render(request, 'gestion/formulario.html', {'titulo': titulo,
+        'items_url': reverse('gestion:items_actividad') if model is ActividadSGR else '',
         'form': form, 'sgr_section': True, 'return_url': reverse('gestion:resultados_sgr')})
+
+
+def meta_efectiva(meta, ajuste):
+    """Copia del ítem con la meta y el ponderador individuales del funcionario, si el delegado los ajustó."""
+    if ajuste is None:
+        return meta
+    propia = copy(meta)
+    propia.meta_cantidad, propia.ponderador, propia.ajuste_individual = ajuste.meta_cantidad, ajuste.ponderador, True
+    return propia
 
 
 @login_required
@@ -91,20 +157,30 @@ def registrar(request, ausencia=False, reclamo=False):
 def resultados(request):
     authorize(request.user, ActividadSGR)
     hoy = timezone.localdate()
-    data = request.GET or {'anio': hoy.year, 'trimestre': (hoy.month - 1) // 3 + 1, 'responsable': request.user.pk}
+    data = request.GET
+    if not data:
+        # Sin selección previa se muestra la propia cuenta; una cuenta sin delegación (p. ej. administración
+        # técnica) abre con el primer funcionario disponible en vez de un error de validación.
+        opciones = PeriodoSGRForm(user=request.user).fields['responsable'].queryset
+        propio = opciones.filter(pk=request.user.pk).exists()
+        elegido = request.user.pk if propio else opciones.order_by('perfil__delegacion_id', 'username').values_list('pk', flat=True).first()
+        data = {'anio': hoy.year, 'trimestre': (hoy.month - 1) // 3 + 1, 'responsable': elegido or ''}
     form = PeriodoSGRForm(data, user=request.user)
     rows, actividades, ausencias, reclamos = [], [], [], []
     total = base = None
     equipo, detalle, objetivo_equipo = [], None, None
+    metricas_delegacion, salon = [], None
     if form.is_valid():
         anio, trimestre = form.cleaned_data['anio'], form.cleaned_data['trimestre']
         inicio, fin = limites_trimestre(anio, trimestre)
         funcionario = form.cleaned_data['responsable']
         org = funcionario.perfil.delegacion_id
         metas = list(scoped(request.user, ItemMeta).filter(delegacion_id=org, estado='Activo'))
+        ajustes = {(a.item_id, a.funcionario_id): a for a in MetaFuncionario.objects.filter(item__in=metas)}
         todos = list(scoped(request.user, ActividadSGR).filter(fecha__range=(inicio, fin)).select_related('item', 'responsable'))
         todas_ausencias = list(scoped(request.user, AusenciaSGR).filter(desde__lte=fin, hasta__gte=inicio))
-        gestiones = list(scoped(request.user, GestionTubo).filter(fecha_solicitud__range=(inicio, fin)).only('responsable_id', 'estado'))
+        gestiones = list(scoped(request.user, GestionTubo).filter(fecha_solicitud__range=(inicio, fin)).only(
+            'delegacion_id', 'responsable_id', 'estado', 'solicitante', 'solicitante_telefono', 'solicitante_cargo'))
         todos_reclamos = list(scoped(request.user, ReclamoSGR).filter(fecha__range=(inicio, fin)).select_related('responsable'))
         # Hoja RECLAMOS: no pueden repetirse más de dos trimestres seguidos (se informa a RRHH).
         previos = [limites_trimestre(a, t) for a, t in trimestres_anteriores(anio, trimestre, 2)]
@@ -119,8 +195,9 @@ def resultados(request):
             libres = [a for a in todas_ausencias if a.responsable_id == user.pk]
             propias = [g for g in gestiones if g.responsable_id == user.pk]
             quejas = [r for r in todos_reclamos if r.responsable_id == user.pk]
-            metricas = [resultado_item(meta, registros, libres, inicio, fin, propias) for meta in metas
-                        if not meta.cargo_sgr or meta.cargo_sgr == user.perfil.cargo_sgr]
+            metricas = [resultado_item(meta_efectiva(meta, ajustes.get((meta.pk, user.pk))), registros, libres, inicio, fin, propias)
+                        for meta in metas if not meta.cargo_sgr or meta.cargo_sgr == user.perfil.cargo_sgr]
+            metricas_delegacion.extend(metricas)
             peso = sum(row['meta'].ponderador for row in metricas if row['porcentaje'] is not None)
             parcial = sum(row['ponderado'] for row in metricas if row['ponderado'] is not None) * 100 / peso if peso else None
             felicitaciones = sum(1 for a in registros if a.felicitacion and a.puntuable)
@@ -137,6 +214,11 @@ def resultados(request):
             equipo.append(fila)
             if user.pk == funcionario.pk:
                 rows, actividades, ausencias, reclamos, total, base, detalle = metricas, registros, libres, quejas, final, parcial, fila
+        # Hoja SALON: el equipo listado es toda la delegación, porque el ámbito de cada rol es su delegación.
+        if equipo:
+            salon = resultado_delegacion(metas, metricas_delegacion, [g for g in gestiones if g.delegacion_id == org])
+            salon['semaforo'] = semaforo(salon['total'], inicio, fin, hoy, [])
+            salon['delegacion'] = funcionario.perfil.delegacion
     valores = [r['porcentaje'] for r in equipo if r['porcentaje'] is not None]
     total_equipo = sum(valores) / len(valores) if valores else None
     equipo.sort(key=lambda r: (r['porcentaje'] is None, -(r['porcentaje'] or 0)))
@@ -144,12 +226,7 @@ def resultados(request):
     return render(request, 'gestion/resultados_sgr.html', {'titulo': 'Resultados SGR', 'sgr_section': True, 'filter_form': form,
         'resultados': rows, 'actividades': actividades, 'ausencias': ausencias, 'reclamos': reclamos, 'total': total, 'base': base,
         'detalle': detalle, 'equipo': equipo, 'total_equipo': total_equipo, 'resumen_semaforo': resumen,
-        'objetivo_equipo': objetivo_equipo})
-
-
-def limites_trimestre(anio, trimestre):
-    mes = (trimestre - 1) * 3 + 1
-    return date(anio, mes, 1), date(anio, mes + 2, monthrange(anio, mes + 2)[1])
+        'objetivo_equipo': objetivo_equipo, 'salon': salon})
 
 
 @login_required
@@ -168,3 +245,67 @@ def configurar_meta(request, pk):
         return redirect('gestion:resultados_sgr')
     return render(request, 'gestion/formulario.html', {'titulo': f'Configurar {obj.nombre}', 'form': form,
         'sgr_section': True, 'return_url': reverse('gestion:resultados_sgr')})
+
+
+@login_required
+@require_POST
+def verificar_actividad(request, pk):
+    """Columna «verificador válido» de la matriz: el delegado marca una actividad como válida (1) o no válida (0)."""
+    authorize(request.user, ActividadSGR)
+    if not request.user.has_perm('gestion.validar_delegado'):
+        raise PermissionDenied('La verificación corresponde al delegado.')
+    actividad = get_object_or_404(scoped(request.user, ActividadSGR), pk=pk)
+    estado = request.POST.get('verificacion')
+    motivo = ' '.join(request.POST.get('motivo', '').split())[:200]
+    if estado not in dict(ActividadSGR.VERIFICACION):
+        messages.error(request, 'Elige si la actividad es válida o no válida.')
+    elif estado == 'no_valida' and not motivo:
+        messages.error(request, 'Indica el motivo por el que la actividad no es válida.')
+    else:
+        # update(): una actividad antigua puede apuntar a un ítem ya inactivo y no debe revalidarse entera.
+        ActividadSGR.objects.filter(pk=actividad.pk).update(
+            verificacion=estado, verificacion_motivo=motivo if estado == 'no_valida' else '',
+            verificado_por=request.user, verificado_en=timezone.now())
+        notificar(actividad.delegacion_id, 'sgr', *(('casos',) if actividad.caso_id else ()))
+        messages.success(request, f'Actividad {actividad.codigo} marcada como {dict(ActividadSGR.VERIFICACION)[estado].lower()}.')
+    destino = request.POST.get('next', '')
+    if url_has_allowed_host_and_scheme(destino, allowed_hosts={request.get_host()}, require_https=request.is_secure()):
+        return redirect(destino)
+    return redirect('gestion:resultados_sgr')
+
+
+@login_required
+def meta_funcionario(request, pk, user_pk):
+    """Ajuste individual de meta y ponderador de un ítem para un funcionario (lo configura el delegado)."""
+    if request.method not in ('GET', 'POST'):
+        from django.http import HttpResponseNotAllowed
+        return HttpResponseNotAllowed(['GET', 'POST'])
+    authorize(request.user, ItemMeta, 'change')
+    if not request.user.has_perm('gestion.validar_delegado'):
+        raise PermissionDenied('La configuración corresponde al delegado.')
+    item = get_object_or_404(scoped(request.user, ItemMeta), pk=pk)
+    funcionario = get_object_or_404(get_user_model().objects.filter(is_active=True, perfil__delegacion_id=item.delegacion_id)
+                                    .exclude(groups__name='Cliente'), pk=user_pk)
+    ajuste = MetaFuncionario.objects.filter(item=item, funcionario=funcionario).first()
+    instancia = ajuste or MetaFuncionario(item=item, funcionario=funcionario, meta_cantidad=item.meta_cantidad,
+                                          ponderador=item.ponderador)
+    form = MetaFuncionarioForm(request.POST if request.method == 'POST' else None, instance=instancia)
+    hoy = timezone.localdate()
+    volver = (f"{reverse('gestion:resultados_sgr')}?anio={hoy.year}&trimestre={(hoy.month - 1) // 3 + 1}"
+              f"&responsable={funcionario.pk}")
+    if request.method == 'POST' and form.is_valid():
+        if form.cleaned_data.get('quitar'):
+            if ajuste:
+                ajuste.delete()
+            messages.success(request, 'El funcionario vuelve a la meta y el ponderador del cargo.')
+        else:
+            obj = form.save(commit=False)
+            obj.actualizado_por = request.user
+            obj.full_clean()
+            obj.save()
+            messages.success(request, 'Meta individual actualizada.')
+        return redirect(volver)
+    nombre = funcionario.get_full_name() or funcionario.username
+    return render(request, 'gestion/formulario.html', {
+        'titulo': f'Meta de {nombre}: {item.nombre}', 'form': form, 'sgr_section': True, 'return_url': volver,
+        'subtitulo': f'Meta del cargo: {item.meta_cantidad} · ponderador {item.ponderador}%.'})

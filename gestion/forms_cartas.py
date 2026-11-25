@@ -14,6 +14,19 @@ class CartaForm(RelacionesForm):
                   'fecha_actividad', 'encargado', 'estado', 'pronunciamiento', 'derivada_a', 'observacion']
         widgets = {key: forms.DateInput(format='%Y-%m-%d', attrs={'type': 'date'})
                    for key in ['fecha', 'fecha_actividad']}
+        help_texts = {
+            'fecha': 'Selecciona el día, mes y año de recepción de la carta.',
+            'para': 'Selecciona a quién está dirigida la carta.',
+            'remite': 'Escribe el nombre de la persona u organización que envía la carta.',
+            'telefono': 'Indica un número de contacto, por ejemplo +56 9 1234 5678.',
+            'nombre': 'Resume la actividad o el asunto tratado en la carta.',
+            'fecha_actividad': 'Selecciona el día, mes y año de la actividad, si corresponde.',
+            'encargado': 'Selecciona al funcionario que hará seguimiento de la carta.',
+            'estado': 'Selecciona la etapa actual de tramitación de la carta.',
+            'pronunciamiento': 'Escribe la respuesta o decisión emitida sobre la solicitud.',
+            'derivada_a': 'Indica la persona o el área a la que se envió la carta para su gestión.',
+            'observacion': 'Agrega antecedentes o avances que ayuden al seguimiento de la carta.',
+        }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

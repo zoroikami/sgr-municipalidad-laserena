@@ -200,6 +200,8 @@ class Atencion(models.Model):
         return super().save(*args, **kwargs)
 
 
-from .models_integrado import ActividadSGR, AusenciaSGR, GestionTubo, Organizacion, ReclamoSGR  # noqa: E402,F401
+from .models_integrado import (ActividadSGR, AusenciaSGR, CasoSocial, GestionTubo, MetaFuncionario,  # noqa: E402,F401
+                               Organizacion, ReclamoSGR)
 
 from .models_cartas import Carta  # noqa: E402,F401
+from .models_seguimiento import HistorialEstado  # noqa: E402,F401

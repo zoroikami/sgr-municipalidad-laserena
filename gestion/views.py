@@ -19,14 +19,16 @@ from .access import authorize, delegation_id, is_cliente, scoped
 from .delegation import active_delegation, has_global_scope
 from .forms import FORMS, PortalDateFilterForm
 from .models import Atencion, Delegacion, ItemMeta, SubAtencion, TipoAtencion
-from .queries import MODULES, display_value, list_context, query_for, state_for
+from .queries import MODULES, casos_con_gestiones, display_value, list_context, query_for, state_for
 from .realtime import notify_after_commit
 from .public_views import consulta_publica, schedule_access_email
-from .forms_integrado import OrganizacionForm, GestionTuboForm
+from .forms_integrado import CasoSocialForm, OrganizacionForm, GestionTuboForm
 
 from .forms_cartas import CartaForm
+from .seguimiento import configurar_estado_formulario, registrar_cambio
+from .views_integrado import initial_formulario
 
-FORMS.update(organizaciones=OrganizacionForm, tubo=GestionTuboForm, cartas=CartaForm)
+FORMS.update(organizaciones=OrganizacionForm, tubo=GestionTuboForm, cartas=CartaForm, casos=CasoSocialForm)
 
 
 def module_config(modulo):
@@ -96,13 +98,21 @@ def form_view(request, modulo, pk=None):
         # Read and validate the existing row under the same lock used by archive.
         # A stale editor cannot write deleted_at=None over an administrator's archive.
         obj = get_object_or_404(query, pk=pk) if pk else None
+        estado_anterior = obj.estado if obj and modulo in ('tubo', 'cartas') else None
         form = FORMS[modulo](request.POST if request.method == 'POST' else None,
                              request.FILES if request.method == 'POST' else None,
-                             instance=obj, user=request.user)
+                             instance=obj, user=request.user, initial=initial_formulario(request))
+        if modulo in ('tubo', 'cartas'):
+            configurar_estado_formulario(form, obj)
         if request.method == 'POST' and form.is_valid():
             try:
                 with transaction.atomic():
+                    if modulo == 'tubo' and obj:
+                        form.instance.estado = form.cleaned_data['estado']
                     saved = form.save()
+                    if estado_anterior is not None:
+                        registrar_cambio(saved, estado_anterior, request.user,
+                            form.cleaned_data.get('observacion_estado', ''))
                     if modulo == 'atenciones':
                         notify_after_commit(saved.delegacion_id)
                         if saved.solicitante_email and (
@@ -138,7 +148,9 @@ def details_for(obj, modulo):
     config = MODULES[modulo]
     fields = config.get('detail_columns', config['columns'] + [('Descripción', 'descripcion')])
     if modulo == 'tubo':
-        fields += [('Responsable', 'responsable.username'), ('Fecha de solicitud', 'fecha_solicitud'),
+        fields += [('RUT solicitante', 'solicitante_rut'), ('Teléfono solicitante', 'solicitante_telefono'),
+                   ('Solicitante funcionario', 'solicitante_funcionario_texto'),
+                   ('Responsable', 'responsable.username'), ('Fecha de solicitud', 'fecha_solicitud'),
                    ('Fecha de compromiso', 'fecha_compromiso'), ('Observaciones', 'observaciones'),
                    ('Atención vinculada', 'atencion.folio'), ('Organización', 'organizacion.nombre')]
     if modulo == 'organizaciones':
@@ -158,13 +170,19 @@ def details_for(obj, modulo):
 def detalle(request, modulo, pk):
     config = module_config(modulo)
     authorize(request.user, config['model'])
-    obj = get_object_or_404(scoped(request.user, config['model']), pk=pk)
+    query = scoped(request.user, config['model'])
+    if modulo == 'casos':
+        query = casos_con_gestiones(query)
+    obj = get_object_or_404(query, pk=pk)
     name = config['model']._meta.model_name
     return render(request, 'gestion/detalle.html', {
         'obj': obj, 'modulo': modulo, 'titulo': str(obj), 'details': details_for(obj, modulo),
         'can_change': request.user.has_perm(f'gestion.change_{name}'),
         'can_delete': modulo != 'delegaciones' and request.user.has_perm(f'gestion.delete_{name}'),
         'return_url': reverse('gestion:listado', args=[modulo]),
+        'historial': obj.historial_estados.select_related('autor') if modulo in ('tubo', 'cartas') else None,
+        'plazos_caso': obj.plazos() if modulo == 'casos' else None,
+        'gestiones_caso': obj.gestiones.all() if modulo == 'casos' else None,
     })
 
 

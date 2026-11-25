@@ -25,7 +25,7 @@ def delegado(mundo):
 def test_resultado_final_bonifica_felicitaciones_descuenta_reclamos_y_tope_150():
     assert resultado_final(Decimal(90), 1, 0) == Decimal(100)
     assert resultado_final(Decimal(90), 5, 0) == Decimal(120)  # máximo 3 felicitaciones
-    assert resultado_final(Decimal(90), 0, 1) == Decimal(70)
+    assert resultado_final(Decimal(90), 0, 1) == Decimal(60)
     assert resultado_final(Decimal(120), 3, 0) == Decimal(150)
     assert resultado_final(Decimal(145), 3, 0) == Decimal(150)
     assert resultado_final(Decimal(10), 0, 2) == Decimal(0)
@@ -39,20 +39,28 @@ def test_semaforo_objetivo_al_dia_descuenta_ausencias_y_usa_umbral_60():
     assert luz['objetivo'] == Decimal(50) and luz['color'] == 'verde'
     assert semaforo(Decimal(40), inicio, fin, hoy, [])['color'] == 'naranjo'
     assert semaforo(Decimal(20), inicio, fin, hoy, [])['color'] == 'rojo'
+    # 23 días de ausencia: el objetivo se mide sobre los 69 días disponibles (la meta ya viene prorrateada).
     ausencias = [SimpleNamespace(desde=date(2026, 11, 1), hasta=date(2026, 11, 23))]
-    luz = semaforo(Decimal(40), inicio, fin, hoy, ausencias)
-    assert luz['netos'] == 31 and luz['color'] == 'verde'
+    luz = semaforo(Decimal(45), inicio, fin, hoy, ausencias)
+    assert luz['netos'] == 31 and luz['disponibles'] == 69 and luz['color'] == 'verde'
+    assert semaforo(Decimal(40), inicio, fin, hoy, ausencias)['color'] == 'naranjo'
+    # Al cierre, con meta prorrateada, se exige el 100% aunque haya ausencias (no se descuentan dos veces).
+    cierre = semaforo(Decimal('48.5'), inicio, fin, fin, [SimpleNamespace(desde=date(2026, 10, 1), hasta=date(2026, 11, 15))])
+    assert cierre['objetivo'] == Decimal(100) and cierre['color'] == 'rojo'
+    completo = [SimpleNamespace(desde=inicio, hasta=fin)]
+    assert semaforo(None, inicio, fin, hoy, completo)['objetivo'] == Decimal(0)
     assert semaforo(Decimal(100), inicio, fin, date(2027, 2, 1), [])['objetivo'] == Decimal(100)
     assert semaforo(None, inicio, fin, hoy, [])['color'] is None
 
 
 def test_soluciones_al_ingreso_al_tubo_mide_tasa_realizada():
     meta = SimpleNamespace(pk=1, meta_cantidad=80, ponderador=Decimal(25), indicador='tubo')
-    gestiones = [SimpleNamespace(estado='Realizado')] * 4 + [SimpleNamespace(estado='Pendiente')]
+    datos = {'solicitante': 'Vecina ficticia', 'solicitante_telefono': '912345678'}
+    gestiones = [SimpleNamespace(estado='Realizado', **datos)] * 4 + [SimpleNamespace(estado='Pendiente', **datos)]
     row = resultado_tubo(meta, gestiones)
     assert row['cantidad'] == 4 and row['porcentaje'] == Decimal(100)
     assert resultado_item(meta, [], [], date(2026, 10, 1), date(2026, 12, 31), gestiones)['porcentaje'] == Decimal(100)
-    assert resultado_tubo(meta, [SimpleNamespace(estado='Realizado')])['porcentaje'] == Decimal(120)
+    assert resultado_tubo(meta, [SimpleNamespace(estado='Realizado', **datos)])['porcentaje'] == Decimal(120)
     assert resultado_tubo(meta, [])['porcentaje'] is None
 
 
@@ -134,7 +142,7 @@ def test_resultados_muestran_semaforo_reclamos_y_alerta_rrhh(client, mundo):
     assert response.status_code == 200
     detalle = response.context['detalle']
     assert detalle['reclamos'] == 1 and detalle['ingresos'] == 1 and detalle['ultimo'] == hoy
-    assert detalle['porcentaje'] == detalle['base'] - 20
+    assert detalle['porcentaje'] == max(0, detalle['base'] - 30)
     assert detalle['semaforo']['color'] in ('verde', 'naranjo', 'rojo')
     assert detalle['rrhh']
     contenido = response.content.decode()

@@ -1,0 +1,8 @@
+<h3{% if obj.estado == 'Realizado' %} class="tubo-concluido"{% endif %}>{{ obj.titulo_tarjeta }}</h3>
+<dl class="tubo-datos">
+  <div><dt>Solicitante</dt><dd>{{ obj.solicitante }}{% if obj.solicitante_es_funcionario %} <span class="tubo-funcionario{% if obj.es_otra_gestion %} es-delegado{% endif %}" title="Funcionario municipal identificado por RUT">Funcionario · {{ obj.solicitante_cargo_nombre }}</span>{% endif %}</dd></div>
+  <div><dt>Responsable</dt><dd>{{ obj.responsable.get_full_name|default:obj.responsable.username }}</dd></div>
+  {% if obj.apoyo %}<div><dt>Apoyo</dt><dd>{{ obj.apoyo }}</dd></div>{% endif %}
+  {% if obj.fecha_compromiso %}<div><dt>Compromiso</dt><dd>{{ obj.fecha_compromiso|date:'d/m/Y' }}</dd></div>{% endif %}
+</dl>
+    {% if obj.es_otra_gestion %}<p class="tubo-otra-gestion">Otra gestión: la solicita el delegado y no suma puntaje.</p>{% endif %}

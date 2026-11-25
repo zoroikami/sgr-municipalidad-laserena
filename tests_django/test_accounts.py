@@ -97,7 +97,7 @@ def test_profile_rejects_invalid_large_and_non_jpeg_png_uploads(client, accounts
 
 
 @pytest.mark.django_db
-def test_photo_only_owner_or_technical_superuser(client, accounts):
+def test_photo_only_owner_managing_delegado_or_technical_superuser(client, accounts):
     client.force_login(accounts['editor'])
     response = client.post(reverse('cuentas:perfil'), {'first_name': '', 'last_name': '', 'email': 'editor@example.test', 'foto': photo()})
     assert response.status_code == 302
@@ -106,8 +106,13 @@ def test_photo_only_owner_or_technical_superuser(client, accounts):
     assert response.status_code == 200
     assert response['Cache-Control'] == 'private, no-store'
     assert b''.join(response.streaming_content).startswith(b'\x89PNG')
+    # Usuarios › Ver: el delegado que administra la cuenta ve su foto; otras cuentas no.
     client.force_login(accounts['admin'])
-    assert client.get(url).status_code == 404
+    assert client.get(url).status_code == 200
+    for ajena in ('other', 'cliente'):
+        client.force_login(accounts[ajena])
+        assert client.get(url).status_code == 404
+    client.force_login(accounts['admin'])
     admin = accounts['admin']
     admin.is_superuser = True
     admin.save()

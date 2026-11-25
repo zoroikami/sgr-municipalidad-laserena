@@ -1,0 +1,40 @@
+{% extends 'base.html' %}{% load static rut_tags %}
+{% block title %}{{ titulo }} | Usuarios | SGR{% endblock %}
+{% block content %}
+<section aria-labelledby="user-title">
+  <div class="module-breadcrumb"><a href="{% url 'gestion:inicio' %}">Gestión municipal</a> / <a href="{% url 'cuentas:usuarios' %}">Usuarios</a> / Ficha</div>
+  <a class="back-link" href="{% url 'cuentas:usuarios' %}">Volver a Usuarios</a>
+  <div class="page-heading user-heading">
+    <div class="user-identity">
+      {% if perfil.foto %}<img class="user-photo" src="{% url 'cuentas:foto' account.pk %}" width="112" height="112" alt="Foto de perfil de {{ titulo }}">{% else %}<img class="user-photo" src="{% static 'municipal/avatar-default.svg' %}" width="112" height="112" alt="{{ titulo }} no tiene foto de perfil">{% endif %}
+      <div>
+        <h1 id="user-title">{{ titulo }}</h1>
+        <p class="text-muted">{{ cargo_nombre }} · {{ perfil.delegacion.nombre|default:'Todas las delegaciones' }}</p>
+        <span class="badge-status {% if account.is_active %}activa{% else %}inactiva{% endif %}">{% if account.is_active %}Cuenta activa{% else %}Cuenta inactiva{% endif %}</span>
+      </div>
+    </div>
+    {% if puede_editar %}<div class="heading-actions"><a class="btn btn-primary" href="{% url 'cuentas:usuario_editar' account.pk %}">Editar usuario</a></div>{% endif %}
+  </div>
+  <h2 class="user-section-title">Datos personales</h2>
+  <dl class="record-details content-panel">
+    <div><dt>Nombres</dt><dd>{{ account.first_name|default:'Sin dato' }}</dd></div>
+    <div><dt>Apellidos</dt><dd>{{ account.last_name|default:'Sin dato' }}</dd></div>
+    <div><dt>RUT</dt><dd>{{ perfil.rut|rut_formateado|default:'Sin dato' }}</dd></div>
+    <div><dt>Correo electrónico</dt><dd>{% if account.email %}<a href="mailto:{{ account.email }}">{{ account.email }}</a>{% else %}Sin dato{% endif %}</dd></div>
+    <div><dt>Teléfono</dt><dd>{% if perfil.telefono %}<a href="tel:{{ perfil.telefono|cut:' ' }}">{{ perfil.telefono }}</a>{% else %}Sin dato{% endif %}</dd></div>
+  </dl>
+  <h2 class="user-section-title">Cargo y acceso</h2>
+  <dl class="record-details content-panel">
+    <div><dt>Usuario</dt><dd>{{ account.username }}</dd></div>
+    <div><dt>Rol</dt><dd>{{ rol }}</dd></div>
+    <div><dt>Delegación</dt><dd>{{ perfil.delegacion.nombre|default:'Todas las delegaciones' }}</dd></div>
+    <div><dt>Cargo municipal</dt><dd>{{ cargo_nombre }}{% if cargo_resumen %}<div class="field-help">{{ cargo_resumen }}</div>{% endif %}</dd></div>
+    <div><dt>Atribución de delegado</dt><dd>{% if atribucion_delegado %}Sí: informa felicitaciones, registra ausencias y reclamos, y configura metas{% else %}No{% endif %}</dd></div>
+  </dl>
+  <h2 class="user-section-title">Actividad de la cuenta</h2>
+  <dl class="record-details content-panel">
+    <div><dt>Fecha de creación</dt><dd>{{ account.date_joined|date:'d-m-Y H:i' }}</dd></div>
+    <div><dt>Último ingreso</dt><dd>{{ account.last_login|date:'d-m-Y H:i'|default:'Aún no ingresa' }}</dd></div>
+  </dl>
+</section>
+{% endblock %}

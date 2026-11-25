@@ -1,14 +1,15 @@
 """One authorized query powers list, table refresh and unpaginated export."""
 from django.core.paginator import Paginator
-from django.db.models import Q, Count
+from django.db.models import Q, Count, F, Prefetch
 from django.urls import reverse
 from urllib.parse import urlencode
-from cuentas.rut import format_rut
+from cuentas.rut import RutError, format_rut, normalize_rut
 
 from .access import scoped
 from .delegation import has_global_scope
 from .forms import AtencionFilterForm
 from .models import Atencion, Delegacion, ItemMeta, SubAtencion, TipoAtencion, ESTADOS, ESTADOS_ATENCION, Organizacion, GestionTubo, Carta
+from .models import ActividadSGR, CasoSocial
 
 
 CARTA_FIELDS = [('Código', 'codigo'), ('Fecha de ingreso', 'fecha'),
@@ -18,7 +19,29 @@ CARTA_FIELDS = [('Código', 'codigo'), ('Fecha de ingreso', 'fecha'),
     ('Estado', 'estado'), ('Pronunciamiento', 'pronunciamiento'),
     ('Derivada a', 'derivada_a'), ('Observación', 'observacion')]
 
+# Columnas de la hoja TUBO de la matriz SGR (más los datos del solicitante del nuevo requerimiento).
+TUBO_FIELDS = [('Código', 'codigo'), ('Fecha de solicitud', 'fecha_solicitud'),
+    ('Actividad / solicitud / problema', 'nombre'), ('INT/EXT', 'origen'), ('Solicitante', 'solicitante'),
+    ('RUT solicitante', 'solicitante_rut'), ('Teléfono solicitante', 'solicitante_telefono'),
+    ('Solicitante funcionario', 'solicitante_funcionario_texto'), ('Territorio', 'territorio'),
+    ('Responsable', 'responsable.get_full_name'), ('Fecha de compromiso', 'fecha_compromiso'),
+    ('Área / persona de apoyo', 'apoyo'), ('Avance, observaciones', 'observaciones'), ('Estatus', 'estado')]
+
+CASO_FIELDS = [('Código', 'codigo'), ('Nombre del usuario', 'nombre'), ('RUT del usuario', 'usuario_rut'),
+    ('Teléfono del usuario', 'usuario_telefono'), ('Gestor social', 'responsable.username'),
+    ('Fecha de ingreso', 'fecha_ingreso'), ('Tipo de atención', 'tipo.nombre'), ('Subatención', 'subatencion.nombre'),
+    ('Descripción', 'descripcion'), ('Estado', 'estado'), ('Requiere visita', 'requiere_visita'),
+    ('Visita programada', 'fecha_programada_visita'), ('Visita realizada', 'fecha_visita'),
+    ('Entrega del informe', 'fecha_informe'), ('Entrega del beneficio', 'fecha_beneficio'),
+    ('Devoluciones del informe', 'devoluciones')]
+
 MODULES = {
+    'casos': {'model': CasoSocial, 'title': 'Casos sociales',
+        'search': ['codigo', 'nombre', 'usuario_rut', 'subatencion__nombre'],
+        'columns': [('Código', 'codigo'), ('Nombre del usuario', 'nombre'), ('Subatención', 'subatencion.nombre'),
+                    ('Gestor social', 'responsable.username'), ('Estado', 'estado'), ('Ingreso', 'fecha_ingreso')],
+        'export_columns': CASO_FIELDS, 'detail_columns': CASO_FIELDS,
+        'sort': ['codigo', '-codigo', 'nombre', '-nombre', 'fecha_ingreso', '-fecha_ingreso', 'created_at', '-created_at']},
     'cartas': {'model': Carta, 'title': 'Cartas de oficina de partes',
         'search': ['codigo', 'numero_ingreso', 'nombre', 'remite', 'derivada_a', 'pronunciamiento',
                    'encargado__first_name', 'encargado__last_name', 'encargado__username'],
@@ -31,8 +54,9 @@ MODULES = {
         'columns': [('Código', 'codigo'), ('Nombre', 'nombre'), ('Familia', 'familia'), ('Subfamilia', 'subfamilia'), ('Verificada', 'verificada'), ('Estado', 'estado')],
         'sort': ['codigo', '-codigo', 'nombre', '-nombre', 'created_at', '-created_at']},
     'tubo': {'model': GestionTubo, 'title': 'Gestiones en tubo',
-        'search': ['codigo', 'nombre', 'solicitante', 'territorio', 'apoyo'],
+        'search': ['codigo', 'nombre', 'solicitante', 'solicitante_rut', 'territorio', 'apoyo'],
         'columns': [('Código', 'codigo'), ('Gestión', 'nombre'), ('Solicitante', 'solicitante'), ('Territorio', 'territorio'), ('Apoyo', 'apoyo'), ('Estado', 'estado')],
+        'export_columns': TUBO_FIELDS,
         'sort': ['codigo', '-codigo', 'nombre', '-nombre', 'created_at', '-created_at']},
     'metas': {'model': ItemMeta, 'title': 'Ítems y Metas', 'search': ['codigo', 'nombre', 'descripcion'],
               'columns': [('Código', 'codigo'), ('Nombre', 'nombre'), ('Unidad', 'unidad_medida'), ('Meta', 'meta_cantidad'), ('Estado', 'estado'), ('Creación', 'created_at')],
@@ -109,6 +133,8 @@ def query_for(user, modulo, state):
             query = query.filter(created_at__date__gte=state['desde'])
         if state['hasta']:
             query = query.filter(created_at__date__lte=state['hasta'])
+    elif modulo == 'casos':
+        query = casos_con_gestiones(query)
     elif modulo == 'cartas':
         query = query.select_related('encargado')
     elif modulo == 'subatenciones':
@@ -117,10 +143,22 @@ def query_for(user, modulo, state):
         condition = Q()
         for field in config['search']:
             condition |= Q(**{f'{field}__icontains': state['q']})
+        if modulo == 'casos':
+            try:
+                condition |= Q(usuario_rut=normalize_rut(state['q']))
+            except RutError:
+                pass
         query = query.filter(condition)
     if state['estado']:
         query = query.filter(estado=state['estado'])
     return query.order_by(state['orden'], '-id')
+
+
+def casos_con_gestiones(query):
+    # Tanto el detalle como los hitos exportados conservan el ámbito del caso.
+    gestiones = ActividadSGR.objects.filter(delegacion_id=F('caso__delegacion_id')).select_related('item').order_by('fecha', 'pk')
+    return query.select_related('responsable', 'tipo', 'subatencion', 'gestion_tubo').prefetch_related(
+        Prefetch('gestiones', queryset=gestiones))
 
 
 def list_context(request, modulo):
@@ -157,7 +195,8 @@ def list_context(request, modulo):
     if modulo == 'cartas':
         totals = {row['estado']: row['cantidad'] for row in scoped(request.user, Carta)
                   .values('estado').annotate(cantidad=Count('pk'))}
-        styles = ['proceso', 'realizado', 'realizado', '']
+        # Mismos tonos que la insignia de estado del listado: ámbar, azul, verde y gris.
+        styles = ['proceso', 'estado-aprobada', 'realizado', 'estado-no-aplica']
         context['cartas_resumen'] = [
             {'label': label, 'cantidad': totals.get(value, 0), 'clase': style}
             for (value, label), style in zip(Carta.ESTADOS, styles)]
@@ -166,14 +205,16 @@ def list_context(request, modulo):
 
 
 def display_value(obj, key):
-    from datetime import datetime
+    from datetime import date, datetime
     from django.utils import timezone
     value = obj
     for part in key.split('.'):
         value = getattr(value, part, '') if value else ''
     if isinstance(value, datetime):
         return timezone.localtime(value).strftime('%d-%m-%Y %H:%M')
-    if key in ('rut', 'solicitante_rut'):
+    if isinstance(value, date):
+        return value.strftime('%d-%m-%Y')
+    if key in ('rut', 'solicitante_rut', 'usuario_rut'):
         return format_rut(value)
     if callable(value):
         value = value() or getattr(getattr(obj, 'encargado', None), 'username', '')
@@ -183,11 +224,22 @@ def display_value(obj, key):
 
 
 def choices_for(modulo):
+    if modulo == 'casos':
+        return CasoSocial.ESTADOS
     if modulo == 'cartas':
         return Carta.ESTADOS
     return GestionTubo.ESTADOS if modulo == 'tubo' else ESTADOS_ATENCION if modulo == 'atenciones' else ESTADOS
 
 
+SORT_LABELS = {
+    # Etiquetas breves: caben en el filtro sin recortar y distinguen la dirección del orden.
+    'created_at': ('Más antiguos', 'Más recientes'), 'fecha': ('Ingreso más antiguo', 'Ingreso más reciente'),
+    'nombre': ('Nombre A–Z', 'Nombre Z–A'), 'solicitante_nombre': ('Solicitante A–Z', 'Solicitante Z–A'),
+    'codigo': ('Código menor primero', 'Código mayor primero'), 'folio': ('Folio menor primero', 'Folio mayor primero'),
+    'fecha_ingreso': ('Ingreso más antiguo', 'Ingreso más reciente'),
+}
+
+
 def sort_label(key):
-    names = {'nombre': 'Nombre', 'codigo': 'Código', 'folio': 'Folio', 'solicitante_nombre': 'Solicitante', 'created_at': 'Fecha de creación', 'fecha': 'Fecha de ingreso'}
-    return names[key.lstrip('-')] + (' descendente' if key.startswith('-') else ' ascendente')
+    ascendente, descendente = SORT_LABELS[key.lstrip('-')]
+    return descendente if key.startswith('-') else ascendente

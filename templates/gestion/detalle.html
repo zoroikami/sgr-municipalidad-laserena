@@ -1,4 +1,6 @@
 {% extends 'base.html' %}
+{% load static %}
+{% block extra_css %}{% if modulo == 'casos' %}<link rel="stylesheet" href="{% static 'sgr/integrado.css' %}">{% endif %}{% endblock %}
 {% block content %}
 <section aria-labelledby="page-title">
   <a class="back-link" href="{{ return_url }}">{% if is_cliente %}Volver a mis atenciones{% else %}Volver al listado{% endif %}</a>
@@ -6,7 +8,10 @@
     {% if can_change %}<a class="btn btn-primary" href="{% url 'gestion:editar' modulo obj.pk %}">Editar registro</a>{% endif %}
     {% if can_delete %}<form class="archive-form" method="post" action="{% url 'gestion:archivar' modulo obj.pk %}" data-record="{{ obj }}">{% csrf_token %}<button class="btn btn-outline-danger" type="submit">Archivar registro</button></form>{% endif %}
   </div></div>
+  {% if modulo == 'casos' %}{% include 'shared/realtime_status.html' %}<div data-realtime-panel data-realtime-module="casos">{% endif %}
   <dl class="record-details content-panel">{% for detail in details %}<div><dt>{{ detail.label }}</dt><dd>{{ detail.value|default:'Sin dato'|linebreaksbr }}</dd></div>{% endfor %}</dl>
+  {% if modulo == 'casos' %}{% include 'gestion/_caso_social.html' %}</div>{% endif %}
+  {% if modulo == 'tubo' or modulo == 'cartas' %}{% include 'gestion/_historial_estados.html' %}{% endif %}
   {% if modulo == 'atenciones' and can_change %}
   <section class="content-panel mt-4" aria-labelledby="consulta-access-title">
     <h2 id="consulta-access-title">Consulta ciudadana por correo</h2>

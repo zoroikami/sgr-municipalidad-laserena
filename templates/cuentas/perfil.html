@@ -13,8 +13,8 @@
       <div class="form-field photo-upload-control">
         <label for="{{ form.foto.id_for_label }}">Foto de perfil</label>
         {{ form.foto }}
-        <button type="button" class="btn btn-outline-secondary" id="profile-photo-select" aria-controls="{{ form.foto.id_for_label }}" hidden>Elegir foto</button>
-        <small class="field-help" id="{{ form.foto.auto_id }}_helptext">JPEG o PNG de hasta 2 MiB. Podrás ajustar el recorte antes de guardar.</small>
+        <button type="button" class="btn btn-outline-secondary" id="profile-photo-select" aria-controls="{{ form.foto.id_for_label }}" aria-describedby="{{ form.foto.auto_id }}_helptext" hidden>Elegir foto</button>
+        <small class="field-help" id="{{ form.foto.auto_id }}_helptext">{{ form.foto.help_text }}</small>
         <span id="photo-file-name" class="photo-file-name" role="status"></span>
         {% if form.foto.errors %}<div class="field-errors" id="{{ form.foto.auto_id }}_error" role="alert">{{ form.foto.errors }}</div>{% endif %}
       </div>
@@ -37,6 +37,16 @@
     {% include 'cuentas/_fields.html' with exclude_field='foto' %}
     <div class="form-actions"><button class="btn btn-primary btn-save" type="submit" id="profile-save">Guardar perfil</button><a class="btn btn-outline-secondary" href="{% url 'cuentas:password_change' %}">Cambiar contraseña</a></div>
   </form>
+  <section class="mt-4" aria-labelledby="profile-functions-title">
+    <h2 id="profile-functions-title">Funciones de tu cargo</h2>
+    {% if funciones %}
+    <p><strong>Cargo municipal: {{ cargo_nombre }}</strong></p>
+    <p class="field-help">{{ funciones_fuente }}</p>
+    <ol class="ps-4">{% for funcion in funciones %}<li class="mb-2">{{ funcion }}</li>{% endfor %}</ol>
+    {% else %}
+    <p>Sin cargo asignado: pide a administración que lo registre en Usuarios.</p>
+    {% endif %}
+  </section>
 </section>
 {% endblock %}
 {% block extra_js %}<script src="{% static 'vendor/croppr-2.3.1.min.js' %}" defer></script><script src="{% static 'sgr/perfil.js' %}" defer></script>{% endblock %}

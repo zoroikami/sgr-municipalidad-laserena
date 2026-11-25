@@ -8,6 +8,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_http_methods, require_POST
 from django.utils.http import url_has_allowed_host_and_scheme
 from gestion.delegation import SESSION_KEY, active_delegation, has_global_scope
+from gestion.funcionarios import FUNCIONES, cargo_de, nombre_cargo
 
 from .forms import GroupPermissionsForm, ManagedUserForm, ProfileForm
 from .models import Perfil
@@ -55,10 +56,17 @@ def cambiar_delegacion(request):
 def perfil(request):
     profiles = Perfil.objects.select_related('delegacion')
     profile = profiles.filter(user=request.user).first() if request.user.is_superuser else get_object_or_404(profiles, user=request.user)
-    form = ProfileForm(request.POST or None, request.FILES or None, instance=request.user)
+    form = ProfileForm(request.POST or None, request.FILES or None, instance=request.user,
+                       initial={'telefono': getattr(profile, 'telefono', '')})
     if request.method == 'POST' and form.is_valid():
         with transaction.atomic():
             form.save()
+            telefono = form.cleaned_data.get('telefono', '').strip()
+            if profile is not None or telefono:
+                if profile is None:
+                    profile, _ = Perfil.objects.get_or_create(user=request.user)
+                profile.telefono = telefono
+                profile.save(update_fields=['telefono'])
             if form.cleaned_data.get('foto'):
                 if profile is None:
                     profile, _ = Perfil.objects.get_or_create(user=request.user)
@@ -70,12 +78,21 @@ def perfil(request):
                     transaction.on_commit(lambda: storage.delete(previous))
         messages.success(request, 'Tu perfil se guardó.')
         return redirect('cuentas:perfil')
-    return render(request, 'cuentas/perfil.html', {'form': form, 'perfil': profile, 'titulo': 'Mi perfil'})
+    cargo = cargo_de(request.user)
+    return render(request, 'cuentas/perfil.html', {
+        'form': form, 'perfil': profile, 'titulo': 'Mi perfil',
+        'cargo_nombre': nombre_cargo(cargo), 'funciones': FUNCIONES.get(cargo, []),
+        'funciones_fuente': ('Funciones según la matriz SGR (hoja GES SEG)' if cargo == 'seguridad'
+                             else 'Descriptor de funciones 2026'),
+    })
 
 
 @login_required
 def foto(request, pk):
-    if not request.user.is_superuser and pk != request.user.pk:
+    # La propia foto, o la de una cuenta que el usuario administra (ficha «Ver» de Usuarios).
+    puede_ver = request.user.is_superuser or pk == request.user.pk or (
+        can_manage_users(request.user) and managed_users(request.user).filter(pk=pk).exists())
+    if not puede_ver:
         raise Http404
     profile = get_object_or_404(Perfil, user_id=pk)
     if not profile.foto:
@@ -104,6 +121,23 @@ def managed_users(actor):
 @login_required
 def usuarios(request):
     return render(request, 'cuentas/usuarios.html', {'usuarios': managed_users(request.user), 'titulo': 'Usuarios'})
+
+
+@login_required
+@require_http_methods(['GET'])
+def usuario_detalle(request, pk):
+    """Ficha completa de una cuenta del ámbito: datos personales, acceso, cargo y foto."""
+    from gestion.funcionarios import DESCRIPTOR, cargo_de, nombre_cargo
+    account = get_object_or_404(managed_users(request.user), pk=pk)
+    perfil = account.perfil
+    cargo = cargo_de(account)
+    rol = 'Superadministrador' if account.is_superuser else ', '.join(g.name for g in account.groups.all()) or 'Sin rol'
+    return render(request, 'cuentas/usuario_detalle.html', {
+        'account': account, 'perfil': perfil, 'rol': rol, 'titulo': account.get_full_name() or account.username,
+        'cargo_nombre': nombre_cargo(cargo) if cargo else 'Sin cargo asignado', 'cargo_resumen': DESCRIPTOR.get(cargo, ''),
+        'atribucion_delegado': account.has_perm('gestion.validar_delegado'),
+        'puede_editar': request.user.has_perm('cuentas.change_cuentas'),
+    })
 
 
 @login_required

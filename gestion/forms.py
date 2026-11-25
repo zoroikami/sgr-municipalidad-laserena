@@ -1,6 +1,7 @@
 from django import forms
 from django.contrib.auth import get_user_model
 from django.db.models import Q
+from django.urls import reverse
 from cuentas.rut import RUT_INPUT_HELP
 
 from .access import delegation_id
@@ -56,27 +57,43 @@ class ScopedModelForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         self.org_id = None
         if has_global_scope(user):
-            self.org_id = getattr(self.instance, 'delegacion_id', None) or active_delegation(user)
+            self.org_id = (getattr(self.instance, 'delegacion_id', None) or active_delegation(user)
+                           or self.delegacion_elegida())
             if hasattr(self.instance, 'delegacion_id') and not self.instance.pk:
                 self.fields['delegacion'] = forms.ModelChoiceField(
                     label='Delegación', queryset=Delegacion.objects.filter(estado='Activo'),
-                    initial=self.org_id, disabled=self.org_id is not None)
+                    initial=self.org_id, disabled=self.org_id is not None,
+                    help_text='Selecciona la delegación para cargar solo sus opciones.')
+                if self.org_id is None:
+                    # Requisitos 2a entrega: las listas muestran solo opciones de la delegación elegida.
+                    self.fields['delegacion'].help_text = 'Selecciona la delegación para cargar solo sus opciones.'
+                    self.fields['delegacion'].widget.attrs['data-recargar-delegacion'] = ''
                 self.order_fields(['delegacion'])
         else:
             self.org_id = delegation_id(user)
             if hasattr(self.instance, 'delegacion_id'):
                 self.instance.delegacion_id = self.org_id
         for name, field in self.fields.items():
-            field.widget.attrs.setdefault('class', 'form-select' if isinstance(field.widget, forms.Select) else 'form-control')
+            if not isinstance(field.widget, forms.CheckboxInput):
+                field.widget.attrs.setdefault('class', 'form-select' if isinstance(field.widget, forms.Select) else 'form-control')
             field.widget.attrs.setdefault('aria-describedby', f'id_{name}_help id_{name}_errors')
             if name == 'descripcion':
-                field.help_text = f'Máximo {field.max_length} caracteres.'
+                field.help_text = f'{field.help_text} Máximo {field.max_length} caracteres.'.strip()
                 field.error_messages['max_length'] = f'La descripción debe tener como máximo {field.max_length} caracteres.'
+
+    def delegacion_elegida(self):
+        """Delegación elegida por una cuenta global antes de cargar las listas dependientes."""
+        value = self.initial.get('delegacion')
+        if value is None or not str(value).isdigit():
+            return None
+        return Delegacion.objects.filter(pk=int(value), estado='Activo').values_list('pk', flat=True).first()
 
     def active_catalog(self, model):
         query = model.objects.filter(estado='Activo')
         if self.org_id:
             return query.filter(delegacion_id=self.org_id)
+        if not self.is_bound and has_global_scope(self.user):
+            return query.none()
         return query.filter(delegacion__estado='Activo', delegacion__deleted_at__isnull=True)
 
     def clean(self):
@@ -103,18 +120,35 @@ class ItemMetaForm(ScopedModelForm):
     class Meta:
         model = ItemMeta
         fields = ['nombre', 'descripcion', 'unidad_medida', 'meta_cantidad', 'estado']
+        help_texts = {
+            'nombre': 'Escribe el nombre de la acción o resultado que se medirá.',
+            'descripcion': 'Describe qué acciones o resultados incluye este ítem.',
+            'unidad_medida': 'Indica qué contarás, por ejemplo atenciones, visitas o reuniones.',
+            'estado': 'Selecciona Activo para que el ítem esté disponible al registrar actividades.',
+        }
 
 
 class TipoAtencionForm(ScopedModelForm):
     class Meta:
         model = TipoAtencion
         fields = ['nombre', 'descripcion', 'estado']
+        help_texts = {
+            'nombre': 'Escribe la categoría general, por ejemplo asistencia social.',
+            'descripcion': 'Describe qué solicitudes pertenecen a esta categoría.',
+            'estado': 'Selecciona Activo para ofrecer esta categoría en nuevas atenciones.',
+        }
 
 
 class SubAtencionForm(ScopedModelForm):
     class Meta:
         model = SubAtencion
         fields = ['nombre', 'tipo', 'descripcion', 'estado']
+        help_texts = {
+            'nombre': 'Escribe el trámite específico, por ejemplo solicitud de subsidio.',
+            'tipo': 'Selecciona la categoría general a la que pertenece este trámite.',
+            'descripcion': 'Describe qué solicitudes se resuelven con este trámite.',
+            'estado': 'Selecciona Activo para ofrecer este trámite en nuevas atenciones.',
+        }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -125,17 +159,31 @@ class DelegacionForm(ScopedModelForm):
     class Meta:
         model = Delegacion
         fields = ['nombre', 'direccion', 'comuna', 'estado']
+        help_texts = {
+            'nombre': 'Escribe el nombre oficial de la delegación municipal.',
+            'direccion': 'Indica la calle, el número y el sector de la oficina.',
+            'comuna': 'Escribe la comuna donde se ubica la delegación.',
+            'estado': 'Selecciona Activo para habilitar el trabajo en esta delegación.',
+        }
 
 
 class AtencionForm(ScopedModelForm):
     class Meta:
         model = Atencion
         fields = ['solicitante_nombre', 'solicitante_rut', 'solicitante_email', 'tipo', 'subatencion', 'cliente', 'descripcion', 'estado']
+        help_texts = {
+            'solicitante_nombre': 'Escribe los nombres y apellidos de quien solicita la atención.',
+            'tipo': 'Selecciona la categoría de la solicitud.',
+            'subatencion': 'Selecciona el trámite que corresponde a la categoría elegida.',
+            'cliente': 'Vincula su cuenta de cliente, si tiene una, para que consulte esta atención.',
+            'descripcion': 'Explica la solicitud y los antecedentes necesarios para atenderla.',
+            'estado': 'Selecciona la etapa actual de atención de la solicitud.',
+        }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.original_email = self.instance.solicitante_email
-        self.fields['solicitante_email'].help_text = 'Enviaremos a este correo el folio y un código privado para consultar la atención sin cuenta. Verifica la dirección con el solicitante.'
+        self.fields['solicitante_email'].help_text = 'Verifica el correo con el solicitante: recibirá el folio y un código privado para consultar sin cuenta.'
         if not self.instance.pk:
             self.instance.responsable = self.user
         self.fields['tipo'].queryset = self.active_catalog(TipoAtencion)
@@ -152,7 +200,8 @@ class AtencionForm(ScopedModelForm):
         self.fields['cliente'].queryset = clients.distinct()
         self.fields['cliente'].label_from_instance = lambda user: user.get_full_name() or user.username
         self.fields['solicitante_rut'].help_text = RUT_INPUT_HELP
-        self.fields['solicitante_rut'].widget.attrs.update({'placeholder': '12345678-5', 'spellcheck': 'false'})
+        self.fields['solicitante_rut'].widget.attrs.update({'placeholder': '12345678-5', 'spellcheck': 'false',
+            'data-rut-funcionario': reverse('gestion:rut_funcionario')})
 
     def save(self, commit=True):
         if self.instance.solicitante_email != self.original_email:
