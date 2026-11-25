@@ -13,7 +13,7 @@ python manage.py asignar_delegado NOMBRE_DE_USUARIO
 
 El último comando se ejecuta únicamente para el funcionario designado como delegado. Requiere una cuenta activa con delegación y rol Delegado Municipal o Coordinador. La atribución permite informar felicitaciones, registrar ausencias y configurar metas; no modifica el rol de acceso. La administración técnica también dispone de esas funciones. Las migraciones incorporan los permisos de los módulos nuevos a Coordinador, Delegado Municipal, Operador / Funcionario y Consultor sin restablecer los permisos personalizados de los módulos existentes. Consultor solo consulta y Cliente sigue accediendo únicamente a su portal. La atribución especial de delegado se asigna explícitamente. El comando opcional `sincronizar_roles` restablece los permisos predeterminados completos; úsalo solo si ese es el resultado deseado.
 
-Las actividades se atribuyen al funcionario de la delegación correspondiente. Para informar una actividad de otra delegación, una cuenta con atribución de delegado debe seleccionar un funcionario de esa delegación. Las cuentas globales pueden cargar los formularios con todas las relaciones visibles; al guardar se validan nuevamente contra la delegación elegida.
+Las actividades se atribuyen al funcionario de la delegación correspondiente. Para informar una actividad de otra delegación, una cuenta con atribución de delegado debe seleccionar un funcionario de esa delegación. Las cuentas globales eligen primero la delegación; los formularios ofrecen únicamente sus relaciones y al guardar vuelven a validar ese ámbito. Al seleccionar al funcionario y su cargo se acota la lista de ítems vigentes.
 
 En Usuarios se asigna el cargo municipal del funcionario. En Resultados SGR, el delegado configura la cantidad, el ponderador y el cargo de cada ítem. Los ítems sin cargo son comunes. Un ítem con cargo solo participa en el resultado de funcionarios con ese cargo asignado. Los cargos representan funciones municipales y son independientes de los roles de acceso.
 
@@ -21,24 +21,30 @@ En Usuarios se asigna el cargo municipal del funcionario. En Resultados SGR, el 
 
 `/tubo/` presenta Ingresado, Pendiente, En proceso y Realizado. Cada tarjeta muestra solicitante, responsable, apoyo, compromiso y enlace al detalle. Puede vincular una atención ciudadana y una organización de la misma delegación. La gestión realizada se tacha y permanece consultable. Los totales incluyen todos los registros vigentes; cada columna muestra hasta 100 tarjetas y ofrece el listado completo cuando supera ese número.
 
+Las tarjetas con permiso de edición se pueden arrastrar al siguiente estado disponible. Al soltar, un diálogo permite agregar una observación o cancelar; confirmar envía el formulario POST existente. Los botones se conservan para teclado y dispositivos táctiles. Los estados terminales y las cuentas de solo lectura no ofrecen arrastre. El resumen muestra total, tasa de resolución y vencidos; los conteos por estado aparecen en las columnas. Debajo se presenta el avance por colaborador en una tabla con desplazamiento horizontal interno cuando es necesario.
+
+Al ingresar el RUT de una cuenta municipal activa se informa su nombre, cargo, delegación y funciones. Las cuentas Cliente no se identifican como funcionarios. El solicitante identificado aparece también en la tarjeta; si su cargo es Delegado, la gestión se marca como otra gestión y se excluye de la puntuación. Las altas del tubo exigen teléfono. El territorio admite texto libre y ofrece las sugerencias de la delegación y los valores ya registrados, sin repetirlos por diferencias de espacios o mayúsculas.
+
 Los cambios de estado requieren POST con CSRF, permiso de edición y el estado de origen vigente. Una solicitud repetida o un editor desactualizado no avanza dos etapas. Los registros de otra delegación devuelven 404. El tablero se actualiza al recargar o cambiar un estado; no incorpora difusión WebSocket propia.
+
+`/cartas/tablero/` conserva los estados En proceso, Aprobada, Finalizada y No aplica, con arrastre y botones sujetos a sus transiciones permitidas. Ambos tableros registran autor, estado anterior y nuevo, fecha y observación, y destacan compromisos vencidos, próximos a vencer y cierres fuera de plazo. Las reglas y límites se describen en [Seguimiento de cartas y gestiones](tablero-canvas.md).
 
 ## Registro y puntuación
 
 `/sgr/` permite consultar año, trimestre y funcionario. `/sgr/actividad/` registra acciones. Los diez puntos del nuevo requerimiento se aplican así:
 
-1. El indicador «El solicitante es el delegado» clasifica la actividad como otra gestión, sin puntaje.
-2. Se pueden conservar registros incompletos, pero sin nombre o teléfono del usuario no son puntuables.
+1. El indicador «El solicitante es el delegado» clasifica la actividad SGR como otra gestión, sin puntaje. En el tubo, el RUT identifica al solicitante y conserva su cargo; las solicitudes del delegado se excluyen del indicador del tubo.
+2. Las actividades sin nombre o teléfono del usuario no son puntuables. Las altas del tubo exigen teléfono; los registros históricos incompletos siguen contando como ingresados, pero no como realizados para calcular el puntaje. Así, omitir datos no mejora la tasa. El estado operativo Realizado y la tasa de resolución del tablero siguen mostrando el seguimiento de las gestiones, aunque alguna no sea puntuable.
 3. Máximo siete actividades por funcionario y fecha de actividad; también se limita a siete ingresos por funcionario en el día actual, aunque correspondan a distintas fechas. La comprobación se serializa con bloqueo de la cuenta en MySQL.
 4. El lunes admite la semana anterior; desde el martes solo admite fechas desde el lunes de la semana actual. No admite fechas futuras. El calendario usa America/Santiago.
 5. El indicador «La acción fue realizada» distingue la ejecución de sus coordinaciones previas. Las coordinaciones se registran sin puntaje.
 6. El motivo de puntaje de cada registro se presenta en el informe. Marcar una acción como ejecutada sigue siendo una declaración del funcionario, no una verificación automática de su realización.
-7. Cada ítem calcula acciones válidas / meta ajustada, con tope de 120%. Este límite del requerimiento nuevo prevalece sobre las referencias de 150% de la planilla del trimestre anterior.
-8. Una felicitación necesita referencia al respaldo formal recibido por el delegado y debe ser informada por una cuenta con la atribución de delegado de la misma delegación. El delegado puede registrarla para el funcionario responsable; un gestor no puede aprobarse su propio respaldo sin esa atribución.
+7. Los ítems de cantidad calculan acciones válidas / meta ajustada y los del tubo comparan su tasa de soluciones con la tasa meta. Cada ítem tiene tope de 120%. El resultado final del funcionario, después de felicitaciones y reclamos, tiene un límite independiente de 150% según la hoja RECLAMOS de la matriz.
+8. Una felicitación necesita referencia al respaldo formal recibido por el delegado y debe ser informada por una cuenta con la atribución de delegado de la misma delegación. El delegado puede registrarla para el funcionario responsable; un gestor no puede aprobarse su propio respaldo sin esa atribución. No cuenta además como acción del ítem: se aplica como bonificación del resultado final.
 9. `/sgr/ausencia/` permite al delegado registrar días libres, vacaciones, días administrativos y licencias. La meta se prorratea por días de lunes a viernes del trimestre, descontando ausencias. Los intervalos superpuestos no duplican descuentos. No se presume un calendario de feriados no suministrado. Una meta ajustada a cero se presenta como no aplicable.
 10. El informe muestra el promedio ponderado de los ítems del funcionario y el promedio de los resultados disponibles del equipo de su delegación. Cada ítem común se aplica a cada funcionario. Los ponderadores se normalizan por su suma; no se suman porcentajes entre personas.
 
-Las metas continúan siendo cantidades enteras de acciones. La planilla también contiene indicadores de razón y otros cálculos, que requieren una definición específica antes de automatizarse. No se importan ni se reinterpretan esos indicadores como cantidades. Las felicitaciones válidas cuentan como una acción; no se agrega un bono porcentual adicional no especificado por el nuevo requerimiento. La configuración de metas es la vigente al consultar; no representa una versión histórica congelada por trimestre.
+Los ítems distinguen metas de cantidad y de tasa. En el indicador del tubo, la meta es una tasa porcentual (por ejemplo, 80%), no una cantidad de acciones. Cada felicitación válida suma diez puntos porcentuales al resultado final, con un máximo de tres; cada reclamo descuenta veinte puntos. El resultado final queda entre 0% y 150%. La configuración de metas es la vigente al consultar; no representa una versión histórica congelada por trimestre.
 
 ## Organizaciones
 
@@ -47,9 +53,13 @@ Las metas continúan siendo cantidades enteras de acciones. La planilla también
 ```sh
 python manage.py importar_organizaciones "RUTA_A_LA_BASE.xlsx" --delegacion ID --territorio "TERRITORIO EXACTO"
 python manage.py importar_organizaciones "RUTA_A_LA_BASE.xlsx" --delegacion ID --territorio "TERRITORIO EXACTO" --aplicar
+python manage.py importar_organizaciones "RUTA_A_LA_BASE.xlsx" --todas
+python manage.py importar_organizaciones "RUTA_A_LA_BASE.xlsx" --todas --aplicar
 ```
 
-El primer comando simula y revierte las escrituras. El segundo aplica la importación de ese territorio a la delegación indicada. No adivina correspondencias entre territorios y delegaciones. Omite nombres existentes, incluidos los archivados, y no sobrescribe revisiones. La clasificación inicial por nombre es provisional y todas las organizaciones ingresan sin verificar. Los archivos originales y los datos personales de los adjuntos no se incluyen en Git.
+Sin `--aplicar`, el comando simula y revierte las escrituras. Con `--delegacion` y `--territorio` aplica un territorio exacto a la delegación indicada. Con `--todas` usa las correspondencias explícitas de la base JJVV: CIAS a Las Compañías, CENTRO a Centro, PAMPA a La Pampa, RURAL a Rural, ANTENA y ALFALFARES a La Antena - La Florida, y AV DEL MAR a Avenida del Mar. Exige esas delegaciones activas; las filas sin territorio o sin correspondencia se informan y no se asignan por suposición.
+
+La importación omite nombres existentes en la delegación, incluidos los archivados, y no sobrescribe revisiones. La clasificación inicial por nombre es provisional y todas las organizaciones ingresan sin verificar. Los registros de personalidad jurídica compartidos por organizaciones distintas se informan para revisión; no se eliminan automáticamente. La base suministrada no contiene RUT de personas ni una nómina de presidentes o tesoreros: el aviso de funcionario usa los perfiles de las cuentas municipales. Los archivos originales y los datos personales de los adjuntos no se incluyen en Git.
 
 ## Validación original de la rama
 
