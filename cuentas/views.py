@@ -8,6 +8,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_http_methods, require_POST
 from django.utils.http import url_has_allowed_host_and_scheme
 from gestion.delegation import SESSION_KEY, active_delegation, has_global_scope
+from gestion.funcionarios import FUNCIONES, cargo_de, nombre_cargo
 
 from .forms import GroupPermissionsForm, ManagedUserForm, ProfileForm
 from .models import Perfil
@@ -70,7 +71,13 @@ def perfil(request):
                     transaction.on_commit(lambda: storage.delete(previous))
         messages.success(request, 'Tu perfil se guardó.')
         return redirect('cuentas:perfil')
-    return render(request, 'cuentas/perfil.html', {'form': form, 'perfil': profile, 'titulo': 'Mi perfil'})
+    cargo = cargo_de(request.user)
+    return render(request, 'cuentas/perfil.html', {
+        'form': form, 'perfil': profile, 'titulo': 'Mi perfil',
+        'cargo_nombre': nombre_cargo(cargo), 'funciones': FUNCIONES.get(cargo, []),
+        'funciones_fuente': ('Funciones según la matriz SGR (hoja GES SEG)' if cargo == 'seguridad'
+                             else 'Descriptor de funciones 2026'),
+    })
 
 
 @login_required
