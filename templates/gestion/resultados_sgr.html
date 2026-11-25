@@ -16,7 +16,7 @@
   <article><h2>Cumplimiento final</h2><strong>{% if total != None %}{{ total|floatformat:1 }}%{% else %}—{% endif %}</strong>
     <p>Base ponderada {% if base != None %}{{ base|floatformat:1 }}%{% else %}sin meta disponible{% endif %} · tope 150%</p></article>
   <article class="sgr-objetivo sgr-objetivo-{{ detalle.semaforo.color|default:'sin' }}"><h2>Objetivo al día de hoy</h2><strong>{{ detalle.semaforo.objetivo|floatformat:1 }}%</strong>
-    <p>{% if detalle.semaforo.color %}<span class="sgr-luz sgr-luz-{{ detalle.semaforo.color }}">{{ detalle.semaforo.color|upper }}</span>{% else %}Sin resultado{% endif %} Naranjo desde {{ detalle.semaforo.umbral|floatformat:1 }}%</p></article>
+    <p>{% if detalle.semaforo.color %}<span class="sgr-luz sgr-luz-{{ detalle.semaforo.color }}">{{ detalle.semaforo.color|upper }}</span>{% else %}Sin resultado ·{% endif %} Naranjo desde {{ detalle.semaforo.umbral|floatformat:1 }}%</p></article>
   <article class="realizado"><h2>Felicitaciones</h2><strong>{{ detalle.felicitaciones }}</strong>
     <p>+10% cada una, máximo 3 (suman {{ detalle.felicitaciones_validas }})</p></article>
   <article class="pendiente"><h2>Reclamos</h2><strong>{{ detalle.reclamos }}</strong>
@@ -30,7 +30,7 @@
 <h2>Resultado de la delegación</h2>
 <section class="tubo-resumen tubo-resumen-3" aria-label="Resultado de {{ salon.delegacion.nombre }}">
   <article class="sgr-objetivo sgr-objetivo-{{ salon.semaforo.color|default:'sin' }}"><h2>Cumplimiento ponderado</h2><strong>{% if salon.total != None %}{{ salon.total|floatformat:1 }}%{% else %}—{% endif %}</strong>
-    <p>{% if salon.semaforo.color %}<span class="sgr-luz sgr-luz-{{ salon.semaforo.color }}">{{ salon.semaforo.color|upper }}</span>{% else %}Sin resultado{% endif %} Objetivo al día {{ salon.semaforo.objetivo|floatformat:1 }}%</p></article>
+    <p>{% if salon.semaforo.color %}<span class="sgr-luz sgr-luz-{{ salon.semaforo.color }}">{{ salon.semaforo.color|upper }}</span>{% else %}Sin resultado ·{% endif %} Objetivo al día {{ salon.semaforo.objetivo|floatformat:1 }}%</p></article>
   <article><h2>Peso considerado</h2><strong>{{ salon.peso|floatformat:0 }}%</strong>
     <p>{% if salon.peso < 100 %}Las filas sin datos no se ponderan; el total se calcula sobre este peso.{% else %}Todas las filas tienen datos.{% endif %}</p></article>
   <article><h2>Delegación</h2><strong class="sgr-delegacion-nombre">{{ salon.delegacion.nombre }}</strong>
