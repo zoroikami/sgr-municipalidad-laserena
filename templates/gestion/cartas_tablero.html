@@ -9,27 +9,29 @@
   {% if perms.gestion.add_carta %}<a class="btn btn-primary" href="{% url 'gestion:crear' 'cartas' %}">Crear carta</a>{% endif %}
 </div></div>
 {% include 'shared/realtime_status.html' %}
-<div data-realtime-panel data-realtime-module="cartas">
+<div class="tablero-seguimiento" data-realtime-panel data-realtime-module="cartas">
 {# Los conteos por estado ya figuran en cada columna: el resumen solo muestra datos que no se repiten. #}
 <section class="tubo-resumen tubo-resumen-3" aria-label="Resumen de cartas">
 <article><h2>Cartas en seguimiento</h2><strong>{{ total }}</strong><p>Ingresadas por oficina de partes</p></article>
 <article class="realizado"><h2>Tasa de cierre</h2><strong>{% widthratio cerradas total 100 %}%</strong><p>{{ cerradas }} de {{ total }} finalizada{{ cerradas|pluralize:'s' }} o sin aplicación</p></article>
-<article class="pendiente"><h2>Vencidos</h2><strong>{{ vencidos }}</strong><p>Cartas en proceso con actividad anterior a hoy</p></article>
+<article{% if vencidos %} class="tubo-metrica-alerta"{% endif %}><h2>Vencidos</h2><strong>{{ vencidos }}</strong><p>Cartas en proceso con actividad anterior a hoy</p></article>
 </section>
 {% if perms.gestion.change_carta %}<p class="tubo-dnd-ayuda">Arrastra una tarjeta a una columna habilitada o usa su botón para cambiar de estado.</p>{% endif %}
 <section class="tubo-columnas" aria-label="Tablero de seguimiento de cartas" data-tablero-dnd>
 {% for columna in columnas %}<section class="tubo-columna {{ columna.color }}" aria-label="{{ columna.estado }}" data-estado="{{ columna.estado }}">
-  <h2>{{ forloop.counter }}. {{ columna.estado }} <span>{{ columna.cantidad }}</span></h2>
+  <h2><span class="tubo-etapa">{{ columna.estado }}</span><span class="tubo-cantidad">{{ columna.cantidad }}</span></h2>
   {% for obj in columna.registros %}<article class="tubo-tarjeta{% if obj.plazo_tipo %} tubo-{{ obj.plazo_tipo }}{% endif %}"{% if columna.destinos and perms.gestion.change_carta %} draggable="true"{% endif %}>
     <div class="tubo-codigos"><strong>{{ obj.codigo }}</strong><span>Nº ingreso: {{ obj.numero_ingreso }}</span></div>
     <h3{% if obj.estado == 'Finalizada' %} class="tubo-concluido"{% endif %}>{{ obj.nombre }}</h3>
-    <p><strong>Para:</strong> {{ obj.para }}</p>
-    <p><strong>Remite:</strong> {{ obj.remite }}</p>
-    <p><strong>Fecha de actividad:</strong> {{ obj.fecha_actividad|date:'d/m/Y'|default:'Sin fecha' }}</p>
+    <dl class="tubo-datos">
+      <div><dt>Para</dt><dd>{{ obj.para }}</dd></div>
+      <div><dt>Remite</dt><dd>{{ obj.remite }}</dd></div>
+      <div><dt>Fecha de actividad</dt><dd>{{ obj.fecha_actividad|date:'d/m/Y'|default:'Sin fecha' }}</dd></div>
+      <div><dt>Encargado</dt><dd>{{ obj.encargado.get_full_name|default:obj.encargado.username }}</dd></div>
+      {% if obj.derivada_a %}<div><dt>Derivada a</dt><dd>{{ obj.derivada_a }}</dd></div>{% endif %}
+    </dl>
     {% if obj.plazo %}<p class="tubo-plazo"><strong>{{ obj.plazo }}</strong></p>{% endif %}
-    <p><strong>Encargado:</strong> {{ obj.encargado.get_full_name|default:obj.encargado.username }}</p>
-    {% if obj.derivada_a %}<p class="tubo-apoyo"><strong>Derivada a:</strong> {{ obj.derivada_a }}</p>{% endif %}
-    <footer><a href="{% url 'gestion:detalle' 'cartas' obj.pk %}">Ver detalle</a>
+    <footer><a class="tubo-detalle" href="{% url 'gestion:detalle' 'cartas' obj.pk %}">Ver detalle {% include 'shared/icon.html' with name='arrow' %}</a>
     {% if perms.gestion.change_carta %}{% for destino in columna.destinos %}<form method="post" action="{% url 'gestion:cartas_mover' obj.pk %}" data-destino="{{ destino }}">{% csrf_token %}<input type="hidden" name="desde" value="{{ obj.estado }}"><input type="hidden" name="estado" value="{{ destino }}">{% include 'gestion/_observacion_transicion.html' %}<button class="btn btn-outline-secondary" type="submit">{% if destino == 'Aprobada' %}Aprobar{% elif destino == 'Finalizada' %}Finalizar{% else %}No aplica{% endif %}</button></form>{% endfor %}{% endif %}</footer>
   </article>{% empty %}<p class="text-muted">Sin cartas en este estado.</p>{% endfor %}
   {% if columna.cantidad > 100 %}<a href="{% url 'gestion:listado' 'cartas' %}?estado={{ columna.estado|urlencode }}">Ver las {{ columna.cantidad }} cartas</a>{% endif %}

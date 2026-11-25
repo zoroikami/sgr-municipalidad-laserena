@@ -44,3 +44,12 @@
 @media (prefers-reduced-motion: reduce) {
   .tubo-dnd-listo .tubo-tarjeta.tubo-arrastrando { transform: none; }
 }
+
+/* El gesto nativo conserva el punto de agarre; la tarjeta original se atenúa. */
+.tablero-seguimiento .tubo-dnd-listo .tubo-tarjeta.tubo-arrastrando {
+  transform: none;
+  opacity: 0.55;
+  box-shadow: none;
+}
+.tablero-seguimiento .tubo-columna[data-estado='Aprobada'] { --tubo-destino-borde: var(--action-view-ink); --tubo-destino-fondo: var(--action-view-bg); }
+.tablero-seguimiento .tubo-columna[data-estado='No aplica'] { --tubo-destino-borde: var(--brand-muted); --tubo-destino-fondo: var(--brand-soft); }
