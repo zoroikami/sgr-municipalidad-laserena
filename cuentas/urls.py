@@ -2,14 +2,12 @@ from django.contrib.auth import views as auth_views
 from django.urls import path, reverse_lazy
 
 from . import views
-from .forms import (MunicipalAuthenticationForm, MunicipalPasswordChangeForm,
-                    MunicipalPasswordResetForm, MunicipalSetPasswordForm)
+from .forms import MunicipalPasswordChangeForm, MunicipalPasswordResetForm, MunicipalSetPasswordForm
 
 app_name = 'cuentas'
 urlpatterns = [
     path('delegacion/', views.cambiar_delegacion, name='cambiar_delegacion'),
-    path('login/', auth_views.LoginView.as_view(template_name='cuentas/login.html', authentication_form=MunicipalAuthenticationForm,
-        extra_context={'public_layout': True}), name='login'),
+    path('login/', views.IngresoView.as_view(), name='login'),
     path('logout/', auth_views.LogoutView.as_view(next_page=reverse_lazy('cuentas:login')), name='logout'),
     path('perfil/', views.perfil, name='perfil'),
     path('foto/<int:pk>/', views.foto, name='foto'),

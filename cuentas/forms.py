@@ -1,7 +1,9 @@
 from io import BytesIO
+import threading
 import warnings
 
 from django import forms
+from django.conf import settings
 from django.core.validators import RegexValidator
 from django.contrib.auth import password_validation
 from django.contrib.auth.forms import AuthenticationForm, PasswordChangeForm, PasswordResetForm, SetPasswordForm
@@ -13,6 +15,7 @@ from django.utils.html import format_html
 from PIL import Image, ImageOps, UnidentifiedImageError
 
 from cuentas.rut import RUT_INPUT_HELP, RutError, normalize_rut
+from . import intentos
 from .models import Perfil
 from .roles import LOCAL_ROLE_NAMES, ROLE_NAMES
 from gestion.delegation import active_delegation
@@ -58,14 +61,26 @@ class MunicipalAuthenticationForm(AuthenticationForm):
         identifier = self.cleaned_data.get('username', '')
         matches = User.objects.filter(Q(username__iexact=identifier) | Q(email__iexact=identifier))
         identified = bool(identifier) and matches.count() == 1
+        # Usuario y correo de una misma cuenta comparten contador: un alias no reinicia los intentos.
+        cuenta = matches.first().username if identified else identifier
+        ip = intentos.direccion(self.request)
+        if intentos.excedido('login-cuenta', cuenta) or intentos.excedido('login-ip', ip):
+            raise ValidationError(intentos.MENSAJE_BLOQUEO, code='bloqueado')
         if identified:
             self.cleaned_data['username'] = matches.first().username
         elif identifier:
             # Preserve Django's dummy hash and neutral invalid-login error for unknown/ambiguous IDs.
             self.cleaned_data['username'] = '__sgr_unknown_identity__'
-        result = super().clean()
-        if not identified:
-            raise self.get_invalid_login_error()
+        try:
+            result = super().clean()
+            if not identified:
+                raise self.get_invalid_login_error()
+        except ValidationError:
+            if identifier and self.cleaned_data.get('password'):
+                intentos.registrar('login-cuenta', cuenta)
+                intentos.registrar('login-ip', ip)
+            raise
+        intentos.limpiar('login-cuenta', cuenta)
         return result
 
 
@@ -82,6 +97,18 @@ class MunicipalPasswordChangeForm(NewPasswordHelpMixin, PasswordChangeForm):
         super().__init__(*args, **kwargs)
         self.fields['old_password'].help_text = 'Escribe la contraseña que usas actualmente para ingresar.'
 
+    def clean_old_password(self):
+        # Una sesión abierta en un equipo ajeno tampoco permite adivinar la contraseña actual sin límite.
+        if intentos.excedido('clave-actual', self.user.pk):
+            raise ValidationError(intentos.MENSAJE_BLOQUEO, code='bloqueado')
+        try:
+            valor = super().clean_old_password()
+        except ValidationError:
+            intentos.registrar('clave-actual', self.user.pk)
+            raise
+        intentos.limpiar('clave-actual', self.user.pk)
+        return valor
+
 
 class MunicipalSetPasswordForm(NewPasswordHelpMixin, SetPasswordForm):
     pass
@@ -91,6 +118,20 @@ class MunicipalPasswordResetForm(PasswordResetForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['email'].help_text = 'Escribe el correo asociado a tu cuenta para recibir el enlace de recuperación.'
+
+    def save(self, *args, request=None, **kwargs):
+        # Límite por IP sin mirar si el correo existe: la respuesta en pantalla es siempre la misma.
+        if not intentos.permitir('recuperacion-ip', intentos.direccion(request)):
+            return None
+        return super().save(*args, request=request, **kwargs)
+
+    def send_mail(self, *args, **kwargs):
+        # El envío SMTP sale de la petición: el tiempo de respuesta no revela si el correo tiene cuenta.
+        if settings.EMAIL_BACKEND.endswith('locmem.EmailBackend'):
+            return super().send_mail(*args, **kwargs)
+        threading.Thread(target=super().send_mail, args=args, kwargs=kwargs, daemon=True,
+                         name='sgr-recuperacion').start()
+        return None
 
 
 class ProfileForm(forms.ModelForm):

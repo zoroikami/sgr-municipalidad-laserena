@@ -57,6 +57,11 @@ CACHES = {'default': {'BACKEND': 'django.core.cache.backends.locmem.LocMemCache'
           'consulta_publica': {'BACKEND': 'django.core.cache.backends.redis.RedisCache',
               'LOCATION': os.environ.get('REDIS_URL', 'redis://127.0.0.1:6380/0'),
               'KEY_PREFIX': 'sgr-public-consultation',
+              'OPTIONS': {'socket_connect_timeout': 2, 'socket_timeout': 2}},
+          # Contadores de intentos de inicio de sesión y recuperación (cuentas/intentos.py).
+          'autenticacion': {'BACKEND': 'django.core.cache.backends.redis.RedisCache',
+              'LOCATION': os.environ.get('REDIS_URL', 'redis://127.0.0.1:6380/0'),
+              'KEY_PREFIX': 'sgr-autenticacion',
               'OPTIONS': {'socket_connect_timeout': 2, 'socket_timeout': 2}}}
 
 INSTALLED_APPS = ['daphne',

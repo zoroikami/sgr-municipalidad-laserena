@@ -1,6 +1,8 @@
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import Group, User
+from django.contrib.auth.views import LoginView
+from django.core.exceptions import NON_FIELD_ERRORS
 from django.core.exceptions import BadRequest, PermissionDenied
 from django.db import transaction
 from django.http import FileResponse, Http404
@@ -10,9 +12,24 @@ from django.utils.http import url_has_allowed_host_and_scheme
 from gestion.delegation import SESSION_KEY, active_delegation, has_global_scope
 from gestion.funcionarios import FUNCIONES, cargo_de, nombre_cargo
 
-from .forms import GroupPermissionsForm, ManagedUserForm, ProfileForm
+from .forms import GroupPermissionsForm, ManagedUserForm, MunicipalAuthenticationForm, ProfileForm
 from .models import Perfil
 from .roles import can_manage_users
+from . import intentos
+
+
+class IngresoView(LoginView):
+    """Login municipal: al agotar los intentos responde 429 con Retry-After, con el mismo mensaje para todos."""
+    template_name = 'cuentas/login.html'
+    authentication_form = MunicipalAuthenticationForm
+    extra_context = {'public_layout': True}
+
+    def form_invalid(self, form):
+        respuesta = super().form_invalid(form)
+        if form.has_error(NON_FIELD_ERRORS, 'bloqueado'):
+            respuesta.status_code = 429
+            respuesta['Retry-After'] = str(intentos.VENTANA)
+        return respuesta
 
 
 @login_required
