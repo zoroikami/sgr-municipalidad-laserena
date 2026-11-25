@@ -12,7 +12,7 @@
       {% if can_add %}<a class="btn btn-primary" href="{% url 'gestion:crear' modulo %}">{% include 'shared/icon.html' with name='plus' %}Crear registro</a>{% endif %}
     </div>
   </div>
-  {% if modulo == 'atenciones' %}<p class="connection-status" id="realtime-status" role="status" aria-live="polite" data-state="connecting">Conectando actualizaciones en tiempo real…</p>{% endif %}
+  {% if modulo == 'atenciones' %}<p class="connection-status" id="realtime-status" role="status" aria-live="polite" data-state="connecting">Conectando actualizaciones en tiempo real…</p>{% elif modulo == 'tubo' or modulo == 'cartas' or modulo == 'casos' %}{% include 'shared/realtime_status.html' %}{% endif %}
   {% if cartas_resumen %}{% include 'gestion/_cartas_resumen.html' %}{% endif %}
   <div class="table-card">
   <form class="filter-form table-toolbar" method="get" action="{% url 'gestion:listado' modulo %}" role="search" aria-label="Filtrar {{ titulo }}">
@@ -24,7 +24,7 @@
     <button class="btn btn-primary" type="submit">Aplicar filtros</button>
     <a class="filter-reset" href="{% url 'gestion:listado' modulo %}?q=&amp;estado=&amp;tipo=&amp;orden=-created_at&amp;tamano=15&amp;pagina=1">Limpiar filtros</a>
   </form>
-  <div id="tabla-region">{% include 'gestion/_tabla.html' %}</div>
+  <div id="tabla-region"{% if modulo == 'tubo' or modulo == 'cartas' or modulo == 'casos' %} data-realtime-panel data-realtime-module="{{ modulo }}"{% endif %}>{% include 'gestion/_tabla.html' %}</div>
   </div>
 </section>
 {% endblock %}

@@ -21,6 +21,7 @@ from .integrado import (resultado_delegacion, resultado_final, resultado_item, s
                         CARGOS, DESCUENTO_RECLAMO, MAX_FELICITACIONES)
 from .models import ActividadSGR, AusenciaSGR, GestionTubo, ItemMeta, MetaFuncionario, ReclamoSGR
 from .ingreso_tubo import ingresar_al_tubo
+from .senales import notificar
 from .seguimiento import ObservacionCambioForm, registrar_cambio, TRANSICIONES_TUBO
 from .plazos import con_plazos, contar_vencidos, etiquetar_plazos
 
@@ -265,6 +266,7 @@ def verificar_actividad(request, pk):
         ActividadSGR.objects.filter(pk=actividad.pk).update(
             verificacion=estado, verificacion_motivo=motivo if estado == 'no_valida' else '',
             verificado_por=request.user, verificado_en=timezone.now())
+        notificar(actividad.delegacion_id, 'sgr', *(('casos',) if actividad.caso_id else ()))
         messages.success(request, f'Actividad {actividad.codigo} marcada como {dict(ActividadSGR.VERIFICACION)[estado].lower()}.')
     destino = request.POST.get('next', '')
     if url_has_allowed_host_and_scheme(destino, allowed_hosts={request.get_host()}, require_https=request.is_secure()):

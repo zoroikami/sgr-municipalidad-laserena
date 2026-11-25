@@ -8,6 +8,8 @@
   <a class="btn btn-outline-secondary" href="{% url 'gestion:listado' 'cartas' %}">Ver listado</a>
   {% if perms.gestion.add_carta %}<a class="btn btn-primary" href="{% url 'gestion:crear' 'cartas' %}">Crear carta</a>{% endif %}
 </div></div>
+{% include 'shared/realtime_status.html' %}
+<div data-realtime-panel data-realtime-module="cartas">
 {# Los conteos por estado ya figuran en cada columna: el resumen solo muestra datos que no se repiten. #}
 <section class="tubo-resumen tubo-resumen-3" aria-label="Resumen de cartas">
 <article><h2>Cartas en seguimiento</h2><strong>{{ total }}</strong><p>Ingresadas por oficina de partes</p></article>
@@ -32,4 +34,5 @@
   </article>{% empty %}<p class="text-muted">Sin cartas en este estado.</p>{% endfor %}
   {% if columna.cantidad > 100 %}<a href="{% url 'gestion:listado' 'cartas' %}?estado={{ columna.estado|urlencode }}">Ver las {{ columna.cantidad }} cartas</a>{% endif %}
 </section>{% endfor %}</section>
+</div>
 {% endblock %}

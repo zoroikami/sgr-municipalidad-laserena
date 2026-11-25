@@ -63,6 +63,7 @@
   <script src="{% static 'sgr/app.js' %}" defer></script>
   <script src="{% static 'sgr/formularios.js' %}" defer></script>
   <script src="{% static 'sgr/interface.js' %}" defer></script>
+  {% if user.is_authenticated and not public_layout %}<script src="{% static 'sgr/realtime-panel.js' %}" defer></script>{% endif %}
   {% block extra_js %}{% endblock %}
 </body>
 </html>

@@ -5,6 +5,8 @@
 {% block content %}
 <div class="module-breadcrumb">Gestión municipal / Tubo de trabajo</div>
 <div class="page-heading"><div><h1>Tubo de trabajo</h1><p>Revisa las gestiones y avanza su seguimiento por estado.</p></div><div class="heading-actions"><a class="btn btn-outline-secondary" href="{% url 'gestion:listado' 'tubo' %}">Ver listado</a>{% if perms.gestion.add_gestiontubo %}<a class="btn btn-primary" href="{% url 'gestion:crear' 'tubo' %}">Nueva gestión</a>{% endif %}</div></div>
+{% include 'shared/realtime_status.html' %}
+<div data-realtime-panel data-realtime-module="tubo">
 {# Los conteos por estado ya figuran en cada columna: el resumen solo muestra datos que no se repiten. #}
 <section class="tubo-resumen tubo-resumen-3" aria-label="Resumen de gestiones">
   <article><h2>Gestiones en tubo</h2><strong>{{ total }}</strong><p>Derivadas para seguimiento</p></article>
@@ -27,4 +29,5 @@
   {% if columna.cantidad > 100 %}<a href="{% url 'gestion:listado' 'tubo' %}?estado={{ columna.estado|urlencode }}">Ver las {{ columna.cantidad }} gestiones</a>{% endif %}
 </section>{% endfor %}</section>
 {% include 'gestion/_tubo_colaboradores.html' %}
+</div>
 {% endblock %}
