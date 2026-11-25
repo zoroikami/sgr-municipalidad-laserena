@@ -130,41 +130,5 @@ def audit_site(browser, base, alias, session, output, max_pages=95, initial_path
     context.close()
     return results
 
-
-def existing_sessions():
-    """Solo lee sesiones vigentes; no crea cuentas, sesiones ni cookies de servidor."""
-    from django.contrib.auth import get_user_model
-    from django.contrib.sessions.models import Session
-    from django.utils import timezone
-    users={str(pk):name for pk,name in get_user_model().objects.values_list('pk','username')}
-    sessions={}
-    wanted={'superadmin','admin_a','editor_a','lector_a','lector_b','cliente_1'}
-    for session in Session.objects.filter(expire_date__gt=timezone.now()).order_by('expire_date'):
-        alias=users.get(str(session.get_decoded().get('_auth_user_id')))
-        if alias in wanted:sessions[alias]=session.session_key
-    return sessions
-
-
-def run_development(output):
-    import django
-    django.setup()
-    from playwright.sync_api import sync_playwright
-    sessions=existing_sessions()
-    all_results=[]
-    with sync_playwright() as p:
-        browser=p.chromium.launch()
-        for alias in ['superadmin','admin_a','editor_a','cliente_1','anonimo']:
-            if alias!='anonimo' and alias not in sessions:continue
-            records=audit_site(browser,'http://127.0.0.1:8001',alias,sessions.get(alias),output)
-            all_results.extend(records)
-            print(f'{alias}: {len(records)} páginas GET verificadas.',flush=True)
-        browser.close()
-    Path(output,'resumen.json').write_text(json.dumps({'paginas':len(all_results),'sesiones_disponibles':list(sessions),'resultados':all_results},ensure_ascii=False,indent=2))
-
-
-if __name__=='__main__':
-    import argparse
-    parser=argparse.ArgumentParser()
-    parser.add_argument('--output',required=True)
-    args=parser.parse_args()
-    run_development(args.output)
+# El barrido se ejecuta desde tests_django/test_qa_navegador.py sobre un servidor ASGI y una base
+# desechables (SGR_RUN_FULL_QA=1). No se reutilizan sesiones de personas del servidor de desarrollo.
