@@ -240,6 +240,15 @@ def usuario_form(request, pk=None):
     return render(request, 'cuentas/usuario_form.html', {'form': form, 'obj': user, 'titulo': 'Editar usuario' if pk else 'Crear usuario'})
 
 
+# Nombres de los módulos como aparecen en el menú (el verbose_name de algunos modelos es técnico).
+NOMBRES_MODULO = {
+    'actividadsgr': 'Actividades SGR', 'ausenciasgr': 'Ausencias SGR', 'reclamosgr': 'Reclamos SGR',
+    'gestiontubo': 'Tubo de trabajo', 'itemmeta': 'Ítems y metas', 'atencion': 'Atenciones ciudadanas',
+    'carta': 'Cartas de oficina de partes', 'casosocial': 'Casos sociales', 'organizacion': 'Organizaciones comunitarias',
+    'tipoatencion': 'Tipos de atención', 'subatencion': 'Subatenciones', 'delegacion': 'Delegaciones',
+}
+
+
 @login_required
 @require_http_methods(['GET', 'POST'])
 def roles(request):
@@ -259,15 +268,31 @@ def roles(request):
         return redirect(reverse('cuentas:roles') + '?grupo=' + str(form.cleaned_data['group'].pk))
     sections = {}
     actions = {'view': 'Consultar', 'add': 'Crear', 'change': 'Editar', 'delete': 'Eliminar'}
+    orden = {'view': 0, 'add': 1, 'change': 2, 'delete': 3}
     for permission, widget in zip(form.fields['permissions'].queryset, form['permissions']):
         ct = permission.content_type
         model = ct.model_class()
-        label = str(model._meta.verbose_name).capitalize() if model else ct.model
+        verbose = str(model._meta.verbose_name) if model else ct.model
+        label = NOMBRES_MODULO.get(ct.model, verbose[:1].upper() + verbose[1:])
         account_permission = ct.app_label == 'cuentas' and permission.codename.endswith('_cuentas')
         key = (ct.app_label, 'cuentas' if account_permission else ct.model)
         section = sections.setdefault(key, {'name': 'Cuentas de la delegación' if account_permission else label, 'app': ct.app_label, 'items': []})
-        section['items'].append({'widget': widget, 'label': actions.get(permission.codename.split('_', 1)[0], permission.name)})
+        accion = permission.codename.split('_', 1)[0]
+        section['items'].append({'widget': widget, 'label': actions.get(accion, permission.name),
+                                 'especial': accion not in actions, 'orden': orden.get(accion, 9),
+                                 'marcado': bool(widget.data.get('selected'))})
+    for section in sections.values():
+        section['items'].sort(key=lambda item: item['orden'])
+        section['marcados'] = sum(item['marcado'] for item in section['items'])
+        section['total'] = len(section['items'])
+        section['tono'] = ('gris' if not section['marcados'] else 'verde' if section['marcados'] == section['total']
+                           else 'ambar')
+    resumen = None
+    if active_group:
+        resumen = {'permisos': sum(s['marcados'] for s in sections.values()),
+                   'modulos': sum(1 for s in sections.values() if s['marcados']), 'total_modulos': len(sections),
+                   'cuentas': active_group.user_set.filter(is_active=True).count()}
     return render(request, 'cuentas/roles.html', {'form': form, 'grupos': groups,
         'active_group': active_group, 'permission_sections': sorted(sections.values(),
             key=lambda section: ({'gestion': 0, 'cuentas': 1}.get(section['app'], 2), section['name'])),
-        'titulo': 'Roles y permisos'})
+        'resumen_rol': resumen, 'titulo': 'Roles y permisos'})
